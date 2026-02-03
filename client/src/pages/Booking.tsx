@@ -1,0 +1,292 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertAppointmentSchema, type InsertAppointment } from "@shared/schema";
+import { useCreateAppointment, useAppointments } from "@/hooks/use-appointments";
+import { Layout } from "@/components/Layout";
+import { format, addDays, isSameDay, setHours, setMinutes } from "date-fns";
+import { arSA } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { 
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage 
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Booking Constraints
+const ALLOWED_DAYS = [0, 1, 4, 6]; // Sun, Mon, Thu, Sat
+const START_HOUR = 12;
+const END_HOUR = 21;
+const SLOT_DURATION = 30; // minutes
+
+export default function Booking() {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  // Fetch existing appointments for the selected date to block slots
+  const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined;
+  const { data: existingAppointments, isLoading: isLoadingSlots } = useAppointments(formattedDate);
+  const { mutate: createAppointment, isPending } = useCreateAppointment();
+
+  const form = useForm<InsertAppointment>({
+    resolver: zodResolver(insertAppointmentSchema),
+    defaultValues: {
+      patientName: "",
+      phone: "",
+      service: "",
+      notes: "",
+      date: formattedDate || "",
+      startTime: "",
+      endTime: "",
+      status: "scheduled"
+    },
+  });
+
+  // Generate time slots
+  const generateTimeSlots = () => {
+    const slots = [];
+    let currentTime = setMinutes(setHours(new Date(), START_HOUR), 0);
+    const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
+
+    while (currentTime < endTime) {
+      const timeString = format(currentTime, "HH:mm");
+      
+      // Check if slot is taken
+      const isTaken = existingAppointments?.some(apt => apt.startTime === timeString && apt.status !== 'cancelled');
+      
+      slots.push({
+        time: timeString,
+        available: !isTaken
+      });
+      currentTime = addDays(currentTime, 0); // Hack to clone
+      currentTime.setMinutes(currentTime.getMinutes() + SLOT_DURATION);
+    }
+    return slots;
+  };
+
+  const timeSlots = selectedDate ? generateTimeSlots() : [];
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    form.setValue("date", format(selectedDate!, "yyyy-MM-dd"));
+    form.setValue("startTime", time);
+    
+    // Calculate end time
+    const [hours, minutes] = time.split(":").map(Number);
+    const endDate = new Date();
+    endDate.setHours(hours, minutes + SLOT_DURATION);
+    form.setValue("endTime", format(endDate, "HH:mm"));
+  };
+
+  const onSubmit = (data: InsertAppointment) => {
+    createAppointment(data, {
+      onSuccess: () => {
+        form.reset();
+        setSelectedTime(null);
+      }
+    });
+  };
+
+  return (
+    <Layout>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold font-tajawal text-slate-900">حجز موعد جديد</h1>
+        <p className="text-slate-500 mt-2">اختر التاريخ والوقت المناسب لحجز الموعد.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Calendar & Time Slots */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="border-0 shadow-lg shadow-slate-200/50 overflow-hidden">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarIcon className="w-5 h-5 text-primary" />
+                اختيار التاريخ
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={(date) => !ALLOWED_DAYS.includes(date.getDay()) || date < new Date(new Date().setHours(0,0,0,0))}
+                className="rounded-md w-full flex justify-center p-4"
+                dir="ltr" // Calendar lib often works better in LTR structure visually
+                locale={arSA}
+              />
+            </CardContent>
+          </Card>
+
+          {selectedDate && (
+            <Card className="border-0 shadow-lg shadow-slate-200/50">
+              <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="w-5 h-5 text-primary" />
+                  الأوقات المتاحة
+                </CardTitle>
+                <CardDescription>
+                  {format(selectedDate, "EEEE, d MMMM yyyy", { locale: arSA })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4">
+                {isLoadingSlots ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {timeSlots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        type="button"
+                        disabled={!slot.available}
+                        onClick={() => handleTimeSelect(slot.time)}
+                        className={cn(
+                          "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
+                          selectedTime === slot.time
+                            ? "bg-primary text-white border-primary shadow-md transform scale-105"
+                            : slot.available
+                            ? "bg-white text-slate-700 border-slate-200 hover:border-primary hover:text-primary"
+                            : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed decoration-slate-400 line-through"
+                        )}
+                      >
+                        {slot.time}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right Column: Booking Form */}
+        <div className="lg:col-span-2">
+          <Card className="border-0 shadow-xl shadow-slate-200/60 h-full">
+            <CardHeader className="border-b border-slate-100">
+              <CardTitle className="text-xl font-tajawal">بيانات المريض</CardTitle>
+              <CardDescription>أدخل بيانات المريض لإتمام عملية الحجز</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 md:p-8">
+              {!selectedTime ? (
+                <div className="flex flex-col items-center justify-center h-64 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                  <Clock className="w-12 h-12 mb-3 opacity-20" />
+                  <p>يرجى اختيار التاريخ والوقت أولاً للمتابعة</p>
+                </div>
+              ) : (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="patientName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>اسم المريض الكامل</FormLabel>
+                            <FormControl>
+                              <Input placeholder="مثال: محمد أحمد" {...field} className="h-12 bg-slate-50" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>رقم الهاتف</FormLabel>
+                            <FormControl>
+                              <Input placeholder="05xxxxxxxx" {...field} className="h-12 bg-slate-50" dir="ltr" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="service"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>الخدمة المطلوبة</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-12 bg-slate-50">
+                                <SelectValue placeholder="اختر نوع الخدمة" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="checkup">كشف عام / استشارة</SelectItem>
+                              <SelectItem value="cleaning">تنظيف وتلميع</SelectItem>
+                              <SelectItem value="filling">حشوات تجميلية</SelectItem>
+                              <SelectItem value="root_canal">علاج جذور</SelectItem>
+                              <SelectItem value="extraction">خلع ضرس</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ملاحظات إضافية (اختياري)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="هل يعاني المريض من ألم معين؟" 
+                              className="bg-slate-50 min-h-[100px]" 
+                              {...field} 
+                              value={field.value || ''} // Handle null
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="bg-blue-50 p-4 rounded-xl flex items-start gap-3 border border-blue-100">
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-bold text-blue-900 text-sm">ملخص الموعد</h4>
+                        <p className="text-blue-700 text-sm mt-1">
+                          التاريخ: {format(selectedDate!, "yyyy-MM-dd")} <br />
+                          الوقت: {selectedTime}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/25" 
+                      disabled={isPending}
+                    >
+                      {isPending ? (
+                        <>
+                          <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                          جاري الحجز...
+                        </>
+                      ) : (
+                        "تأكيد الحجز"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Layout>
+  );
+}

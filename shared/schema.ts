@@ -1,18 +1,49 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const patients = pgTable("patients", {
+  id: serial("id").primaryKey(),
+  fullName: text("full_name").notNull(),
+  phone: text("phone").notNull().unique(),
+  age: integer("age"),
+  gender: text("gender"), // "male" | "female"
+  address: text("address"),
+  allergies: text("allergies"),
+  chronicDiseases: text("chronic_diseases"),
+  currentMeds: text("current_meds"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const appointments = pgTable("appointments", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").references(() => patients.id),
+  patientName: text("patient_name").notNull(), // Denormalized for ease or direct entry
+  phone: text("phone").notNull(), // Denormalized for direct entry
+  service: text("service").notNull(),
+  notes: text("notes"),
+  date: text("date").notNull(), // YYYY-MM-DD
+  startTime: text("start_time").notNull(), // HH:mm
+  endTime: text("end_time").notNull(), // HH:mm
+  status: text("status").default("scheduled"), // scheduled, completed, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// Schemas
+export const insertPatientSchema = createInsertSchema(patients).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertAppointmentSchema = createInsertSchema(appointments).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+// Types
+export type Patient = typeof patients.$inferSelect;
+export type InsertPatient = z.infer<typeof insertPatientSchema>;
+
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
