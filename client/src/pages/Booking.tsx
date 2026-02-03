@@ -169,7 +169,7 @@ export default function Booking() {
         <div className="lg:col-span-2">
           <Card className="border-0 shadow-xl shadow-slate-200/60 h-full">
             <CardHeader className="border-b border-slate-100">
-              <CardTitle className="text-xl font-tajawal">بيانات المريض</CardTitle>
+              <CardTitle className="text-xl font-tajawal">حجز موعد جديد</CardTitle>
               <CardDescription>أدخل بيانات المريض لإتمام عملية الحجز</CardDescription>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
@@ -181,56 +181,15 @@ export default function Booking() {
               ) : (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="patientName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>اسم المريض الكامل</FormLabel>
-                            <FormControl>
-                              <Input placeholder="مثال: محمد أحمد" {...field} className="h-12 bg-slate-50" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>رقم الهاتف</FormLabel>
-                            <FormControl>
-                              <Input placeholder="05xxxxxxxx" {...field} className="h-12 bg-slate-50" dir="ltr" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
                     <FormField
                       control={form.control}
-                      name="service"
+                      name="patientName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>الخدمة المطلوبة</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="h-12 bg-slate-50">
-                                <SelectValue placeholder="اختر نوع الخدمة" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="checkup">كشف عام / استشارة</SelectItem>
-                              <SelectItem value="cleaning">تنظيف وتلميع</SelectItem>
-                              <SelectItem value="filling">حشوات تجميلية</SelectItem>
-                              <SelectItem value="root_canal">علاج جذور</SelectItem>
-                              <SelectItem value="extraction">خلع ضرس</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>اسم المريض</FormLabel>
+                          <FormControl>
+                            <Input placeholder="أدخل اسم المريض الكامل" {...field} className="h-12 bg-slate-50" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -241,19 +200,45 @@ export default function Booking() {
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ملاحظات إضافية (اختياري)</FormLabel>
+                          <FormLabel>ملاحظات</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="هل يعاني المريض من ألم معين؟" 
-                              className="bg-slate-50 min-h-[100px]" 
+                              placeholder="أضف أي ملاحظات هنا..." 
+                              className="bg-slate-50 min-h-[120px]" 
                               {...field} 
-                              value={field.value || ''} // Handle null
+                              value={field.value || ''} 
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    {/* Hidden but required fields for the backend */}
+                    <div className="hidden">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input {...field} value={field.value || "000"} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="service"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input {...field} value={field.value || "عام"} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <div className="bg-blue-50 p-4 rounded-xl flex items-start gap-3 border border-blue-100">
                       <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -268,16 +253,16 @@ export default function Booking() {
 
                     <Button 
                       type="submit" 
-                      className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/25" 
+                      className="w-full h-14 text-xl font-bold shadow-lg shadow-primary/25" 
                       disabled={isPending}
                     >
                       {isPending ? (
                         <>
-                          <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                          <Loader2 className="ml-2 h-6 w-6 animate-spin" />
                           جاري الحجز...
                         </>
                       ) : (
-                        "تأكيد الحجز"
+                        "إتمام عملية الحجز"
                       )}
                     </Button>
                   </form>
