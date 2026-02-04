@@ -6,10 +6,11 @@ import { arSA } from "date-fns/locale";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon } from "lucide-react";
+import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useLocation } from "wouter";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const [date, setDate] = useState<Date>(new Date());
+  const [, setLocation] = useLocation();
   const formattedDate = format(date, "yyyy-MM-dd");
   const { data: appointments, isLoading } = useAppointments(formattedDate);
   const { mutate: deleteAppointment } = useDeleteAppointment();
@@ -128,7 +130,13 @@ export default function Dashboard() {
                       {apt.startTime}
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-slate-900">{apt.patientName}</div>
+                      <button 
+                        onClick={() => setLocation(`/patients?search=${encodeURIComponent(apt.patientName)}`)}
+                        className="font-medium text-slate-900 hover:text-primary transition-colors flex items-center gap-2 group"
+                      >
+                        <User className="w-4 h-4 text-slate-400 group-hover:text-primary" />
+                        {apt.patientName}
+                      </button>
                       <div className="text-sm text-slate-500 flex items-center gap-1 mt-0.5">
                         <Phone className="w-3 h-3" /> {apt.phone}
                       </div>
