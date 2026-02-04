@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAppointments, useDeleteAppointment } from "@/hooks/use-appointments";
 import { Layout } from "@/components/Layout";
 import { format } from "date-fns";
@@ -5,8 +6,10 @@ import { arSA } from "date-fns/locale";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone } from "lucide-react";
+import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,10 +21,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
-  const today = format(new Date(), "yyyy-MM-dd");
-  const { data: appointments, isLoading } = useAppointments(today);
+  const [date, setDate] = useState<Date>(new Date());
+  const formattedDate = format(date, "yyyy-MM-dd");
+  const { data: appointments, isLoading } = useAppointments(formattedDate);
   const { mutate: deleteAppointment } = useDeleteAppointment();
 
   // Sort by start time
@@ -31,19 +36,39 @@ export default function Dashboard() {
 
   const stats = {
     total: sortedAppointments.length,
-    completed: sortedAppointments.filter(a => a.status === 'completed').length,
     scheduled: sortedAppointments.filter(a => a.status === 'scheduled').length,
   };
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-tajawal text-slate-900">لوحة التحكم</h1>
-        <p className="text-slate-500 mt-2">نظرة عامة على مواعيد اليوم: {format(new Date(), "EEEE, d MMMM yyyy", { locale: arSA })}</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold font-tajawal text-slate-900">لوحة التحكم</h1>
+          <p className="text-slate-500 mt-2">عرض المواعيد ليوم: {format(date, "EEEE, d MMMM yyyy", { locale: arSA })}</p>
+        </div>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="h-12 px-6 flex items-center gap-2 bg-white shadow-sm hover:bg-slate-50 border-slate-200 text-slate-700 font-bold">
+              <CalendarIcon className="w-5 h-5 text-primary" />
+              تغيير التاريخ
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(d) => d && setDate(d)}
+              initialFocus
+              locale={arSA}
+              dir="rtl"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
@@ -67,25 +92,13 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-white border-0 shadow-lg shadow-slate-200/50">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 font-medium mb-1">تم إنجازها</p>
-              <h3 className="text-3xl font-bold text-slate-900">{stats.completed}</h3>
-            </div>
-            <div className="bg-green-100 p-3 rounded-xl">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Appointments List */}
       <Card className="border-0 shadow-lg shadow-slate-200/50">
         <CardHeader className="border-b border-slate-100">
-          <CardTitle className="text-xl font-tajawal">جدول مواعيد اليوم</CardTitle>
-          <CardDescription>قائمة بجميع الحجوزات المؤكدة لهذا اليوم</CardDescription>
+          <CardTitle className="text-xl font-tajawal">جدول المواعيد</CardTitle>
+          <CardDescription>عرض الحجوزات ليوم {format(date, "d MMMM yyyy", { locale: arSA })}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
