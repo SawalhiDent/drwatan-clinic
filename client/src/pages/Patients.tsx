@@ -41,6 +41,7 @@ export default function Patients() {
     chronicDiseases: "",
     currentMeds: "",
     notes: "",
+    paidAmount: 0,
   };
 
   const form = useForm<InsertPatient>({
@@ -61,6 +62,7 @@ export default function Patients() {
         chronicDiseases: patient.chronicDiseases || "",
         currentMeds: patient.currentMeds || "",
         notes: patient.notes || "",
+        paidAmount: patient.paidAmount || 0,
       });
     } else {
       setEditingPatient(null);
@@ -173,6 +175,24 @@ export default function Patients() {
                             <SelectItem value="female">أنثى</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="paidAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>المبلغ المدفوع (ريال)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -301,6 +321,7 @@ export default function Patients() {
                     <TableHead className="text-right">الاسم</TableHead>
                     <TableHead className="text-right">رقم الهاتف</TableHead>
                     <TableHead className="text-right">العمر / الجنس</TableHead>
+                    <TableHead className="text-right">المبلغ المدفوع</TableHead>
                     <TableHead className="text-right">تنبيهات طبية</TableHead>
                     <TableHead className="text-center w-[100px]">إجراءات</TableHead>
                   </TableRow>
@@ -312,6 +333,9 @@ export default function Patients() {
                       <TableCell dir="ltr" className="text-right">{patient.phone}</TableCell>
                       <TableCell>
                         {patient.age} سنة / {patient.gender === 'male' ? 'ذكر' : 'أنثى'}
+                      </TableCell>
+                      <TableCell className="font-bold text-primary">
+                        {patient.paidAmount || 0} ريال
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2 flex-wrap">

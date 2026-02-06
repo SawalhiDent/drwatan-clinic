@@ -13,6 +13,7 @@ export const patients = pgTable("patients", {
   chronicDiseases: text("chronic_diseases"),
   currentMeds: text("current_meds"),
   notes: text("notes"),
+  paidAmount: integer("paid_amount").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
