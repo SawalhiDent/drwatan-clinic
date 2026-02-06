@@ -102,7 +102,7 @@ export default function Patients() {
               إضافة مريض جديد
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-50 dark:bg-slate-900 border-slate-200">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold font-tajawal">
                 {editingPatient ? "تعديل بيانات المريض" : "إضافة ملف مريض جديد"}
