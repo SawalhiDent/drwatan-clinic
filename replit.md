@@ -1,0 +1,82 @@
+# Replit.md
+
+## Overview
+
+This is a **dental clinic management system** (عيادة الأسنان - "Dental Clinic") built as a full-stack web application. It provides patient record management, appointment booking with calendar-based scheduling, and an admin dashboard. The entire UI is in **Arabic** with **RTL (Right-to-Left)** layout direction.
+
+Key features:
+- **Patient Management**: CRUD operations for patient records including medical history (allergies, chronic diseases, current medications)
+- **Appointment Booking**: Calendar-based booking with specific day/time constraints (Sat, Sun, Mon, Thu only; 12:00–21:00 hours; 30-minute slots)
+- **Dashboard**: Daily appointment overview with statistics and management controls
+- **Home Page**: Landing page with animated navigation cards
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend
+- **Framework**: React 18 with TypeScript
+- **Routing**: Wouter (lightweight client-side router)
+- **State Management**: TanStack React Query for server state (data fetching, caching, mutations)
+- **Forms**: React Hook Form with Zod validation via `@hookform/resolvers`
+- **UI Components**: shadcn/ui (new-york style) built on Radix UI primitives
+- **Styling**: Tailwind CSS with CSS variables for theming, custom dark blue medical theme
+- **Fonts**: Cairo (body) and Tajawal (headings) — Arabic-optimized fonts
+- **Animations**: Framer Motion for page transitions and interactions
+- **Build Tool**: Vite with React plugin
+- **Path Aliases**: `@/` maps to `client/src/`, `@shared/` maps to `shared/`
+
+### Backend
+- **Runtime**: Node.js with TypeScript (tsx for dev, esbuild for production)
+- **Framework**: Express 5
+- **API Design**: RESTful JSON API under `/api/` prefix. Routes are defined in `shared/routes.ts` as a typed contract (method, path, input/output schemas) shared between client and server
+- **Validation**: Zod schemas shared between frontend and backend via `shared/` directory
+
+### Data Layer
+- **Database**: PostgreSQL (required, connection via `DATABASE_URL` environment variable)
+- **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation
+- **Schema Location**: `shared/schema.ts` — contains `patients` and `appointments` tables
+- **Migrations**: Drizzle Kit with `db:push` command for schema synchronization
+
+### Database Schema
+Two tables:
+1. **patients**: id, full_name, phone (unique), age, gender, address, allergies, chronic_diseases, current_meds, notes, created_at
+2. **appointments**: id, patient_id (FK to patients, optional), patient_name, phone, service, notes, date (YYYY-MM-DD text), start_time (HH:mm text), end_time (HH:mm text), status (scheduled/completed/cancelled), created_at
+
+### Shared Code (`shared/` directory)
+- `schema.ts`: Drizzle table definitions, Zod insert schemas, TypeScript types — single source of truth
+- `routes.ts`: API route contract with paths, methods, input schemas, and response schemas — used by both server route handlers and client fetch hooks
+
+### Build & Deploy
+- **Dev**: `tsx server/index.ts` with Vite dev server middleware (HMR)
+- **Production Build**: Vite builds client to `dist/public/`, esbuild bundles server to `dist/index.cjs`
+- **Static Serving**: In production, Express serves the built client files with SPA fallback
+
+### Key Design Decisions
+1. **Shared route definitions**: The `shared/routes.ts` file acts as a typed API contract, ensuring client and server stay in sync on endpoints, methods, and data shapes
+2. **Denormalized appointment data**: Appointments store `patientName` and `phone` directly (not just `patientId`) to support direct entry without requiring a patient record first
+3. **Text-based date/time storage**: Dates stored as `YYYY-MM-DD` strings, times as `HH:mm` strings for simplicity in the booking logic
+4. **RTL-first design**: The entire app is wrapped in `dir="rtl"` with Arabic fonts and RTL CSS applied globally
+
+## External Dependencies
+
+### Required Services
+- **PostgreSQL Database**: Connected via `DATABASE_URL` environment variable. Uses `connect-pg-simple` for session storage and `pg` Pool for Drizzle ORM connection
+
+### Key npm Packages
+- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling for PostgreSQL
+- **express** (v5): HTTP server framework
+- **@tanstack/react-query**: Async state management
+- **react-hook-form** + **zod**: Form handling and validation
+- **date-fns**: Date manipulation with Arabic locale support (`arSA`)
+- **react-day-picker**: Calendar component for appointment booking
+- **framer-motion**: Animation library
+- **wouter**: Lightweight client-side routing
+- **lucide-react**: Icon library
+- **shadcn/ui** components: Built on multiple `@radix-ui/*` primitives
+
+### Replit-specific
+- `@replit/vite-plugin-runtime-error-modal`: Error overlay in development
+- `@replit/vite-plugin-cartographer` and `@replit/vite-plugin-dev-banner`: Development tools (only loaded in non-production Replit environments)
