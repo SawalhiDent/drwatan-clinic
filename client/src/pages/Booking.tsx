@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2 } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Phone } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 // Booking Constraints
@@ -32,6 +33,10 @@ export default function Booking() {
   const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined;
   const { data: existingAppointments, isLoading: isLoadingSlots } = useAppointments(formattedDate);
   const { mutate: createAppointment, isPending } = useCreateAppointment();
+
+  const sortedAppointments = existingAppointments?.filter(apt => apt.status !== 'cancelled').sort((a, b) => 
+    a.startTime.localeCompare(b.startTime)
+  ) || [];
 
   const form = useForm<InsertAppointment>({
     resolver: zodResolver(insertAppointmentSchema),
@@ -123,45 +128,88 @@ export default function Booking() {
           </Card>
 
           {selectedDate && (
-            <Card className="border-0 shadow-lg shadow-slate-200/50">
-              <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Clock className="w-5 h-5 text-primary" />
-                  الأوقات المتاحة
-                </CardTitle>
-                <CardDescription>
-                  {format(selectedDate, "EEEE, d MMMM yyyy", { locale: arSA })}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4">
-                {isLoadingSlots ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        disabled={!slot.available}
-                        onClick={() => handleTimeSelect(slot.time)}
-                        className={cn(
-                          "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
-                          selectedTime === slot.time
-                            ? "bg-primary text-white border-primary shadow-md transform scale-105"
-                            : slot.available
-                            ? "bg-white text-slate-700 border-slate-200 hover:border-primary hover:text-primary"
-                            : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed decoration-slate-400 line-through"
-                        )}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card className="border-0 shadow-lg shadow-slate-200/50">
+                <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Clock className="w-5 h-5 text-primary" />
+                    الأوقات المتاحة
+                  </CardTitle>
+                  <CardDescription>
+                    {format(selectedDate, "EEEE, d MMMM yyyy", { locale: arSA })}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4">
+                  {isLoadingSlots ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {timeSlots.map((slot) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={!slot.available}
+                          onClick={() => handleTimeSelect(slot.time)}
+                          className={cn(
+                            "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
+                            selectedTime === slot.time
+                              ? "bg-primary text-white border-primary shadow-md transform scale-105"
+                              : slot.available
+                              ? "bg-white text-slate-700 border-slate-200 hover:border-primary hover:text-primary"
+                              : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed decoration-slate-400 line-through"
+                          )}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Existing Appointments for the day */}
+              <Card className="border-0 shadow-lg shadow-slate-200/50">
+                <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    المواعيد المحجوزة
+                  </CardTitle>
+                  <CardDescription>
+                    {sortedAppointments.length} مواعيد مؤكدة اليوم
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 max-h-[400px] overflow-y-auto">
+                  {isLoadingSlots ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : sortedAppointments.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400">
+                      <p className="text-sm">لا توجد مواعيد محجوزة بعد</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {sortedAppointments.map((apt) => (
+                        <div key={apt.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-primary font-mono">{apt.startTime}</span>
+                            <div className="flex items-center gap-2 text-sm text-slate-700">
+                              <User className="w-3 h-3 text-slate-400" />
+                              <span className="font-medium truncate max-w-[120px]">{apt.patientName}</span>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px]">
+                            محجوز
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
 
