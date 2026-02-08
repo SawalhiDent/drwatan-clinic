@@ -7,6 +7,7 @@ import { Layout } from "@/components/Layout";
 import { format, addDays, isSameDay, setHours, setMinutes } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
+import { sendWhatsAppMessage, WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
 import { 
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage 
 } from "@/components/ui/form";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Phone } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Phone, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -200,9 +201,26 @@ export default function Booking() {
                               <span className="font-medium truncate max-w-[120px]">{apt.patientName}</span>
                             </div>
                           </div>
-                          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px]">
-                            محجوز
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {apt.phone && apt.phone !== "000" && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={() => {
+                                  const template = WHATSAPP_TEMPLATES.find(t => t.id === 'reminder');
+                                  if (template) {
+                                    sendWhatsAppMessage(apt.phone, template.message(apt.patientName, apt.date, apt.startTime));
+                                  }
+                                }}
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px]">
+                              محجوز
+                            </Badge>
+                          </div>
                         </div>
                       ))}
                     </div>
