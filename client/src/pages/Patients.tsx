@@ -16,8 +16,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2 } from "lucide-react";
+import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { sendWhatsAppMessage, WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Patients() {
   const [search, setSearch] = useState("");
@@ -357,9 +364,29 @@ export default function Patients() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(patient)}>
-                          <Pencil className="w-4 h-4 text-slate-500" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                                <MessageSquare className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              {WHATSAPP_TEMPLATES.map((template) => (
+                                <DropdownMenuItem 
+                                  key={template.id}
+                                  className="text-right justify-end"
+                                  onClick={() => sendWhatsAppMessage(patient.phone, template.message(patient.fullName, "", ""))}
+                                >
+                                  {template.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(patient)}>
+                            <Pencil className="w-4 h-4 text-slate-500" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
