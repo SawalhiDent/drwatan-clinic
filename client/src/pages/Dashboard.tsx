@@ -185,24 +185,25 @@ export default function Dashboard() {
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
-                            <AlertDialogDescription className="text-right">
-                              سيتم إلغاء هذا الموعد نهائياً من الجدول.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="flex-row-reverse gap-2">
-                            <AlertDialogCancel className="ml-0">تراجع</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => deleteAppointment(apt.id)}
-                              className="bg-red-600 hover:bg-red-700 ml-0"
-                            >
-                              نعم، إلغاء الموعد
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+                              <AlertDialogDescription className="text-right">
+                                سيتم إلغاء هذا الموعد نهائياً من الجدول.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-row-reverse gap-2">
+                              <AlertDialogCancel className="ml-0">تراجع</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteAppointment(apt.id)}
+                                className="bg-red-600 hover:bg-red-700 ml-0"
+                              >
+                                نعم، إلغاء الموعد
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
