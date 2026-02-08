@@ -28,10 +28,17 @@ export const WHATSAPP_TEMPLATES = [
 
 export function sendWhatsAppMessage(phone: string, message: string) {
   // Clean phone number: remove non-digits
-  const cleanPhone = phone.replace(/\D/g, "");
-  // Add country code if not present (assuming Saudi Arabia +966 for this clinic context)
-  const finalPhone = cleanPhone.startsWith("966") ? cleanPhone : `966${cleanPhone.startsWith("0") ? cleanPhone.substring(1) : cleanPhone}`;
+  let cleanPhone = phone.replace(/\D/g, "");
   
-  const url = `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`;
+  // If it starts with 05 or 0, assume local format and default to +972 (Israel/Palestine prefix)
+  // as per the common usage in the region for both 05- prefix numbers
+  if (cleanPhone.startsWith("0")) {
+    cleanPhone = "972" + cleanPhone.substring(1);
+  } else if (!cleanPhone.startsWith("972") && !cleanPhone.startsWith("970")) {
+    // If no prefix, default to 972
+    cleanPhone = "972" + cleanPhone;
+  }
+  
+  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
 }

@@ -263,7 +263,51 @@ export default function Booking() {
 
                     <FormField
                       control={form.control}
-                      name="notes"
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>رقم الهاتف</FormLabel>
+                          <div className="flex gap-2">
+                            <Select 
+                              defaultValue="972" 
+                              onValueChange={(val) => {
+                                const current = field.value || "";
+                                // If it already has a prefix we recognize, swap it
+                                if (current.startsWith("972") || current.startsWith("970")) {
+                                  field.onChange(val + current.substring(3));
+                                } else if (current.startsWith("0")) {
+                                  field.onChange(val + current.substring(1));
+                                } else {
+                                  field.onChange(val + current);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="w-[120px] h-12 bg-slate-50">
+                                <SelectValue placeholder="المقدمة" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="970">🇵🇸 +970</SelectItem>
+                                <SelectItem value="972">🇮🇱 +972</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormControl>
+                              <Input 
+                                placeholder="5xxxxxxxx" 
+                                {...field} 
+                                className="h-12 bg-slate-50 flex-1" 
+                                dir="ltr"
+                                onChange={(e) => {
+                                  let val = e.target.value.replace(/\D/g, "");
+                                  // Keep the prefix if already there
+                                  field.onChange(val);
+                                }}
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>ملاحظات</FormLabel>
@@ -282,17 +326,6 @@ export default function Booking() {
 
                     {/* Hidden but required fields for the backend */}
                     <div className="hidden">
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input {...field} value={field.value || "000"} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
                       <FormField
                         control={form.control}
                         name="service"

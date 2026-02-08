@@ -37,7 +37,9 @@ export const insertPatientSchema = createInsertSchema(patients).omit({
   createdAt: true 
 });
 
-export const insertAppointmentSchema = createInsertSchema(appointments).omit({ 
+export const insertAppointmentSchema = createInsertSchema(appointments, {
+  phone: z.string().min(9, "رقم الهاتف غير صالح"),
+}).omit({ 
   id: true, 
   createdAt: true 
 });
