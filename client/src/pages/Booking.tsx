@@ -272,7 +272,6 @@ export default function Booking() {
                               defaultValue="972" 
                               onValueChange={(val) => {
                                 const current = field.value || "";
-                                // If it already has a prefix we recognize, swap it
                                 if (current.startsWith("972") || current.startsWith("970")) {
                                   field.onChange(val + current.substring(3));
                                 } else if (current.startsWith("0")) {
@@ -298,7 +297,6 @@ export default function Booking() {
                                 dir="ltr"
                                 onChange={(e) => {
                                   let val = e.target.value.replace(/\D/g, "");
-                                  // Keep the prefix if already there
                                   field.onChange(val);
                                 }}
                               />
@@ -308,6 +306,10 @@ export default function Booking() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>ملاحظات</FormLabel>
