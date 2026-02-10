@@ -34,6 +34,7 @@ export default function Patients() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "check">("cash");
   const [paymentCurrency, setPaymentCurrency] = useState("₪");
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
