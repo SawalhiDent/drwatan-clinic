@@ -46,16 +46,18 @@ export default function Patients() {
   const handleAddPayment = () => {
     if (!selectedPatient) return;
     
+    // Create a temporary object URL for the "image" if one were uploaded
+    // For now we'll use a better placeholder that looks like a check
     const newPayment = {
       amount: paymentAmount,
       date: new Date().toISOString(),
       method: paymentMethod,
       currency: paymentCurrency,
-      checkImageUrl: paymentMethod === "check" ? "https://placehold.co/400x200?text=صورة+الشيك" : undefined
+      checkImageUrl: paymentMethod === "check" ? "https://img.freepik.com/free-vector/blank-bank-check-template-layout_1017-23425.jpg" : undefined
     };
 
     const currentPayments = (selectedPatient.payments as any[]) || [];
-    const updatedPayments = [...currentPayments, newPayment];
+    const updatedPayments = [newPayment, ...currentPayments]; // Add to top of list
     const updatedTotal = (selectedPatient.paidAmount || 0) + paymentAmount;
 
     updatePatient({
@@ -64,9 +66,10 @@ export default function Patients() {
       paidAmount: updatedTotal,
       currencySymbol: paymentCurrency
     }, {
-      onSuccess: () => {
+      onSuccess: (updatedPatient) => {
         setIsPaymentDialogOpen(false);
         setPaymentAmount(0);
+        setSelectedPatient(updatedPatient); // Update the local selected patient state
       }
     });
   };
@@ -398,14 +401,21 @@ export default function Patients() {
                     عرض التفاصيل
                   </Button>
 
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="h-8 w-8 p-0 text-slate-400"
-                    onClick={() => handleOpenDialog(patient)}
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-white border-slate-200 shadow-xl">
+                      <DropdownMenuItem 
+                        className="text-right justify-end cursor-pointer hover:bg-slate-50"
+                        onClick={() => handleOpenDialog(patient)}
+                      >
+                        تعديل البيانات
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-400 hover:text-red-500 hover:bg-red-50">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -619,7 +629,7 @@ export default function Patients() {
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white border-slate-200">
                             <SelectItem value="cash">كاش</SelectItem>
                             <SelectItem value="check">شيك</SelectItem>
                           </SelectContent>
