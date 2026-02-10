@@ -38,26 +38,36 @@ export default function Patients() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "check">("cash");
   const [paymentCurrency, setPaymentCurrency] = useState("₪");
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [checkImage, setCheckImage] = useState<string | null>(null);
 
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
   const { mutate: updatePatient, isPending: isUpdating } = useUpdatePatient();
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCheckImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddPayment = () => {
     if (!selectedPatient) return;
     
-    // Create a temporary object URL for the "image" if one were uploaded
-    // For now we'll use a better placeholder that looks like a check
     const newPayment = {
       amount: paymentAmount,
       date: new Date().toISOString(),
       method: paymentMethod,
       currency: paymentCurrency,
-      checkImageUrl: paymentMethod === "check" ? "https://img.freepik.com/free-vector/blank-bank-check-template-layout_1017-23425.jpg" : undefined
+      checkImageUrl: paymentMethod === "check" ? checkImage || "https://img.freepik.com/free-vector/blank-bank-check-template-layout_1017-23425.jpg" : undefined
     };
 
     const currentPayments = (selectedPatient.payments as any[]) || [];
-    const updatedPayments = [newPayment, ...currentPayments]; // Add to top of list
+    const updatedPayments = [newPayment, ...currentPayments];
     const updatedTotal = (selectedPatient.paidAmount || 0) + paymentAmount;
 
     updatePatient({
@@ -69,7 +79,8 @@ export default function Patients() {
       onSuccess: (updatedPatient) => {
         setIsPaymentDialogOpen(false);
         setPaymentAmount(0);
-        setSelectedPatient(updatedPatient); // Update the local selected patient state
+        setCheckImage(null);
+        setSelectedPatient(updatedPatient);
       }
     });
   };
@@ -639,9 +650,31 @@ export default function Patients() {
                       {paymentMethod === "check" && (
                         <div className="space-y-2">
                           <label className="text-sm font-medium">صورة الشيك</label>
-                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center bg-white">
-                            <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                            <span className="text-xs text-slate-500">سيتم رفع الصورة تلقائياً</span>
+                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center bg-white relative">
+                            {checkImage ? (
+                              <div className="relative group">
+                                <img src={checkImage} alt="Check" className="max-h-32 mx-auto rounded-md shadow-sm" />
+                                <Button 
+                                  variant="destructive" 
+                                  size="icon" 
+                                  className="h-6 w-6 absolute -top-2 -right-2 rounded-full"
+                                  onClick={() => setCheckImage(null)}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <>
+                                <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                <span className="text-xs text-slate-500 block mb-2">اضغط لرفع صورة الشيك</span>
+                                <Input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                                  onChange={handleFileChange}
+                                />
+                              </>
+                            )}
                           </div>
                         </div>
                       )}
