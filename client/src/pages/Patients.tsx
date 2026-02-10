@@ -32,12 +32,43 @@ export default function Patients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isQuickBookingOpen, setIsQuickBookingOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "check">("cash");
+  const [paymentCurrency, setPaymentCurrency] = useState("₪");
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
 
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
   const { mutate: updatePatient, isPending: isUpdating } = useUpdatePatient();
+
+  const handleAddPayment = () => {
+    if (!selectedPatient) return;
+    
+    const newPayment = {
+      amount: paymentAmount,
+      date: new Date().toISOString(),
+      method: paymentMethod,
+      currency: paymentCurrency,
+      checkImageUrl: paymentMethod === "check" ? "https://placehold.co/400x200?text=صورة+الشيك" : undefined
+    };
+
+    const currentPayments = (selectedPatient.payments as any[]) || [];
+    const updatedPayments = [...currentPayments, newPayment];
+    const updatedTotal = (selectedPatient.paidAmount || 0) + paymentAmount;
+
+    updatePatient({
+      id: selectedPatient.id,
+      payments: updatedPayments,
+      paidAmount: updatedTotal,
+      currencySymbol: paymentCurrency
+    }, {
+      onSuccess: () => {
+        setIsPaymentDialogOpen(false);
+        setPaymentAmount(0);
+      }
+    });
+  };
   const { mutate: createAppointment, isPending: isBooking } = useCreateAppointment();
 
   const isSaving = isCreating || isUpdating;
@@ -505,7 +536,9 @@ export default function Patients() {
                 <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
                   <div>
                     <span className="text-sm text-slate-400 block">إجمالي المدفوعات</span>
-                    <span className="text-2xl font-bold text-green-600">{selectedPatient?.paidAmount || 0} ريال</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      {selectedPatient?.paidAmount || 0} {selectedPatient?.currencySymbol || "₪"}
+                    </span>
                   </div>
                   <div className="bg-green-50 p-3 rounded-full">
                     <DollarSign className="w-6 h-6 text-green-600" />
@@ -514,14 +547,104 @@ export default function Patients() {
                 
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
                   <h4 className="text-sm font-bold text-slate-700 mb-4">آخر العمليات</h4>
-                  <div className="text-center py-6 text-slate-400 text-sm">
-                    لا توجد عمليات دفع مسجلة حالياً
+                  <div className="space-y-3">
+                    {((selectedPatient?.payments as any[]) || []).length === 0 ? (
+                      <div className="text-center py-6 text-slate-400 text-sm">
+                        لا توجد عمليات دفع مسجلة حالياً
+                      </div>
+                    ) : (
+                      ((selectedPatient?.payments as any[]) || []).map((payment, i) => (
+                        <div key={i} className="flex justify-between items-center border-b border-slate-50 pb-2 last:border-0">
+                          <div>
+                            <span className="block font-bold text-slate-700">{payment.amount} {payment.currency}</span>
+                            <span className="text-[10px] text-slate-400">{format(new Date(payment.date), "yyyy-MM-dd")}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={payment.method === 'cash' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}>
+                              {payment.method === 'cash' ? 'كاش' : 'شيك'}
+                            </Badge>
+                            {payment.method === 'check' && payment.checkImageUrl && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 px-2 text-[10px]"
+                                onClick={() => window.open(payment.checkImageUrl, '_blank')}
+                              >
+                                <ImageIcon className="w-3 h-3 ml-1" />
+                                عرض الشيك
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
-                <Button className="w-full bg-[#0e8bab] h-11">
-                  إضافة دفعة جديدة
-                </Button>
+                <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-[#0e8bab] h-11">
+                      إضافة دفعة جديدة
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md bg-slate-50 border-slate-200">
+                    <DialogHeader>
+                      <DialogTitle className="font-bold">إضافة دفعة جديدة</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">المبلغ</label>
+                          <Input 
+                            type="number" 
+                            placeholder="0" 
+                            value={paymentAmount}
+                            onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">رمز العملة</label>
+                          <Input 
+                            placeholder="₪, $, ريال..." 
+                            value={paymentCurrency}
+                            onChange={(e) => setPaymentCurrency(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">طريقة الدفع</label>
+                        <Select onValueChange={(val: any) => setPaymentMethod(val)} defaultValue="cash">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cash">كاش</SelectItem>
+                            <SelectItem value="check">شيك</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {paymentMethod === "check" && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">صورة الشيك</label>
+                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center bg-white">
+                            <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                            <span className="text-xs text-slate-500">سيتم رفع الصورة تلقائياً</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <DialogFooter className="pt-4">
+                        <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>إلغاء</Button>
+                        <Button className="bg-[#0e8bab]" onClick={handleAddPayment} disabled={isUpdating}>
+                          {isUpdating && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                          تأكيد الدفعة
+                        </Button>
+                      </DialogFooter>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </TabsContent>
             </div>
           </Tabs>

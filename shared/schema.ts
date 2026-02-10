@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -14,6 +14,14 @@ export const patients = pgTable("patients", {
   currentMeds: text("current_meds"),
   notes: text("notes"),
   paidAmount: integer("paid_amount").default(0),
+  currencySymbol: text("currency_symbol").default("₪"),
+  payments: jsonb("payments").$type<{
+    amount: number;
+    date: string;
+    method: "cash" | "check";
+    checkImageUrl?: string;
+    currency: string;
+  }[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
