@@ -22,6 +22,12 @@ export const patients = pgTable("patients", {
     checkImageUrl?: string;
     currency: string;
   }[]>().default([]),
+  files: jsonb("files").$type<{
+    id: string;
+    name: string;
+    data: string;
+    date: string;
+  }[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
