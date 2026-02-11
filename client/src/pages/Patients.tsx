@@ -51,6 +51,8 @@ export default function Patients() {
   const [checkImage, setCheckImage] = useState<string | null>(null);
   const [quickBookDate, setQuickBookDate] = useState<Date | undefined>(new Date());
   const [quickBookTime, setQuickBookTime] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
@@ -96,6 +98,48 @@ export default function Patients() {
       }
     });
   };
+
+  const handleUploadFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedPatient || !e.target.files?.length) return;
+    setIsUploadingFiles(true);
+    const files = Array.from(e.target.files);
+    const readers: Promise<{ id: string; name: string; data: string; date: string }>[] = files.map(file =>
+      new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({
+            id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+            name: file.name,
+            data: reader.result as string,
+            date: new Date().toISOString(),
+          });
+        };
+        reader.readAsDataURL(file);
+      })
+    );
+
+    Promise.all(readers).then((newFiles) => {
+      const currentFiles = (selectedPatient.files as any[]) || [];
+      const updatedFiles = [...newFiles, ...currentFiles];
+      updatePatient({ id: selectedPatient.id, files: updatedFiles }, {
+        onSuccess: (updated) => {
+          setSelectedPatient(updated);
+          setIsUploadingFiles(false);
+        },
+        onError: () => setIsUploadingFiles(false)
+      });
+    });
+  };
+
+  const handleDeleteFile = (fileId: string) => {
+    if (!selectedPatient) return;
+    const currentFiles = (selectedPatient.files as any[]) || [];
+    const updatedFiles = currentFiles.filter((f: any) => f.id !== fileId);
+    updatePatient({ id: selectedPatient.id, files: updatedFiles }, {
+      onSuccess: (updated) => setSelectedPatient(updated)
+    });
+  };
+
   const { mutate: createAppointment, isPending: isBooking } = useCreateAppointment();
 
   const quickBookFormattedDate = quickBookDate ? format(quickBookDate, "yyyy-MM-dd") : undefined;
@@ -623,18 +667,65 @@ export default function Patients() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="files" className="mt-0">
-                <div className="bg-white rounded-xl border border-dashed border-slate-200 p-8 text-center">
-                  <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ImageIcon className="w-8 h-8 text-slate-300" />
+              <TabsContent value="files" className="mt-0 space-y-4">
+                <div className="bg-white rounded-xl border border-dashed border-slate-200 p-6 text-center relative">
+                  <input
+                    type="file"
+                    id="patient-files-upload"
+                    data-testid="input-patient-files"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => { handleUploadFiles(e); e.target.value = ""; }}
+                  />
+                  <div className="pointer-events-none">
+                    <div className="bg-slate-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3">
+                      {isUploadingFiles ? (
+                        <Loader2 className="w-6 h-6 animate-spin text-[#0e8bab]" />
+                      ) : (
+                        <Download className="w-6 h-6 text-slate-400 rotate-180" />
+                      )}
+                    </div>
+                    <h4 className="text-slate-600 font-bold text-sm mb-1">
+                      {isUploadingFiles ? "جاري الرفع..." : "اضغط لرفع صور جديدة"}
+                    </h4>
+                    <p className="text-slate-400 text-xs">يمكنك اختيار أكثر من صورة في نفس الوقت</p>
                   </div>
-                  <h4 className="text-slate-600 font-bold mb-1">لا توجد ملفات مرفقة</h4>
-                  <p className="text-slate-400 text-sm mb-4">يمكنك رفع صور الأشعة أو التقارير الطبية هنا</p>
-                  <Button variant="outline" className="border-[#0e8bab] text-[#0e8bab] hover:bg-blue-50">
-                    <Download className="ml-2 w-4 h-4 rotate-180" />
-                    رفع ملف جديد
-                  </Button>
                 </div>
+
+                {(() => {
+                  const patientFiles = (selectedPatient?.files as any[]) || [];
+                  if (patientFiles.length === 0) return (
+                    <div className="text-center py-6 text-slate-400 text-sm">لا توجد صور مرفقة بعد</div>
+                  );
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {patientFiles.map((file: any) => (
+                        <div key={file.id} className="group relative bg-white rounded-xl border border-slate-100 overflow-hidden">
+                          <img
+                            src={file.data}
+                            alt={file.name}
+                            className="w-full h-32 object-cover cursor-pointer"
+                            data-testid={`file-image-${file.id}`}
+                            onClick={() => setViewingImage(file.data)}
+                          />
+                          <div className="p-2 flex items-center justify-between gap-1">
+                            <span className="text-xs text-slate-500 truncate flex-1">{file.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              data-testid={`delete-file-${file.id}`}
+                              onClick={() => handleDeleteFile(file.id)}
+                              className="text-red-500 h-7 w-7"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </TabsContent>
 
               <TabsContent value="payments" className="mt-0 space-y-4">
@@ -831,6 +922,23 @@ export default function Patients() {
               </TabsContent>
             </div>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Lightbox */}
+      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
+        <DialogContent className="max-w-3xl p-2 bg-black/95 border-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>عرض الصورة</DialogTitle>
+          </DialogHeader>
+          {viewingImage && (
+            <img
+              src={viewingImage}
+              alt="صورة مكبرة"
+              className="w-full max-h-[80vh] object-contain rounded-md"
+              data-testid="lightbox-image"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </Layout>
