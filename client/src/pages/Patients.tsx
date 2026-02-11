@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPatientSchema, insertAppointmentSchema, type InsertPatient, type Patient, type InsertAppointment } from "@shared/schema";
+import { insertPatientSchema, type InsertPatient, type Patient } from "@shared/schema";
 import { usePatients, useCreatePatient, useUpdatePatient } from "@/hooks/use-patients";
 import { useCreateAppointment } from "@/hooks/use-appointments";
 import { Layout } from "@/components/Layout";
@@ -25,7 +25,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
+import { format, addMinutes, setHours, setMinutes } from "date-fns";
+import { arSA } from "date-fns/locale";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { useAppointments } from "@/hooks/use-appointments";
+import { cn } from "@/lib/utils";
+import { Clock, CheckCircle2 } from "lucide-react";
+
+const ALLOWED_DAYS = [0, 1, 4, 6];
+const START_HOUR = 12;
+const END_HOUR = 21;
+const SLOT_DURATION = 30;
 
 export default function Patients() {
   const [search, setSearch] = useState("");
@@ -39,6 +49,8 @@ export default function Patients() {
   const [paymentCurrency, setPaymentCurrency] = useState("₪");
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [checkImage, setCheckImage] = useState<string | null>(null);
+  const [quickBookDate, setQuickBookDate] = useState<Date | undefined>(new Date());
+  const [quickBookTime, setQuickBookTime] = useState<string | null>(null);
 
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
@@ -86,9 +98,26 @@ export default function Patients() {
   };
   const { mutate: createAppointment, isPending: isBooking } = useCreateAppointment();
 
+  const quickBookFormattedDate = quickBookDate ? format(quickBookDate, "yyyy-MM-dd") : undefined;
+  const { data: quickBookAppointments, isLoading: isLoadingSlots } = useAppointments(quickBookFormattedDate);
+
+  const generateTimeSlots = () => {
+    const slots = [];
+    let currentTime = setMinutes(setHours(new Date(), START_HOUR), 0);
+    const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
+    while (currentTime < endTime) {
+      const timeString = format(currentTime, "HH:mm");
+      const isTaken = quickBookAppointments?.some(apt => apt.startTime === timeString && apt.status !== 'cancelled');
+      slots.push({ time: timeString, available: !isTaken });
+      currentTime = addMinutes(currentTime, SLOT_DURATION);
+    }
+    return slots;
+  };
+
+  const quickBookSlots = quickBookDate ? generateTimeSlots() : [];
+
   const isSaving = isCreating || isUpdating;
 
-  // Initial values for the form
   const defaultValues: Partial<InsertPatient> = {
     fullName: "",
     phone: "",
@@ -105,18 +134,6 @@ export default function Patients() {
   const form = useForm<InsertPatient>({
     resolver: zodResolver(insertPatientSchema),
     defaultValues
-  });
-
-  const bookingForm = useForm<InsertAppointment>({
-    resolver: zodResolver(insertAppointmentSchema),
-    defaultValues: {
-      patientName: "",
-      phone: "",
-      date: format(new Date(), "yyyy-MM-dd"),
-      startTime: "12:00",
-      service: "كشف عام",
-      status: "scheduled"
-    }
   });
 
   const handleOpenDialog = (patient?: Patient) => {
@@ -143,15 +160,8 @@ export default function Patients() {
 
   const handleQuickBooking = (patient: Patient) => {
     setSelectedPatient(patient);
-    bookingForm.reset({
-      patientId: patient.id,
-      patientName: patient.fullName,
-      phone: patient.phone,
-      date: format(new Date(), "yyyy-MM-dd"),
-      startTime: "12:00",
-      service: "كشف عام",
-      status: "scheduled"
-    });
+    setQuickBookDate(new Date());
+    setQuickBookTime(null);
     setIsQuickBookingOpen(true);
   };
 
@@ -172,9 +182,27 @@ export default function Patients() {
     }
   };
 
-  const onBookingSubmit = (data: InsertAppointment) => {
-    createAppointment(data, {
-      onSuccess: () => setIsQuickBookingOpen(false)
+  const onQuickBookingConfirm = () => {
+    if (!selectedPatient || !quickBookDate || !quickBookTime) return;
+    const [h, m] = quickBookTime.split(":").map(Number);
+    const startDate = new Date(quickBookDate);
+    startDate.setHours(h, m, 0, 0);
+    const endDate = addMinutes(startDate, SLOT_DURATION);
+
+    createAppointment({
+      patientId: selectedPatient.id,
+      patientName: selectedPatient.fullName,
+      phone: selectedPatient.phone || "000",
+      date: format(quickBookDate, "yyyy-MM-dd"),
+      startTime: quickBookTime,
+      endTime: format(endDate, "HH:mm"),
+      service: "حجز سريع",
+      status: "scheduled"
+    }, {
+      onSuccess: () => {
+        setIsQuickBookingOpen(false);
+        setQuickBookTime(null);
+      }
     });
   };
 
@@ -440,42 +468,97 @@ export default function Patients() {
 
       {/* Quick Booking Dialog */}
       <Dialog open={isQuickBookingOpen} onOpenChange={setIsQuickBookingOpen}>
-        <DialogContent className="max-w-md bg-slate-50 border-slate-200">
+        <DialogContent className="max-w-lg bg-slate-50 border-slate-200 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold font-tajawal">حجز سريع: {selectedPatient?.fullName}</DialogTitle>
           </DialogHeader>
-          <Form {...bookingForm}>
-            <form onSubmit={bookingForm.handleSubmit(onBookingSubmit)} className="space-y-4 pt-4">
-              <FormField
-                control={bookingForm.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>تاريخ الموعد</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
+
+          <div className="space-y-4 pt-2">
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+              <div className="bg-slate-50 border-b border-slate-100 p-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#0e8bab]" />
+                <span className="font-bold text-sm">اختيار التاريخ</span>
+              </div>
+              <CalendarComponent
+                mode="single"
+                selected={quickBookDate}
+                onSelect={(date) => { setQuickBookDate(date); setQuickBookTime(null); }}
+                disabled={(date) => !ALLOWED_DAYS.includes(date.getDay()) || date < new Date(new Date().setHours(0,0,0,0))}
+                className="rounded-md w-full flex justify-center p-3"
+                dir="ltr"
+                locale={arSA}
               />
-              <FormField
-                control={bookingForm.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الوقت</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsQuickBookingOpen(false)}>إلغاء</Button>
-                <Button type="submit" className="bg-[#0e8bab]" disabled={isBooking}>تأكيد الحجز</Button>
-              </DialogFooter>
-            </form>
-          </Form>
+            </div>
+
+            {quickBookDate && (
+              <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-100 p-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#0e8bab]" />
+                    <span className="font-bold text-sm">الأوقات المتاحة</span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {format(quickBookDate, "EEEE, d MMMM yyyy", { locale: arSA })}
+                  </p>
+                </div>
+                <div className="p-3">
+                  {isLoadingSlots ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#0e8bab]" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {quickBookSlots.map((slot) => (
+                        <button
+                          key={slot.time}
+                          type="button"
+                          disabled={!slot.available}
+                          data-testid={`quick-slot-${slot.time}`}
+                          onClick={() => setQuickBookTime(slot.time)}
+                          className={cn(
+                            "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
+                            quickBookTime === slot.time
+                              ? "bg-[#0e8bab] text-white border-[#0e8bab] shadow-md"
+                              : slot.available
+                              ? "bg-white text-slate-700 border-slate-200 hover:border-[#0e8bab] hover:text-[#0e8bab]"
+                              : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed line-through"
+                          )}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {quickBookTime && quickBookDate && (
+              <div className="bg-blue-50 p-3 rounded-xl flex items-start gap-3 border border-blue-100">
+                <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-blue-900 text-sm">ملخص الموعد</h4>
+                  <p className="text-blue-700 text-sm mt-1">
+                    التاريخ: {format(quickBookDate, "yyyy-MM-dd")} — الوقت: {quickBookTime}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsQuickBookingOpen(false)}>إلغاء</Button>
+              <Button
+                type="button"
+                className="bg-[#0e8bab]"
+                disabled={isBooking || !quickBookTime || !quickBookDate}
+                onClick={onQuickBookingConfirm}
+                data-testid="button-confirm-quick-booking"
+              >
+                {isBooking ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
+                تأكيد الحجز
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -569,7 +652,7 @@ export default function Patients() {
                             }, {} as Record<string, number>)
                         ).map(([curr, total]) => (
                           <span key={curr} className="text-2xl font-bold text-green-600 block leading-none">
-                            {total} {curr}
+                            {total as number} {curr}
                           </span>
                         ))}
                         {Object.keys(
@@ -602,7 +685,7 @@ export default function Patients() {
                             }, {} as Record<string, number>)
                         ).map(([curr, total]) => (
                           <span key={curr} className="text-2xl font-bold text-blue-600 block leading-none">
-                            {total} {curr}
+                            {total as number} {curr}
                           </span>
                         ))}
                         {Object.keys(
