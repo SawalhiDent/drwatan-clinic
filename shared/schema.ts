@@ -1,6 +1,45 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export const PERMISSIONS = [
+  "appointments",
+  "patients_view",
+  "patients_edit",
+  "payments",
+  "reports",
+  "files",
+  "user_management",
+] as const;
+
+export type Permission = typeof PERMISSIONS[number];
+
+export const PERMISSION_LABELS: Record<Permission, string> = {
+  appointments: "إدارة المواعيد",
+  patients_view: "عرض المرضى",
+  patients_edit: "تعديل المرضى",
+  payments: "المدفوعات",
+  reports: "التقارير المالية",
+  files: "الملفات والصور",
+  user_management: "إدارة المستخدمين",
+};
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  displayName: text("display_name").notNull(),
+  role: text("role").notNull().default("assistant"),
+  permissions: jsonb("permissions").$type<Permission[]>().default([]),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  expiresAt: timestamp("expires_at").notNull(),
+});
 
 export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
@@ -58,9 +97,26 @@ export const insertAppointmentSchema = createInsertSchema(appointments, {
   createdAt: true 
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  passwordHash: true,
+}).extend({
+  password: z.string().min(4, "كلمة المرور قصيرة جداً"),
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "أدخل اسم المستخدم"),
+  password: z.string().min(1, "أدخل كلمة المرور"),
+});
+
 // Types
 export type Patient = typeof patients.$inferSelect;
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Session = typeof sessions.$inferSelect;
