@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { usePatients } from "@/hooks/use-patients";
 import { Layout } from "@/components/Layout";
-import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, parseISO, subDays, subWeeks, subMonths } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, DollarSign, Banknote, FileText, ChevronRight, ChevronLeft, TrendingUp, Calendar } from "lucide-react";
+import { Loader2, DollarSign, Banknote, FileText, ChevronRight, ChevronLeft, TrendingUp, Calendar, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type PaymentEntry = {
@@ -20,9 +20,10 @@ type PaymentEntry = {
 
 export default function Reports() {
   const { data: patients, isLoading } = usePatients();
-  const [view, setView] = useState<"daily" | "weekly">("daily");
+  const [view, setView] = useState<"daily" | "weekly" | "monthly">("daily");
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
 
   const allPayments: PaymentEntry[] = useMemo(() => {
     if (!patients) return [];
@@ -39,6 +40,9 @@ export default function Reports() {
   const selectedDay = useMemo(() => subDays(new Date(), dayOffset), [dayOffset]);
   const selectedWeekStart = useMemo(() => startOfWeek(subWeeks(new Date(), weekOffset), { weekStartsOn: 6 }), [weekOffset]);
   const selectedWeekEnd = useMemo(() => endOfWeek(subWeeks(new Date(), weekOffset), { weekStartsOn: 6 }), [weekOffset]);
+  const selectedMonthDate = useMemo(() => subMonths(new Date(), monthOffset), [monthOffset]);
+  const selectedMonthStart = useMemo(() => startOfMonth(selectedMonthDate), [selectedMonthDate]);
+  const selectedMonthEnd = useMemo(() => endOfMonth(selectedMonthDate), [selectedMonthDate]);
 
   const dailyPayments = useMemo(() => {
     const dayStr = format(selectedDay, "yyyy-MM-dd");
@@ -63,7 +67,18 @@ export default function Reports() {
     });
   }, [allPayments, selectedWeekStart, selectedWeekEnd]);
 
-  const activePayments = view === "daily" ? dailyPayments : weeklyPayments;
+  const monthlyPayments = useMemo(() => {
+    return allPayments.filter((p) => {
+      try {
+        const pDate = parseISO(p.date);
+        return isWithinInterval(pDate, { start: selectedMonthStart, end: selectedMonthEnd });
+      } catch {
+        return false;
+      }
+    });
+  }, [allPayments, selectedMonthStart, selectedMonthEnd]);
+
+  const activePayments = view === "daily" ? dailyPayments : view === "weekly" ? weeklyPayments : monthlyPayments;
 
   const cashByCurrency = useMemo(() => {
     const map: Record<string, number> = {};
@@ -119,6 +134,14 @@ export default function Reports() {
             <TrendingUp className="ml-2 w-4 h-4" />
             أسبوعي
           </Button>
+          <Button
+            variant={view === "monthly" ? "default" : "outline"}
+            onClick={() => setView("monthly")}
+            data-testid="button-monthly-view"
+          >
+            <CalendarDays className="ml-2 w-4 h-4" />
+            شهري
+          </Button>
         </div>
 
         {view === "daily" && (
@@ -165,6 +188,31 @@ export default function Reports() {
               onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
               disabled={weekOffset === 0}
               data-testid="button-next-week"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
+
+        {view === "monthly" && (
+          <div className="flex items-center gap-3 bg-white rounded-xl p-3 border border-slate-100">
+            <Button variant="ghost" size="icon" onClick={() => setMonthOffset((o) => o + 1)} data-testid="button-prev-month">
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+            <div className="flex-1 text-center">
+              <span className="font-bold text-lg text-slate-800">
+                {format(selectedMonthDate, "MMMM", { locale: arSA })}
+              </span>
+              <span className="text-sm text-slate-500 block">
+                {format(selectedMonthDate, "yyyy", { locale: arSA })}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMonthOffset((o) => Math.max(0, o - 1))}
+              disabled={monthOffset === 0}
+              data-testid="button-next-month"
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
