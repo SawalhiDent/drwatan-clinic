@@ -555,15 +555,71 @@ export default function Patients() {
               </TabsContent>
 
               <TabsContent value="payments" className="mt-0 space-y-4">
-                <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-sm text-slate-400 block">إجمالي المدفوعات</span>
-                    <span className="text-2xl font-bold text-green-600">
-                      {selectedPatient?.paidAmount || 0} {selectedPatient?.currencySymbol || "₪"}
-                    </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-slate-400 block">إجمالي الكاش</span>
+                      <div className="space-y-1">
+                        {Object.entries(
+                          ((selectedPatient?.payments as any[]) || [])
+                            .filter(p => p.method === 'cash')
+                            .reduce((acc, p) => {
+                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
+                              return acc;
+                            }, {} as Record<string, number>)
+                        ).map(([curr, total]) => (
+                          <span key={curr} className="text-2xl font-bold text-green-600 block leading-none">
+                            {total} {curr}
+                          </span>
+                        ))}
+                        {Object.keys(
+                          ((selectedPatient?.payments as any[]) || [])
+                            .filter(p => p.method === 'cash')
+                            .reduce((acc, p) => {
+                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
+                              return acc;
+                            }, {} as Record<string, number>)
+                        ).length === 0 && (
+                          <span className="text-2xl font-bold text-slate-300 block">0</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-full">
+                      <DollarSign className="w-6 h-6 text-green-600" />
+                    </div>
                   </div>
-                  <div className="bg-green-50 p-3 rounded-full">
-                    <DollarSign className="w-6 h-6 text-green-600" />
+
+                  <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-slate-400 block">إجمالي الشيكات</span>
+                      <div className="space-y-1">
+                        {Object.entries(
+                          ((selectedPatient?.payments as any[]) || [])
+                            .filter(p => p.method === 'check')
+                            .reduce((acc, p) => {
+                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
+                              return acc;
+                            }, {} as Record<string, number>)
+                        ).map(([curr, total]) => (
+                          <span key={curr} className="text-2xl font-bold text-blue-600 block leading-none">
+                            {total} {curr}
+                          </span>
+                        ))}
+                        {Object.keys(
+                          ((selectedPatient?.payments as any[]) || [])
+                            .filter(p => p.method === 'check')
+                            .reduce((acc, p) => {
+                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
+                              return acc;
+                            }, {} as Record<string, number>)
+                        ).length === 0 && (
+                          <span className="text-2xl font-bold text-slate-300 block">0</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 p-3 rounded-full">
+                      <FileJson className="w-6 h-6 text-blue-600" />
+                    </div>
                   </div>
                 </div>
                 
