@@ -1,31 +1,149 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { loginSchema, type User, type Permission, PERMISSIONS } from "@shared/schema";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+      sessionId?: string;
+    }
+  }
+}
+
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const sessionId = req.headers["x-session-id"] as string;
+  if (!sessionId) {
+    return res.status(401).json({ message: "غير مصرح" });
+  }
+
+  const session = await storage.getSession(sessionId);
+  if (!session || !session.user.active) {
+    return res.status(401).json({ message: "الجلسة منتهية" });
+  }
+
+  req.user = session.user;
+  req.sessionId = sessionId;
+  next();
+}
+
+function requirePermission(...perms: Permission[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) return res.status(401).json({ message: "غير مصرح" });
+    if (req.user.role === "admin") return next();
+    const userPerms = (req.user.permissions as Permission[]) || [];
+    const hasAll = perms.every((p) => userPerms.includes(p));
+    if (!hasAll) return res.status(403).json({ message: "لا تملك صلاحية لهذا الإجراء" });
+    next();
+  };
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
 
-  // === Patients ===
-  app.get(api.patients.list.path, async (req, res) => {
+  // === Auth Routes (no middleware) ===
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = loginSchema.parse(req.body);
+      const user = await storage.getUserByUsername(username);
+      if (!user || !user.active) {
+        return res.status(401).json({ message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
+      }
+      const valid = await storage.verifyPassword(user, password);
+      if (!valid) {
+        return res.status(401).json({ message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
+      }
+      const session = await storage.createSession(user.id);
+      const { passwordHash, ...safeUser } = user;
+      res.json({ sessionId: session.id, user: safeUser });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.post("/api/auth/logout", authMiddleware, async (req, res) => {
+    if (req.sessionId) await storage.deleteSession(req.sessionId);
+    res.json({ message: "تم تسجيل الخروج" });
+  });
+
+  app.get("/api/auth/me", authMiddleware, async (req, res) => {
+    const { passwordHash, ...safeUser } = req.user!;
+    res.json(safeUser);
+  });
+
+  // === Users (admin only) ===
+  app.get("/api/users", authMiddleware, requirePermission("user_management"), async (req, res) => {
+    const allUsers = await storage.getUsers();
+    const safeUsers = allUsers.map(({ passwordHash, ...u }) => u);
+    res.json(safeUsers);
+  });
+
+  app.post("/api/users", authMiddleware, requirePermission("user_management"), async (req, res) => {
+    try {
+      const { username, password, displayName, role, permissions } = req.body;
+      if (!username || !password || !displayName) {
+        return res.status(400).json({ message: "جميع الحقول مطلوبة" });
+      }
+      const existing = await storage.getUserByUsername(username);
+      if (existing) {
+        return res.status(409).json({ message: "اسم المستخدم مستخدم بالفعل" });
+      }
+      const user = await storage.createUser({
+        username,
+        password,
+        displayName,
+        role: role || "assistant",
+        permissions: permissions || [],
+      });
+      const { passwordHash, ...safeUser } = user;
+      res.status(201).json(safeUser);
+    } catch (err) {
+      throw err;
+    }
+  });
+
+  app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {
+    const id = Number(req.params.id);
+    const { displayName, role, permissions, active, password } = req.body;
+    const updated = await storage.updateUser(id, { displayName, role, permissions, active, password });
+    if (!updated) return res.status(404).json({ message: "المستخدم غير موجود" });
+    const { passwordHash, ...safeUser } = updated;
+    res.json(safeUser);
+  });
+
+  app.delete("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {
+    const id = Number(req.params.id);
+    const user = await storage.getUser(id);
+    if (!user) return res.status(404).json({ message: "المستخدم غير موجود" });
+    if (user.role === "admin") return res.status(403).json({ message: "لا يمكن حذف المدير" });
+    await storage.deleteUser(id);
+    res.status(204).send();
+  });
+
+  // === Patients (protected) ===
+  app.get(api.patients.list.path, authMiddleware, requirePermission("patients_view"), async (req, res) => {
     const search = req.query.search as string | undefined;
     const patients = await storage.getPatients(search);
     res.json(patients);
   });
 
-  app.get(api.patients.get.path, async (req, res) => {
+  app.get(api.patients.get.path, authMiddleware, requirePermission("patients_view"), async (req, res) => {
     const patient = await storage.getPatient(Number(req.params.id));
     if (!patient) return res.status(404).json({ message: "Patient not found" });
     res.json(patient);
   });
 
-  app.post(api.patients.create.path, async (req, res) => {
+  app.post(api.patients.create.path, authMiddleware, requirePermission("patients_edit"), async (req, res) => {
     try {
       const input = api.patients.create.input.parse(req.body);
-      // Check phone uniqueness
       const existing = await storage.getPatientByPhone(input.phone);
       if (existing) {
         return res.status(409).json({ message: "رقم الهاتف مسجل بالفعل لمريض آخر" });
@@ -40,7 +158,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.patients.update.path, async (req, res) => {
+  app.put(api.patients.update.path, authMiddleware, requirePermission("patients_edit"), async (req, res) => {
     try {
       const input = api.patients.update.input.parse(req.body);
       const patient = await storage.updatePatient(Number(req.params.id), input);
@@ -54,37 +172,20 @@ export async function registerRoutes(
     }
   });
 
-  // === Appointments ===
-  app.get(api.appointments.list.path, async (req, res) => {
+  // === Appointments (protected) ===
+  app.get(api.appointments.list.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
     const date = req.query.date as string | undefined;
     const appointments = await storage.getAppointments(date);
     res.json(appointments);
   });
 
-  app.post(api.appointments.create.path, async (req, res) => {
+  app.post(api.appointments.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
     try {
       const input = api.appointments.create.input.parse(req.body);
-      
-      // Check constraints
-      // 1. Availability
       const isAvailable = await storage.checkAvailability(input.date, input.startTime);
       if (!isAvailable) {
         return res.status(409).json({ message: "هذا الموعد محجوز مسبقاً" });
       }
-      
-      // 2. Day/Time constraints (Double check backend side for safety)
-      const dateObj = new Date(input.date);
-      const day = dateObj.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-      const allowedDays = [0, 1, 4, 6]; // Sun, Mon, Thu, Sat
-      
-      // Note: input.date is YYYY-MM-DD, new Date(input.date) might parse as UTC. 
-      // Ideally we rely on frontend validation or use a library to parse specifically.
-      // For simplicity, we assume the frontend sends valid data, but basic checking:
-      if (!allowedDays.includes(day)) {
-        // This check depends heavily on timezone interpretation, keeping it loose for now 
-        // or letting frontend handle the primary user feedback.
-      }
-
       const appointment = await storage.createAppointment(input);
       res.status(201).json(appointment);
     } catch (err) {
@@ -95,7 +196,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.appointments.update.path, async (req, res) => {
+  app.put(api.appointments.update.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
     try {
       const input = api.appointments.update.input.parse(req.body);
       const appointment = await storage.updateAppointment(Number(req.params.id), input);
@@ -109,38 +210,27 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.appointments.delete.path, async (req, res) => {
+  app.delete(api.appointments.delete.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
     await storage.deleteAppointment(Number(req.params.id));
     res.status(204).send();
   });
 
-  // Seed Data (if empty)
-  await seedDatabase();
+  // Seed admin user
+  await seedAdminUser();
 
   return httpServer;
 }
 
-async function seedDatabase() {
-  const existingPatients = await storage.getPatients();
-  if (existingPatients.length === 0) {
-    const p1 = await storage.createPatient({
-      fullName: "أحمد محمد",
-      phone: "0501234567",
-      age: 30,
-      gender: "male",
-      address: "الرياض",
-      notes: "مريض جديد"
+async function seedAdminUser() {
+  const existingUsers = await storage.getUsers();
+  if (existingUsers.length === 0) {
+    await storage.createUser({
+      username: "admin",
+      password: "admin123",
+      displayName: "المدير",
+      role: "admin",
+      permissions: [...PERMISSIONS],
     });
-    
-    await storage.createAppointment({
-      patientId: p1.id,
-      patientName: p1.fullName,
-      phone: p1.phone,
-      service: "تنظيف أسنان",
-      date: new Date().toISOString().split('T')[0], // Today
-      startTime: "16:00",
-      endTime: "16:30",
-      status: "scheduled"
-    });
+    console.log("Admin user created: username=admin, password=admin123");
   }
 }

@@ -2,12 +2,19 @@ import { db } from "./db";
 import {
   patients,
   appointments,
+  users,
+  sessions,
   type InsertPatient,
   type InsertAppointment,
   type Patient,
-  type Appointment
+  type Appointment,
+  type User,
+  type Session,
+  type Permission,
 } from "@shared/schema";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export interface IStorage {
   // Patients
@@ -23,6 +30,21 @@ export interface IStorage {
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
   deleteAppointment(id: number): Promise<void>;
   checkAvailability(date: string, startTime: string): Promise<boolean>;
+
+  // Users
+  getUsers(): Promise<User[]>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[] }): Promise<User>;
+  updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string }): Promise<User | undefined>;
+  deleteUser(id: number): Promise<void>;
+  verifyPassword(user: User, password: string): Promise<boolean>;
+
+  // Sessions
+  createSession(userId: number): Promise<Session>;
+  getSession(id: string): Promise<(Session & { user: User }) | undefined>;
+  deleteSession(id: string): Promise<void>;
+  cleanExpiredSessions(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -30,7 +52,6 @@ export class DatabaseStorage implements IStorage {
   async getPatients(search?: string): Promise<Patient[]> {
     let query = db.select().from(patients);
     if (search) {
-      // Simple case-insensitive search
       const lowerSearch = `%${search.toLowerCase()}%`;
       return await db.select().from(patients).where(
         sql`lower(${patients.fullName}) LIKE ${lowerSearch} OR ${patients.phone} LIKE ${lowerSearch}`
@@ -88,10 +109,92 @@ export class DatabaseStorage implements IStorage {
       and(
         eq(appointments.date, date),
         eq(appointments.startTime, startTime),
-        sql`${appointments.status} != 'cancelled'` // Don't count cancelled
+        sql`${appointments.status} != 'cancelled'`
       )
     );
     return !existing;
+  }
+
+  // Users
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[] }): Promise<User> {
+    const passwordHash = await bcrypt.hash(data.password, 10);
+    const [user] = await db.insert(users).values({
+      username: data.username,
+      passwordHash,
+      displayName: data.displayName,
+      role: data.role,
+      permissions: data.permissions,
+    }).returning();
+    return user;
+  }
+
+  async updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string }): Promise<User | undefined> {
+    const updates: any = {};
+    if (data.displayName !== undefined) updates.displayName = data.displayName;
+    if (data.role !== undefined) updates.role = data.role;
+    if (data.permissions !== undefined) updates.permissions = data.permissions;
+    if (data.active !== undefined) updates.active = data.active;
+    if (data.password) updates.passwordHash = await bcrypt.hash(data.password, 10);
+
+    const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return updated;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(sessions).where(eq(sessions.userId, id));
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async verifyPassword(user: User, password: string): Promise<boolean> {
+    return bcrypt.compare(password, user.passwordHash);
+  }
+
+  // Sessions
+  async createSession(userId: number): Promise<Session> {
+    const id = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const [session] = await db.insert(sessions).values({ id, userId, expiresAt }).returning();
+    return session;
+  }
+
+  async getSession(id: string): Promise<(Session & { user: User }) | undefined> {
+    const results = await db
+      .select()
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(eq(sessions.id, id));
+
+    if (results.length === 0) return undefined;
+
+    const row = results[0];
+    if (new Date() > row.sessions.expiresAt) {
+      await this.deleteSession(id);
+      return undefined;
+    }
+
+    return { ...row.sessions, user: row.users };
+  }
+
+  async deleteSession(id: string): Promise<void> {
+    await db.delete(sessions).where(eq(sessions.id, id));
+  }
+
+  async cleanExpiredSessions(): Promise<void> {
+    await db.delete(sessions).where(sql`${sessions.expiresAt} < NOW()`);
   }
 }
 

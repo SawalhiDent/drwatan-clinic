@@ -3,21 +3,40 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import Home from "@/pages/Home";
 import Booking from "@/pages/Booking";
 import Patients from "@/pages/Patients";
 import Dashboard from "@/pages/Dashboard";
 import Reports from "@/pages/Reports";
+import UsersPage from "@/pages/Users";
+import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
+import { Loader2 } from "lucide-react";
 
-function Router() {
+function ProtectedRouter() {
+  const { user, isLoading, hasPermission } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/booking" component={Booking} />
-      <Route path="/patients" component={Patients} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/reports" component={Reports} />
+      {hasPermission("appointments") && <Route path="/booking" component={Booking} />}
+      {hasPermission("patients_view") && <Route path="/patients" component={Patients} />}
+      {hasPermission("appointments") && <Route path="/dashboard" component={Dashboard} />}
+      {hasPermission("reports") && <Route path="/reports" component={Reports} />}
+      {hasPermission("user_management") && <Route path="/users" component={UsersPage} />}
       <Route component={NotFound} />
     </Switch>
   );
@@ -27,11 +46,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {/* Direction wrapper to ensure Toast also follows RTL */}
-        <div dir="rtl">
-          <Router />
-          <Toaster />
-        </div>
+        <AuthProvider>
+          <div dir="rtl">
+            <ProtectedRouter />
+            <Toaster />
+          </div>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
