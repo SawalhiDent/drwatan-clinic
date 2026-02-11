@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, Users, LayoutDashboard, UserCircle2 } from "lucide-react";
+import { Home, Calendar, Users, LayoutDashboard, UserCircle2, BarChart3 } from "lucide-react";
 import logo from "@assets/pp_1770153797959.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -10,6 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/booking", label: "حجز موعد", icon: Calendar },
     { href: "/patients", label: "المرضى", icon: Users },
     { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
+    { href: "/reports", label: "التقارير", icon: BarChart3 },
   ];
 
   return (
