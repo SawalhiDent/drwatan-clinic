@@ -247,13 +247,14 @@ async function seedAdminUser() {
   const existingUsers = await storage.getUsers();
   if (existingUsers.length === 0) {
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const adminUsername = process.env.ADMIN_USERNAME || "admin";
     await storage.createUser({
-      username: "admin",
+      username: adminUsername,
       password: adminPassword,
       displayName: "المدير",
       role: "admin",
       permissions: [...PERMISSIONS],
     });
-    console.log("Admin user created: username=admin");
+    console.log("Admin user created");
   }
 }
