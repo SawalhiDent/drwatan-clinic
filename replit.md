@@ -5,10 +5,18 @@
 This is a **dental clinic management system** (عيادة الأسنان - "Dental Clinic") built as a full-stack web application. It provides patient record management, appointment booking with calendar-based scheduling, and an admin dashboard. The entire UI is in **Arabic** with **RTL (Right-to-Left)** layout direction.
 
 Key features:
+- **User Authentication**: Session-based auth with role-based permissions (admin/doctor/assistant). Admin can manage users and assign granular permissions via a control panel.
 - **Patient Management**: CRUD operations for patient records including medical history (allergies, chronic diseases, current medications)
 - **Appointment Booking**: Calendar-based booking with specific day/time constraints (Sat, Sun, Mon, Thu only; 12:00–21:00 hours; 30-minute slots)
 - **Dashboard**: Daily appointment overview with statistics and management controls
+- **Financial Reports**: Daily, weekly, and monthly payment summaries with cash/check breakdown by currency
 - **Home Page**: Landing page with animated navigation cards
+
+### Authentication & Permissions
+- Default admin credentials: username=admin, password=admin123 (or ADMIN_PASSWORD env var)
+- Roles: admin (full access), doctor, assistant
+- Permissions: appointments, patients_view, patients_edit, payments, reports, files, user_management
+- Sessions stored in DB with 7-day expiry, session ID passed via x-session-id header
 
 ## User Preferences
 

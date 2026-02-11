@@ -92,6 +92,14 @@ export async function registerRoutes(
       if (!username || !password || !displayName) {
         return res.status(400).json({ message: "جميع الحقول مطلوبة" });
       }
+      if (password.length < 4) {
+        return res.status(400).json({ message: "كلمة المرور قصيرة جداً" });
+      }
+      const allowedRoles = ["doctor", "assistant"];
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({ message: "دور غير صالح" });
+      }
+      const validPerms = (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission) && p !== "user_management");
       const existing = await storage.getUserByUsername(username);
       if (existing) {
         return res.status(409).json({ message: "اسم المستخدم مستخدم بالفعل" });
@@ -100,8 +108,8 @@ export async function registerRoutes(
         username,
         password,
         displayName,
-        role: role || "assistant",
-        permissions: permissions || [],
+        role,
+        permissions: validPerms,
       });
       const { passwordHash, ...safeUser } = user;
       res.status(201).json(safeUser);
@@ -112,8 +120,22 @@ export async function registerRoutes(
 
   app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {
     const id = Number(req.params.id);
+    const target = await storage.getUser(id);
+    if (!target) return res.status(404).json({ message: "المستخدم غير موجود" });
+    if (target.role === "admin" && req.user!.id !== target.id) {
+      return res.status(403).json({ message: "لا يمكن تعديل المدير" });
+    }
     const { displayName, role, permissions, active, password } = req.body;
-    const updated = await storage.updateUser(id, { displayName, role, permissions, active, password });
+    const allowedRoles = ["doctor", "assistant"];
+    const safeRole = target.role === "admin" ? undefined : (allowedRoles.includes(role) ? role : undefined);
+    const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission));
+    const updated = await storage.updateUser(id, {
+      displayName,
+      role: safeRole,
+      permissions: validPerms,
+      active,
+      password: password || undefined,
+    });
     if (!updated) return res.status(404).json({ message: "المستخدم غير موجود" });
     const { passwordHash, ...safeUser } = updated;
     res.json(safeUser);
@@ -224,13 +246,14 @@ export async function registerRoutes(
 async function seedAdminUser() {
   const existingUsers = await storage.getUsers();
   if (existingUsers.length === 0) {
+    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     await storage.createUser({
       username: "admin",
-      password: "admin123",
+      password: adminPassword,
       displayName: "المدير",
       role: "admin",
       permissions: [...PERMISSIONS],
     });
-    console.log("Admin user created: username=admin, password=admin123");
+    console.log("Admin user created: username=admin");
   }
 }
