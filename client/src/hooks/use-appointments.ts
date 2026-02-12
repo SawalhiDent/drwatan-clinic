@@ -2,18 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertAppointment, type Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export function useAppointments(date?: string) {
   return useQuery({
     queryKey: [api.appointments.list.path, date],
     queryFn: async () => {
-      // Build URL with query params if date exists
       let url = api.appointments.list.path;
       if (date) {
         url += `?date=${date}`;
       }
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("فشل في تحميل المواعيد");
+      const res = await apiRequest("GET", url);
       return api.appointments.list.responses[200].parse(await res.json());
     },
   });
@@ -25,17 +24,7 @@ export function useCreateAppointment() {
 
   return useMutation({
     mutationFn: async (data: InsertAppointment) => {
-      const res = await fetch(api.appointments.create.path, {
-        method: api.appointments.create.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) {
-        if (res.status === 409) throw new Error("عذراً، هذا الموعد محجوز مسبقاً");
-        if (res.status === 400) throw new Error("بيانات الحجز غير مكتملة");
-        throw new Error("فشل في حجز الموعد");
-      }
+      const res = await apiRequest(api.appointments.create.method, api.appointments.create.path, data);
       return api.appointments.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
@@ -62,11 +51,7 @@ export function useDeleteAppointment() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.appointments.delete.path, { id });
-      const res = await fetch(url, {
-        method: api.appointments.delete.method,
-      });
-
-      if (!res.ok) throw new Error("فشل في إلغاء الموعد");
+      await apiRequest(api.appointments.delete.method, url);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
