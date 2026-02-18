@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/use-patients";
 import { Layout } from "@/components/Layout";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, parseISO, subDays, subWeeks, subMonths } from "date-fns";
@@ -6,8 +7,10 @@ import { arSA } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, DollarSign, Banknote, FileText, ChevronRight, ChevronLeft, TrendingUp, Calendar, CalendarDays } from "lucide-react";
+import { Loader2, DollarSign, Banknote, FileText, ChevronRight, ChevronLeft, TrendingUp, TrendingDown, Calendar, CalendarDays, Receipt, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@shared/routes";
+import type { Expense, ExpenseCategory } from "@shared/schema";
 
 type PaymentEntry = {
   amount: number;
@@ -20,6 +23,12 @@ type PaymentEntry = {
 
 export default function Reports() {
   const { data: patients, isLoading } = usePatients();
+  const { data: allExpenses, isLoading: expensesLoading } = useQuery<Expense[]>({
+    queryKey: [api.expenses.list.path],
+  });
+  const { data: expenseCategories } = useQuery<ExpenseCategory[]>({
+    queryKey: [api.expenseCategories.list.path],
+  });
   const [view, setView] = useState<"daily" | "weekly" | "monthly">("daily");
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -44,41 +53,31 @@ export default function Reports() {
   const selectedMonthStart = useMemo(() => startOfMonth(selectedMonthDate), [selectedMonthDate]);
   const selectedMonthEnd = useMemo(() => endOfMonth(selectedMonthDate), [selectedMonthDate]);
 
-  const dailyPayments = useMemo(() => {
-    const dayStr = format(selectedDay, "yyyy-MM-dd");
-    return allPayments.filter((p) => {
-      try {
-        const pDate = format(parseISO(p.date), "yyyy-MM-dd");
-        return pDate === dayStr;
-      } catch {
-        return false;
-      }
-    });
-  }, [allPayments, selectedDay]);
+  const filterByPeriod = <T extends { date: string }>(items: T[]): T[] => {
+    if (view === "daily") {
+      const dayStr = format(selectedDay, "yyyy-MM-dd");
+      return items.filter((item) => {
+        try {
+          return format(parseISO(item.date), "yyyy-MM-dd") === dayStr;
+        } catch { return false; }
+      });
+    } else if (view === "weekly") {
+      return items.filter((item) => {
+        try {
+          return isWithinInterval(parseISO(item.date), { start: selectedWeekStart, end: selectedWeekEnd });
+        } catch { return false; }
+      });
+    } else {
+      return items.filter((item) => {
+        try {
+          return isWithinInterval(parseISO(item.date), { start: selectedMonthStart, end: selectedMonthEnd });
+        } catch { return false; }
+      });
+    }
+  };
 
-  const weeklyPayments = useMemo(() => {
-    return allPayments.filter((p) => {
-      try {
-        const pDate = parseISO(p.date);
-        return isWithinInterval(pDate, { start: selectedWeekStart, end: selectedWeekEnd });
-      } catch {
-        return false;
-      }
-    });
-  }, [allPayments, selectedWeekStart, selectedWeekEnd]);
-
-  const monthlyPayments = useMemo(() => {
-    return allPayments.filter((p) => {
-      try {
-        const pDate = parseISO(p.date);
-        return isWithinInterval(pDate, { start: selectedMonthStart, end: selectedMonthEnd });
-      } catch {
-        return false;
-      }
-    });
-  }, [allPayments, selectedMonthStart, selectedMonthEnd]);
-
-  const activePayments = view === "daily" ? dailyPayments : view === "weekly" ? weeklyPayments : monthlyPayments;
+  const activePayments = useMemo(() => filterByPeriod(allPayments), [allPayments, view, selectedDay, selectedWeekStart, selectedWeekEnd, selectedMonthStart, selectedMonthEnd]);
+  const activeExpenses = useMemo(() => filterByPeriod(allExpenses || []), [allExpenses, view, selectedDay, selectedWeekStart, selectedWeekEnd, selectedMonthStart, selectedMonthEnd]);
 
   const cashByCurrency = useMemo(() => {
     const map: Record<string, number> = {};
@@ -96,7 +95,7 @@ export default function Reports() {
     return map;
   }, [activePayments]);
 
-  const totalByCurrency = useMemo(() => {
+  const totalIncomeByCurrency = useMemo(() => {
     const map: Record<string, number> = {};
     activePayments.forEach((p) => {
       map[p.currency] = (map[p.currency] || 0) + p.amount;
@@ -104,8 +103,43 @@ export default function Reports() {
     return map;
   }, [activePayments]);
 
+  const totalExpensesByCurrency = useMemo(() => {
+    const map: Record<string, number> = {};
+    activeExpenses.forEach((e) => {
+      map[e.currency] = (map[e.currency] || 0) + e.amount;
+    });
+    return map;
+  }, [activeExpenses]);
+
+  const netByCurrency = useMemo(() => {
+    const currencies = new Set([...Object.keys(totalIncomeByCurrency), ...Object.keys(totalExpensesByCurrency)]);
+    const map: Record<string, number> = {};
+    currencies.forEach((c) => {
+      map[c] = (totalIncomeByCurrency[c] || 0) - (totalExpensesByCurrency[c] || 0);
+    });
+    return map;
+  }, [totalIncomeByCurrency, totalExpensesByCurrency]);
+
+  const expensesByCategory = useMemo(() => {
+    const map: Record<number, { name: string; color: string; total: Record<string, number> }> = {};
+    activeExpenses.forEach((e) => {
+      if (!map[e.categoryId]) {
+        const cat = expenseCategories?.find((c) => c.id === e.categoryId);
+        map[e.categoryId] = { name: cat?.name || "غير معروف", color: cat?.color || "#6b7280", total: {} };
+      }
+      map[e.categoryId].total[e.currency] = (map[e.categoryId].total[e.currency] || 0) + e.amount;
+    });
+    return map;
+  }, [activeExpenses, expenseCategories]);
+
   const cashTotal = activePayments.filter((p) => p.method === "cash").reduce((s, p) => s + p.amount, 0);
   const checkTotal = activePayments.filter((p) => p.method === "check").reduce((s, p) => s + p.amount, 0);
+
+  const dataLoading = isLoading || expensesLoading;
+
+  function getCategoryName(id: number) {
+    return expenseCategories?.find((c) => c.id === id)?.name || "غير معروف";
+  }
 
   return (
     <Layout>
@@ -113,11 +147,11 @@ export default function Reports() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold font-tajawal text-slate-900">التقارير المالية</h1>
-            <p className="text-slate-500 mt-1 text-sm">عرض ملخص الإيرادات والمدفوعات</p>
+            <p className="text-slate-500 mt-1 text-sm">عرض ملخص الإيرادات والمصروفات وصافي الربح</p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant={view === "daily" ? "default" : "outline"}
             onClick={() => setView("daily")}
@@ -175,9 +209,7 @@ export default function Reports() {
               <ChevronRight className="w-5 h-5" />
             </Button>
             <div className="flex-1 text-center">
-              <span className="font-bold text-lg text-slate-800">
-                الأسبوع
-              </span>
+              <span className="font-bold text-lg text-slate-800">الأسبوع</span>
               <span className="text-sm text-slate-500 block">
                 {format(selectedWeekStart, "d MMM", { locale: arSA })} — {format(selectedWeekEnd, "d MMM yyyy", { locale: arSA })}
               </span>
@@ -219,13 +251,13 @@ export default function Reports() {
           </div>
         )}
 
-        {isLoading ? (
+        {dataLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="border-0 shadow-lg shadow-green-100/50">
                 <CardContent className="p-5 flex items-center justify-between gap-2">
                   <div>
@@ -266,13 +298,37 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
+              <Card className="border-0 shadow-lg shadow-red-100/50">
+                <CardContent className="p-5 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs text-slate-400 block mb-1">إجمالي المصروفات</span>
+                    {Object.entries(totalExpensesByCurrency).length > 0 ? (
+                      Object.entries(totalExpensesByCurrency).map(([curr, total]) => (
+                        <span key={curr} className="text-xl font-bold text-red-600 block" data-testid={`text-expenses-${curr}`}>
+                          {total.toLocaleString()} {curr}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xl font-bold text-slate-300">0</span>
+                    )}
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-full">
+                    <TrendingDown className="w-6 h-6 text-red-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="border-0 shadow-lg shadow-purple-100/50">
                 <CardContent className="p-5 flex items-center justify-between gap-2">
                   <div>
-                    <span className="text-xs text-slate-400 block mb-1">الإجمالي الكلي</span>
-                    {Object.entries(totalByCurrency).length > 0 ? (
-                      Object.entries(totalByCurrency).map(([curr, total]) => (
-                        <span key={curr} className="text-xl font-bold text-purple-600 block" data-testid={`text-total-${curr}`}>
+                    <span className="text-xs text-slate-400 block mb-1">صافي الربح</span>
+                    {Object.entries(netByCurrency).length > 0 ? (
+                      Object.entries(netByCurrency).map(([curr, total]) => (
+                        <span
+                          key={curr}
+                          className={cn("text-xl font-bold block", total >= 0 ? "text-purple-600" : "text-red-600")}
+                          data-testid={`text-net-${curr}`}
+                        >
                           {total.toLocaleString()} {curr}
                         </span>
                       ))
@@ -281,21 +337,62 @@ export default function Reports() {
                     )}
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
-                    <DollarSign className="w-6 h-6 text-purple-600" />
+                    <ArrowUpDown className="w-6 h-6 text-purple-600" />
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {Object.keys(expensesByCategory).length > 0 && (
+              <Card className="border-0 shadow-lg shadow-slate-200/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm text-slate-500 font-medium">المصروفات حسب القسم</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(expensesByCategory).map(([catId, data]) => (
+                      <div key={catId}>
+                        <div className="flex justify-between items-center text-sm mb-1 gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }} />
+                            <span className="text-slate-700 font-medium">{data.name}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            {Object.entries(data.total).map(([curr, total]) => (
+                              <span key={curr} className="font-bold text-red-600">
+                                {total.toLocaleString()} {curr}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        {Object.entries(totalExpensesByCurrency).map(([curr]) => {
+                          const catTotal = data.total[curr] || 0;
+                          const grandTotal = totalExpensesByCurrency[curr] || 1;
+                          return (
+                            <div key={curr} className="w-full bg-slate-100 rounded-full h-2 mb-1">
+                              <div
+                                className="h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${(catTotal / grandTotal) * 100}%`, backgroundColor: data.color }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Card className="border-0 shadow-lg shadow-slate-200/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm text-slate-500 font-medium">عدد العمليات</CardTitle>
                 </CardHeader>
-                <CardContent className="flex items-center gap-6">
+                <CardContent className="flex items-center gap-6 flex-wrap">
                   <div className="text-center">
                     <span className="text-3xl font-bold text-slate-800" data-testid="text-total-count">{activePayments.length}</span>
-                    <span className="text-xs text-slate-400 block">إجمالي</span>
+                    <span className="text-xs text-slate-400 block">إيرادات</span>
                   </div>
                   <div className="h-10 w-px bg-slate-200" />
                   <div className="text-center">
@@ -311,6 +408,13 @@ export default function Reports() {
                     </span>
                     <span className="text-xs text-slate-400 block">شيكات</span>
                   </div>
+                  <div className="h-10 w-px bg-slate-200" />
+                  <div className="text-center">
+                    <span className="text-2xl font-bold text-red-600" data-testid="text-expense-count">
+                      {activeExpenses.length}
+                    </span>
+                    <span className="text-xs text-slate-400 block">مصروفات</span>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -322,7 +426,7 @@ export default function Reports() {
                   {activePayments.length > 0 && (cashTotal + checkTotal) > 0 ? (
                     <div className="space-y-3">
                       <div>
-                        <div className="flex justify-between text-sm mb-1">
+                        <div className="flex justify-between text-sm mb-1 gap-2">
                           <span className="text-slate-600">كاش</span>
                           <span className="font-bold text-green-600">
                             {Math.round((cashTotal / (cashTotal + checkTotal)) * 100)}%
@@ -336,7 +440,7 @@ export default function Reports() {
                         </div>
                       </div>
                       <div>
-                        <div className="flex justify-between text-sm mb-1">
+                        <div className="flex justify-between text-sm mb-1 gap-2">
                           <span className="text-slate-600">شيكات</span>
                           <span className="font-bold text-blue-600">
                             {Math.round((checkTotal / (cashTotal + checkTotal)) * 100)}%
@@ -359,20 +463,20 @@ export default function Reports() {
 
             <Card className="border-0 shadow-lg shadow-slate-200/50">
               <CardHeader className="border-b border-slate-100">
-                <CardTitle className="text-lg font-tajawal">تفاصيل العمليات</CardTitle>
+                <CardTitle className="text-lg font-tajawal">تفاصيل الإيرادات</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {activePayments.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>لا توجد عمليات مالية في هذه الفترة</p>
+                    <p>لا توجد إيرادات في هذه الفترة</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {activePayments
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map((payment, idx) => (
-                        <div key={idx} className="p-4 flex items-center justify-between" data-testid={`row-payment-${idx}`}>
+                        <div key={idx} className="p-4 flex items-center justify-between gap-3" data-testid={`row-payment-${idx}`}>
                           <div className="flex items-center gap-3">
                             <div className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center",
@@ -424,6 +528,51 @@ export default function Reports() {
                 )}
               </CardContent>
             </Card>
+
+            {activeExpenses.length > 0 && (
+              <Card className="border-0 shadow-lg shadow-slate-200/50">
+                <CardHeader className="border-b border-slate-100">
+                  <CardTitle className="text-lg font-tajawal">تفاصيل المصروفات</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y divide-slate-100">
+                    {activeExpenses
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .map((expense) => (
+                        <div key={expense.id} className="p-4 flex items-center justify-between gap-3" data-testid={`row-expense-${expense.id}`}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-50">
+                              <Receipt className="w-5 h-5 text-red-600" />
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-800 text-sm block">
+                                {expense.description || getCategoryName(expense.categoryId)}
+                              </span>
+                              <span className="text-xs text-slate-400">
+                                {(() => {
+                                  try {
+                                    return format(parseISO(expense.date), "d MMM yyyy", { locale: arSA });
+                                  } catch {
+                                    return expense.date;
+                                  }
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="text-xs bg-red-50 text-red-700 border-red-100">
+                              {getCategoryName(expense.categoryId)}
+                            </Badge>
+                            <span className="font-bold text-lg text-red-600">
+                              {expense.amount.toLocaleString()} {expense.currency}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>

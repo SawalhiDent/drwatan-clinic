@@ -5,15 +5,21 @@ import {
   users,
   sessions,
   whatsappTemplates,
+  expenseCategories,
+  expenses,
   type InsertPatient,
   type InsertAppointment,
   type InsertWhatsappTemplate,
+  type InsertExpenseCategory,
+  type InsertExpense,
   type Patient,
   type Appointment,
   type User,
   type Session,
   type Permission,
   type WhatsappTemplate,
+  type ExpenseCategory,
+  type Expense,
 } from "@shared/schema";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -56,6 +62,19 @@ export interface IStorage {
   updateWhatsappTemplate(id: number, data: Partial<InsertWhatsappTemplate>): Promise<WhatsappTemplate | undefined>;
   deleteWhatsappTemplate(id: number): Promise<void>;
   seedDefaultTemplates(): Promise<void>;
+
+  // Expense Categories
+  getExpenseCategories(): Promise<ExpenseCategory[]>;
+  createExpenseCategory(data: InsertExpenseCategory): Promise<ExpenseCategory>;
+  updateExpenseCategory(id: number, data: Partial<InsertExpenseCategory>): Promise<ExpenseCategory | undefined>;
+  deleteExpenseCategory(id: number): Promise<void>;
+  seedDefaultExpenseCategories(): Promise<void>;
+
+  // Expenses
+  getExpenses(startDate?: string, endDate?: string): Promise<Expense[]>;
+  createExpense(data: InsertExpense): Promise<Expense>;
+  updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense | undefined>;
+  deleteExpense(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -303,6 +322,69 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(whatsappTemplates).values(defaults);
+  }
+
+  // Expense Categories
+  async getExpenseCategories(): Promise<ExpenseCategory[]> {
+    return await db.select().from(expenseCategories).orderBy(asc(expenseCategories.name));
+  }
+
+  async createExpenseCategory(data: InsertExpenseCategory): Promise<ExpenseCategory> {
+    const [cat] = await db.insert(expenseCategories).values(data).returning();
+    return cat;
+  }
+
+  async updateExpenseCategory(id: number, data: Partial<InsertExpenseCategory>): Promise<ExpenseCategory | undefined> {
+    const [cat] = await db.update(expenseCategories).set(data).where(eq(expenseCategories.id, id)).returning();
+    return cat;
+  }
+
+  async deleteExpenseCategory(id: number): Promise<void> {
+    await db.delete(expenses).where(eq(expenses.categoryId, id));
+    await db.delete(expenseCategories).where(eq(expenseCategories.id, id));
+  }
+
+  async seedDefaultExpenseCategories(): Promise<void> {
+    const existing = await db.select().from(expenseCategories);
+    if (existing.length > 0) return;
+
+    const defaults: InsertExpenseCategory[] = [
+      { name: "المختبر", icon: "FlaskConical", color: "#8b5cf6" },
+      { name: "الأدوات والمواد", icon: "Wrench", color: "#f59e0b" },
+      { name: "الإيجار", icon: "Building2", color: "#3b82f6" },
+      { name: "الكهرباء والماء", icon: "Zap", color: "#eab308" },
+      { name: "الرواتب", icon: "Users", color: "#10b981" },
+      { name: "الصيانة", icon: "Settings", color: "#6b7280" },
+    ];
+
+    await db.insert(expenseCategories).values(defaults);
+  }
+
+  // Expenses
+  async getExpenses(startDate?: string, endDate?: string): Promise<Expense[]> {
+    if (startDate && endDate) {
+      return await db.select().from(expenses)
+        .where(and(
+          sql`${expenses.date} >= ${startDate}`,
+          sql`${expenses.date} <= ${endDate}`
+        ))
+        .orderBy(desc(expenses.date));
+    }
+    return await db.select().from(expenses).orderBy(desc(expenses.date));
+  }
+
+  async createExpense(data: InsertExpense): Promise<Expense> {
+    const [exp] = await db.insert(expenses).values(data).returning();
+    return exp;
+  }
+
+  async updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense | undefined> {
+    const [exp] = await db.update(expenses).set(data).where(eq(expenses.id, id)).returning();
+    return exp;
+  }
+
+  async deleteExpense(id: number): Promise<void> {
+    await db.delete(expenses).where(eq(expenses.id, id));
   }
 }
 

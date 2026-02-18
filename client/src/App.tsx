@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Reports from "@/pages/Reports";
 import UsersPage from "@/pages/Users";
 import WhatsAppTemplatesPage from "@/pages/WhatsAppTemplates";
+import ExpensesPage from "@/pages/Expenses";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
@@ -36,6 +37,7 @@ function ProtectedRouter() {
       {hasPermission("appointments") && <Route path="/booking" component={Booking} />}
       {hasPermission("patients_view") && <Route path="/patients" component={Patients} />}
       {hasPermission("appointments") && <Route path="/dashboard" component={Dashboard} />}
+      {hasPermission("payments") && <Route path="/expenses" component={ExpensesPage} />}
       {hasPermission("reports") && <Route path="/reports" component={Reports} />}
       {hasPermission("user_management") && <Route path="/users" component={UsersPage} />}
       {hasPermission("appointments") && <Route path="/whatsapp-templates" component={WhatsAppTemplatesPage} />}

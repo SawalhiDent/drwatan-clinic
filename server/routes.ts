@@ -286,9 +286,91 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
-  // Seed admin user and default templates
+  // === Expense Categories ===
+  app.get(api.expenseCategories.list.path, authMiddleware, requirePermission("payments"), async (_req, res) => {
+    const categories = await storage.getExpenseCategories();
+    res.json(categories);
+  });
+
+  app.post(api.expenseCategories.create.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    try {
+      const input = api.expenseCategories.create.input.parse(req.body);
+      const category = await storage.createExpenseCategory(input);
+      res.status(201).json(category);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      if (err?.code === "23505") {
+        return res.status(409).json({ message: "هذا القسم موجود بالفعل" });
+      }
+      throw err;
+    }
+  });
+
+  app.put(api.expenseCategories.update.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    try {
+      const input = api.expenseCategories.update.input.parse(req.body);
+      const category = await storage.updateExpenseCategory(Number(req.params.id), input);
+      if (!category) return res.status(404).json({ message: "القسم غير موجود" });
+      res.json(category);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.expenseCategories.delete.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    await storage.deleteExpenseCategory(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // === Expenses ===
+  app.get(api.expenses.list.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    const startDate = req.query.startDate as string | undefined;
+    const endDate = req.query.endDate as string | undefined;
+    const expensesList = await storage.getExpenses(startDate, endDate);
+    res.json(expensesList);
+  });
+
+  app.post(api.expenses.create.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    try {
+      const input = api.expenses.create.input.parse(req.body);
+      const expense = await storage.createExpense(input);
+      res.status(201).json(expense);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.put(api.expenses.update.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    try {
+      const input = api.expenses.update.input.parse(req.body);
+      const expense = await storage.updateExpense(Number(req.params.id), input);
+      if (!expense) return res.status(404).json({ message: "المصروف غير موجود" });
+      res.json(expense);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.expenses.delete.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+    await storage.deleteExpense(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // Seed admin user, default templates, and expense categories
   await seedAdminUser();
   await storage.seedDefaultTemplates();
+  await storage.seedDefaultExpenseCategories();
 
   return httpServer;
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertPatientSchema, insertAppointmentSchema, insertWhatsappTemplateSchema, patients, appointments, whatsappTemplates } from './schema';
+import { insertPatientSchema, insertAppointmentSchema, insertWhatsappTemplateSchema, insertExpenseCategorySchema, insertExpenseSchema, patients, appointments, whatsappTemplates, expenseCategories, expenses } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -122,6 +122,81 @@ export const api = {
     delete: {
       method: 'DELETE' as const,
       path: '/api/whatsapp-templates/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  expenseCategories: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/expense-categories',
+      responses: {
+        200: z.array(z.custom<typeof expenseCategories.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/expense-categories',
+      input: insertExpenseCategorySchema,
+      responses: {
+        201: z.custom<typeof expenseCategories.$inferSelect>(),
+        400: errorSchemas.validation,
+        409: errorSchemas.conflict,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/expense-categories/:id',
+      input: insertExpenseCategorySchema.partial(),
+      responses: {
+        200: z.custom<typeof expenseCategories.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/expense-categories/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  expenses: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/expenses',
+      input: z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.custom<typeof expenses.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/expenses',
+      input: insertExpenseSchema,
+      responses: {
+        201: z.custom<typeof expenses.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/expenses/:id',
+      input: insertExpenseSchema.partial(),
+      responses: {
+        200: z.custom<typeof expenses.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/expenses/:id',
       responses: {
         204: z.void(),
         404: errorSchemas.notFound,
