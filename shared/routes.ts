@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertPatientSchema, insertAppointmentSchema, patients, appointments } from './schema';
+import { insertPatientSchema, insertAppointmentSchema, insertWhatsappTemplateSchema, patients, appointments, whatsappTemplates } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -87,6 +87,41 @@ export const api = {
     delete: {
       method: 'DELETE' as const,
       path: '/api/appointments/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  whatsappTemplates: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/whatsapp-templates',
+      responses: {
+        200: z.array(z.custom<typeof whatsappTemplates.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/whatsapp-templates',
+      input: insertWhatsappTemplateSchema,
+      responses: {
+        201: z.custom<typeof whatsappTemplates.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/whatsapp-templates/:id',
+      input: insertWhatsappTemplateSchema.partial(),
+      responses: {
+        200: z.custom<typeof whatsappTemplates.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/whatsapp-templates/:id',
       responses: {
         204: z.void(),
         404: errorSchemas.notFound,

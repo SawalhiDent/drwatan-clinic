@@ -84,6 +84,18 @@ export const appointments = pgTable("appointments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const whatsappTemplates = pgTable("whatsapp_templates", {
+  id: serial("id").primaryKey(),
+  templateKey: text("template_key").notNull().unique(),
+  label: text("label").notNull(),
+  iconName: text("icon_name").notNull().default("MessageCircle"),
+  messageBody: text("message_body").notNull(),
+  needsAppointment: boolean("needs_appointment").default(false),
+  sortOrder: integer("sort_order").default(0),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas
 export const insertPatientSchema = createInsertSchema(patients).omit({ 
   id: true, 
@@ -105,6 +117,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
   password: z.string().min(4, "كلمة المرور قصيرة جداً"),
 });
 
+export const insertWhatsappTemplateSchema = createInsertSchema(whatsappTemplates).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const loginSchema = z.object({
   username: z.string().min(1, "أدخل اسم المستخدم"),
   password: z.string().min(1, "أدخل كلمة المرور"),
@@ -120,3 +137,6 @@ export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Session = typeof sessions.$inferSelect;
+
+export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;
+export type InsertWhatsappTemplate = z.infer<typeof insertWhatsappTemplateSchema>;

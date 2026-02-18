@@ -10,6 +10,7 @@ import Patients from "@/pages/Patients";
 import Dashboard from "@/pages/Dashboard";
 import Reports from "@/pages/Reports";
 import UsersPage from "@/pages/Users";
+import WhatsAppTemplatesPage from "@/pages/WhatsAppTemplates";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
@@ -37,6 +38,7 @@ function ProtectedRouter() {
       {hasPermission("appointments") && <Route path="/dashboard" component={Dashboard} />}
       {hasPermission("reports") && <Route path="/reports" component={Reports} />}
       {hasPermission("user_management") && <Route path="/users" component={UsersPage} />}
+      {hasPermission("appointments") && <Route path="/whatsapp-templates" component={WhatsAppTemplatesPage} />}
       <Route component={NotFound} />
     </Switch>
   );

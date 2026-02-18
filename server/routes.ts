@@ -248,8 +248,47 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
-  // Seed admin user
+  // WhatsApp Templates
+  app.get(api.whatsappTemplates.list.path, authMiddleware, async (_req, res) => {
+    const templates = await storage.getWhatsappTemplates();
+    res.json(templates);
+  });
+
+  app.post(api.whatsappTemplates.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    try {
+      const input = api.whatsappTemplates.create.input.parse(req.body);
+      const template = await storage.createWhatsappTemplate(input);
+      res.status(201).json(template);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.put(api.whatsappTemplates.update.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    try {
+      const input = api.whatsappTemplates.update.input.parse(req.body);
+      const template = await storage.updateWhatsappTemplate(Number(req.params.id), input);
+      if (!template) return res.status(404).json({ message: "القالب غير موجود" });
+      res.json(template);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.whatsappTemplates.delete.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    await storage.deleteWhatsappTemplate(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // Seed admin user and default templates
   await seedAdminUser();
+  await storage.seedDefaultTemplates();
 
   return httpServer;
 }

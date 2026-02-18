@@ -4,13 +4,16 @@ import {
   appointments,
   users,
   sessions,
+  whatsappTemplates,
   type InsertPatient,
   type InsertAppointment,
+  type InsertWhatsappTemplate,
   type Patient,
   type Appointment,
   type User,
   type Session,
   type Permission,
+  type WhatsappTemplate,
 } from "@shared/schema";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -45,6 +48,14 @@ export interface IStorage {
   getSession(id: string): Promise<(Session & { user: User }) | undefined>;
   deleteSession(id: string): Promise<void>;
   cleanExpiredSessions(): Promise<void>;
+
+  // WhatsApp Templates
+  getWhatsappTemplates(): Promise<WhatsappTemplate[]>;
+  getWhatsappTemplate(id: number): Promise<WhatsappTemplate | undefined>;
+  createWhatsappTemplate(data: InsertWhatsappTemplate): Promise<WhatsappTemplate>;
+  updateWhatsappTemplate(id: number, data: Partial<InsertWhatsappTemplate>): Promise<WhatsappTemplate | undefined>;
+  deleteWhatsappTemplate(id: number): Promise<void>;
+  seedDefaultTemplates(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -200,6 +211,98 @@ export class DatabaseStorage implements IStorage {
 
   async cleanExpiredSessions(): Promise<void> {
     await db.delete(sessions).where(sql`${sessions.expiresAt} < NOW()`);
+  }
+
+  // WhatsApp Templates
+  async getWhatsappTemplates(): Promise<WhatsappTemplate[]> {
+    return await db.select().from(whatsappTemplates)
+      .where(eq(whatsappTemplates.active, true))
+      .orderBy(asc(whatsappTemplates.sortOrder));
+  }
+
+  async getWhatsappTemplate(id: number): Promise<WhatsappTemplate | undefined> {
+    const [t] = await db.select().from(whatsappTemplates).where(eq(whatsappTemplates.id, id));
+    return t;
+  }
+
+  async createWhatsappTemplate(data: InsertWhatsappTemplate): Promise<WhatsappTemplate> {
+    const [t] = await db.insert(whatsappTemplates).values(data).returning();
+    return t;
+  }
+
+  async updateWhatsappTemplate(id: number, data: Partial<InsertWhatsappTemplate>): Promise<WhatsappTemplate | undefined> {
+    const [t] = await db.update(whatsappTemplates).set(data).where(eq(whatsappTemplates.id, id)).returning();
+    return t;
+  }
+
+  async deleteWhatsappTemplate(id: number): Promise<void> {
+    await db.delete(whatsappTemplates).where(eq(whatsappTemplates.id, id));
+  }
+
+  async seedDefaultTemplates(): Promise<void> {
+    const existing = await db.select().from(whatsappTemplates);
+    if (existing.length > 0) return;
+
+    const defaults: InsertWhatsappTemplate[] = [
+      {
+        templateKey: "reminder",
+        label: "تذكير بموعد",
+        iconName: "Clock",
+        needsAppointment: true,
+        sortOrder: 1,
+        messageBody: `السلام عليكم {name}،\nنذكرك بموعدك في عيادة *صوالحي دنت*\nالتاريخ: {date}\nالساعة: {time}\nالخدمة: {service}\n\nنرجو الحضور في الموعد المحدد.\nنتمنى لك دوام الصحة والعافية.`,
+      },
+      {
+        templateKey: "invoice",
+        label: "إرسال فاتورة",
+        iconName: "Receipt",
+        needsAppointment: false,
+        sortOrder: 2,
+        messageBody: `السلام عليكم {name}،\nفاتورة من عيادة *صوالحي دنت*\n━━━━━━━━━━━━━━━\n{payments_list}\n━━━━━━━━━━━━━━━\nالمبلغ الإجمالي المدفوع: *{total_paid} {currency}*\n\nشكراً لثقتكم بعيادة صوالحي دنت.`,
+      },
+      {
+        templateKey: "extraction",
+        label: "تعليمات بعد الخلع",
+        iconName: "Syringe",
+        needsAppointment: false,
+        sortOrder: 3,
+        messageBody: `السلام عليكم {name}،\nتعليمات مهمة بعد *خلع السن* من عيادة صوالحي دنت:\n\n1- العض على الشاش لمدة *ساعة كاملة* وعدم إزالته.\n2- *تجنب* المشروبات والأطعمة الساخنة لمدة 24 ساعة.\n3- *عدم المضمضة* بقوة في نفس اليوم.\n4- *عدم استخدام* القشة (الشلمون) للشرب.\n5- تجنب التدخين لمدة *48 ساعة* على الأقل.\n6- وضع *كمادات باردة* على الخد من الخارج (20 دقيقة تشغيل / 20 دقيقة إيقاف).\n7- تناول الأدوية الموصوفة *بانتظام*.\n8- تناول أطعمة *لينة وباردة* في اليوم الأول.\n9- النوم مع *رفع الرأس* قليلاً.\n\nفي حال استمرار النزيف أو حدوث ألم شديد، تواصل معنا فوراً.\nنتمنى لك الشفاء العاجل.`,
+      },
+      {
+        templateKey: "implant",
+        label: "تعليمات بعد الزراعة",
+        iconName: "Wrench",
+        needsAppointment: false,
+        sortOrder: 4,
+        messageBody: `السلام عليكم {name}،\nتعليمات مهمة بعد *زراعة الأسنان* من عيادة صوالحي دنت:\n\n1- وضع *كمادات باردة* على الخد (20 دقيقة تشغيل / 20 دقيقة إيقاف) خلال أول 48 ساعة.\n2- الالتزام بالأدوية الموصوفة (*المضاد الحيوي + مسكن الألم*).\n3- تناول أطعمة *لينة فقط* لمدة أسبوع.\n4- *تجنب المضغ* على منطقة الزراعة.\n5- تنظيف الأسنان *بلطف شديد* وتجنب منطقة الزراعة.\n6- *تجنب التدخين* تماماً لمدة أسبوعين على الأقل.\n7- *عدم ممارسة* الرياضة الشاقة لمدة أسبوع.\n8- استخدام *غسول الفم* الموصوف بعد 24 ساعة من العملية.\n9- الحضور لموعد *المتابعة* بعد أسبوع.\n\nفي حال حدوث تورم شديد أو نزيف مستمر أو ارتفاع في الحرارة، تواصل معنا فوراً.\nنتمنى لك الشفاء العاجل.`,
+      },
+      {
+        templateKey: "filling",
+        label: "تعليمات بعد الحشوة",
+        iconName: "Sparkles",
+        needsAppointment: false,
+        sortOrder: 5,
+        messageBody: `السلام عليكم {name}،\nتعليمات بعد *حشوة الأسنان* من عيادة صوالحي دنت:\n\n1- *تجنب الأكل والشرب* لمدة ساعتين بعد الحشوة.\n2- تجنب الأطعمة *القاسية والصلبة* لمدة 24 ساعة.\n3- إذا شعرت بأن *الإطباق مرتفع*، راجعنا لتعديله.\n4- من الطبيعي الشعور بـ *حساسية خفيفة* لبضعة أيام.\n5- استمر في تنظيف أسنانك *بشكل طبيعي*.\n\nنتمنى لك دوام الصحة.`,
+      },
+      {
+        templateKey: "scaling",
+        label: "تعليمات بعد التنظيف",
+        iconName: "Brush",
+        needsAppointment: false,
+        sortOrder: 6,
+        messageBody: `السلام عليكم {name}،\nتعليمات بعد *تنظيف الأسنان* من عيادة صوالحي دنت:\n\n1- تجنب الأطعمة والمشروبات *الملونة* (شاي، قهوة، كولا) لمدة 48 ساعة.\n2- من الطبيعي حدوث *حساسية خفيفة* في اللثة لبضعة أيام.\n3- استخدم فرشاة أسنان *ناعمة* ومعجون أسنان *للحساسية*.\n4- استخدم *خيط الأسنان* يومياً.\n5- يُنصح بإجراء تنظيف *كل 6 أشهر*.\n\nنتمنى لك دوام الصحة.`,
+      },
+      {
+        templateKey: "general",
+        label: "رسالة عامة",
+        iconName: "MessageCircle",
+        needsAppointment: false,
+        sortOrder: 7,
+        messageBody: `السلام عليكم {name}،\nمعك عيادة *صوالحي دنت*\nكيف يمكننا مساعدتك اليوم؟\nنتمنى لك دوام الصحة والعافية.`,
+      },
+    ];
+
+    await db.insert(whatsappTemplates).values(defaults);
   }
 }
 

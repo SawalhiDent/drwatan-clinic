@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, Clock, Receipt, Syringe, Wrench, Sparkles, Brush, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { WHATSAPP_TEMPLATES, sendWhatsAppMessage, type WhatsAppTemplateContext } from "@/lib/whatsapp";
+import { renderTemplate, sendWhatsAppMessage, type WhatsAppTemplateContext } from "@/lib/whatsapp";
+import { api } from "@shared/routes";
+import type { WhatsappTemplate } from "@shared/schema";
 import type { LucideIcon } from "lucide-react";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -19,6 +22,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Sparkles,
   Brush,
   MessageCircle,
+  MessageSquare,
 };
 
 interface WhatsAppTemplatePickerProps {
@@ -34,11 +38,13 @@ export function WhatsAppTemplatePicker({
   size = "icon",
   showLabel = false,
 }: WhatsAppTemplatePickerProps) {
-  const handleSelect = (templateId: string) => {
-    const template = WHATSAPP_TEMPLATES.find((t) => t.id === templateId);
-    if (template) {
-      sendWhatsAppMessage(phone, template.message(context));
-    }
+  const { data: templates } = useQuery<WhatsappTemplate[]>({
+    queryKey: [api.whatsappTemplates.list.path],
+  });
+
+  const handleSelect = (template: WhatsappTemplate) => {
+    const message = renderTemplate(template.messageBody, context);
+    sendWhatsAppMessage(phone, message);
   };
 
   const hasAppointmentContext = !!(context.date && context.time);
@@ -61,22 +67,28 @@ export function WhatsAppTemplatePicker({
           قوالب رسائل واتساب
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {WHATSAPP_TEMPLATES.map((template) => {
-          const Icon = ICON_MAP[template.iconName];
-          const disabled = template.needsAppointment && !hasAppointmentContext;
-          return (
-            <DropdownMenuItem
-              key={template.id}
-              onClick={() => !disabled && handleSelect(template.id)}
-              className={`cursor-pointer gap-2 ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
-              disabled={disabled}
-              data-testid={`whatsapp-template-${template.id}`}
-            >
-              {Icon && <Icon className="w-4 h-4 shrink-0" />}
-              <span>{template.label}</span>
-            </DropdownMenuItem>
-          );
-        })}
+        {templates && templates.length > 0 ? (
+          templates.map((template) => {
+            const Icon = ICON_MAP[template.iconName] || MessageCircle;
+            const disabled = !!template.needsAppointment && !hasAppointmentContext;
+            return (
+              <DropdownMenuItem
+                key={template.id}
+                onClick={() => !disabled && handleSelect(template)}
+                className={`cursor-pointer gap-2 ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                disabled={disabled}
+                data-testid={`whatsapp-template-${template.templateKey}`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{template.label}</span>
+              </DropdownMenuItem>
+            );
+          })
+        ) : (
+          <DropdownMenuItem disabled className="text-muted-foreground text-center">
+            لا توجد قوالب
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
