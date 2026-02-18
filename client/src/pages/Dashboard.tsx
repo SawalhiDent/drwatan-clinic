@@ -6,12 +6,12 @@ import { arSA } from "date-fns/locale";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon, User, MessageSquare } from "lucide-react";
+import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
-import { sendWhatsAppMessage, WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
+import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -165,20 +165,15 @@ export default function Dashboard() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => {
-                            const template = WHATSAPP_TEMPLATES.find(t => t.id === 'reminder');
-                            if (template) {
-                              sendWhatsAppMessage(apt.phone, template.message(apt.patientName, apt.date, apt.startTime));
-                            }
+                        <WhatsAppTemplatePicker
+                          phone={apt.phone}
+                          context={{
+                            name: apt.patientName,
+                            date: apt.date,
+                            time: apt.startTime,
+                            service: apt.service,
                           }}
-                          title="إرسال تذكير واتساب"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                        </Button>
+                        />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">

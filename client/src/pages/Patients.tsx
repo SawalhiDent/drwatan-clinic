@@ -15,9 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2, MessageSquare, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon } from "lucide-react";
+import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { sendWhatsAppMessage, WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
+import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -451,14 +451,20 @@ export default function Patients() {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span dir="ltr" className="text-sm text-slate-500">{patient.phone}</span>
                       {patient.phone && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => sendWhatsAppMessage(patient.phone, `مرحباً ${patient.fullName}، معك عيادة الأسنان...`)}
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </Button>
+                        <WhatsAppTemplatePicker
+                          phone={patient.phone}
+                          context={{
+                            name: patient.fullName,
+                            totalPaid: patient.paidAmount ?? 0,
+                            currency: patient.currencySymbol ?? "₪",
+                            payments: (patient.payments ?? []).map(p => ({
+                              amount: p.amount,
+                              date: p.date,
+                              method: p.method,
+                              currency: p.currency,
+                            })),
+                          }}
+                        />
                       )}
                     </div>
                   </div>
