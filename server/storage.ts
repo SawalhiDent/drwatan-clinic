@@ -104,15 +104,20 @@ export class DatabaseStorage implements IStorage {
     await db.delete(appointments).where(eq(appointments.id, id));
   }
 
-  async checkAvailability(date: string, startTime: string): Promise<boolean> {
-    const [existing] = await db.select().from(appointments).where(
+  async checkAvailability(date: string, slotTime: string): Promise<boolean> {
+    const dayAppointments = await db.select().from(appointments).where(
       and(
         eq(appointments.date, date),
-        eq(appointments.startTime, startTime),
         sql`${appointments.status} != 'cancelled'`
       )
     );
-    return !existing;
+    const slotMin = parseInt(slotTime.split(":")[0]) * 60 + parseInt(slotTime.split(":")[1]);
+    const conflict = dayAppointments.some(apt => {
+      const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
+      const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);
+      return slotMin >= startMin && slotMin < endMin;
+    });
+    return !conflict;
   }
 
   // Users

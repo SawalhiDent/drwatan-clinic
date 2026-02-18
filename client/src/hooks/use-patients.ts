@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 export function usePatients() {
-  return useQuery({
+  return useQuery<Patient[]>({
     queryKey: [api.patients.list.path],
   });
 }

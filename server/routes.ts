@@ -204,9 +204,20 @@ export async function registerRoutes(
   app.post(api.appointments.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
     try {
       const input = api.appointments.create.input.parse(req.body);
-      const isAvailable = await storage.checkAvailability(input.date, input.startTime);
-      if (!isAvailable) {
-        return res.status(409).json({ message: "هذا الموعد محجوز مسبقاً" });
+      const slotsToCheck = [];
+      let [sh, sm] = input.startTime.split(":").map(Number);
+      const [eh, em] = input.endTime.split(":").map(Number);
+      const endMinutes = eh * 60 + em;
+      while (sh * 60 + sm < endMinutes) {
+        slotsToCheck.push(`${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}`);
+        sm += 30;
+        if (sm >= 60) { sh += 1; sm -= 60; }
+      }
+      for (const slot of slotsToCheck) {
+        const isAvailable = await storage.checkAvailability(input.date, slot);
+        if (!isAvailable) {
+          return res.status(409).json({ message: `الوقت ${slot} محجوز مسبقاً` });
+        }
       }
       const appointment = await storage.createAppointment(input);
       res.status(201).json(appointment);
