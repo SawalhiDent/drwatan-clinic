@@ -30,8 +30,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white shadow-xl h-screen sticky top-0">
         <div className="p-6 flex flex-col items-center border-b border-slate-800">
           <img src={logo} alt="Clinic Logo" className="w-20 h-20 rounded-full mb-3 bg-white p-1" />
-          <h1 className="text-xl font-bold font-tajawal text-center">عيادة الأسنان</h1>
-          <p className="text-xs text-slate-400 mt-1">نظام الإدارة المتكامل</p>
+          <h1 className="text-xl font-bold font-tajawal text-center">صوالحي دنت</h1>
+          <p className="text-xs text-slate-400 mt-1">إدارة المرضى والمواعيد</p>
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
@@ -75,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <img src={logo} alt="Logo" className="w-10 h-10 rounded-full bg-white p-0.5" />
-          <h1 className="font-bold font-tajawal">عيادة الأسنان</h1>
+          <h1 className="font-bold font-tajawal">صوالحي دنت</h1>
         </div>
         <div className="flex items-center gap-2">
           <nav className="flex gap-2">

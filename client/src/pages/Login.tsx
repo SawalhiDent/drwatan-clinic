@@ -34,7 +34,7 @@ export default function Login() {
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Logo" className="w-24 h-24 rounded-full bg-white p-1 shadow-lg" />
           </div>
-          <CardTitle className="text-2xl font-tajawal text-slate-800">عيادة الأسنان</CardTitle>
+          <CardTitle className="text-2xl font-tajawal text-slate-800">صوالحي دنت</CardTitle>
           <p className="text-sm text-slate-500 mt-1">تسجيل الدخول إلى النظام</p>
         </CardHeader>
         <CardContent>

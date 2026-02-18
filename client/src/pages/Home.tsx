@@ -23,10 +23,10 @@ export default function Home() {
           <img src={logo} alt="Clinic Logo" className="w-full h-full object-contain rounded-full" />
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-white font-tajawal mb-4">
-          عيادة الأسنان الحديثة
+          صوالحي دنت
         </h1>
         <p className="text-slate-400 text-lg md:text-xl max-w-xl mx-auto">
-          نظام متكامل لإدارة المرضى والمواعيد بكفاءة واحترافية
+          إدارة المرضى والمواعيد
         </p>
       </motion.div>
 
