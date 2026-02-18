@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAppointments, useDeleteAppointment } from "@/hooks/use-appointments";
 import { Layout } from "@/components/Layout";
-import { format } from "date-fns";
+import { format, addDays, subDays, getDay } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon, User } from "lucide-react";
+import { CalendarClock, CheckCircle2, XCircle, Clock, Trash2, Loader2, Phone, Calendar as CalendarIcon, User, ChevronRight, ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,8 +25,30 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
+const WORKING_DAYS = [0, 1, 4, 6]; // Sun=0, Mon=1, Thu=4, Sat=6
+
+function isWorkingDay(d: Date) {
+  return WORKING_DAYS.includes(getDay(d));
+}
+
+function getNextWorkingDay(from: Date) {
+  let d = addDays(from, 1);
+  while (!isWorkingDay(d)) d = addDays(d, 1);
+  return d;
+}
+
+function getPrevWorkingDay(from: Date) {
+  let d = subDays(from, 1);
+  while (!isWorkingDay(d)) d = subDays(d, 1);
+  return d;
+}
+
 export default function Dashboard() {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date>(() => {
+    const today = new Date();
+    if (isWorkingDay(today)) return today;
+    return getNextWorkingDay(today);
+  });
   const [, setLocation] = useLocation();
   const formattedDate = format(date, "yyyy-MM-dd");
   const { data: appointments, isLoading } = useAppointments(formattedDate);
@@ -50,24 +72,33 @@ export default function Dashboard() {
           <p className="text-slate-500 mt-2">عرض المواعيد ليوم: {format(date, "EEEE, d MMMM yyyy", { locale: arSA })}</p>
         </div>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="h-12 px-6 flex items-center gap-2 bg-white shadow-sm hover:bg-slate-50 border-slate-200 text-slate-700 font-bold">
-              <CalendarIcon className="w-5 h-5 text-primary" />
-              تغيير التاريخ
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(d) => d && setDate(d)}
-              initialFocus
-              locale={arSA}
-              dir="rtl"
-            />
-          </PopoverContent>
-        </Popover>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setDate(getNextWorkingDay(date))} data-testid="button-next-working-day">
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2 bg-white shadow-sm border-slate-200 text-slate-700 font-bold">
+                <CalendarIcon className="w-5 h-5 text-primary" />
+                {format(date, "EEEE d/M", { locale: arSA })}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(d) => d && isWorkingDay(d) && setDate(d)}
+                initialFocus
+                locale={arSA}
+                dir="rtl"
+                disabled={(d) => !isWorkingDay(d)}
+              />
+            </PopoverContent>
+          </Popover>
+          <Button variant="ghost" size="icon" onClick={() => setDate(getPrevWorkingDay(date))} data-testid="button-prev-working-day">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
