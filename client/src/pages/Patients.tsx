@@ -273,14 +273,6 @@ export default function Patients() {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="bg-white border-slate-200 h-9 px-4 text-slate-700 text-sm">
-              <Download className="ml-2 w-4 h-4" />
-              تحميل النموذج العبري
-            </Button>
-            <Button variant="outline" className="bg-white border-slate-200 h-9 px-4 text-slate-700 text-sm">
-              <Download className="ml-2 w-4 h-4" />
-              تحميل النموذج العربي
-            </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => handleOpenDialog()} className="bg-[#0e8bab] hover:bg-[#0c7a96] h-9 px-6 text-sm">
