@@ -615,44 +615,43 @@ export default function Patients() {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-slate-200 bg-white">
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-xl font-bold font-tajawal flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#0e8bab]" />
-              ملف المريض: {selectedPatient?.fullName}
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-4">
+              <DialogTitle className="text-xl font-bold font-tajawal flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#0e8bab]" />
+                {detailsLang === "he" ? `תיק מטופל: ${selectedPatient?.fullName}` : `ملف المريض: ${selectedPatient?.fullName}`}
+              </DialogTitle>
+              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 shrink-0">
+                <button
+                  onClick={() => setDetailsLang("ar")}
+                  className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "ar" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
+                  data-testid="button-lang-ar"
+                >
+                  عربي
+                </button>
+                <button
+                  onClick={() => setDetailsLang("he")}
+                  className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "he" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
+                  data-testid="button-lang-he"
+                >
+                  עברית
+                </button>
+              </div>
+            </div>
           </DialogHeader>
 
           <Tabs defaultValue="info" className="flex-1 flex flex-col">
-            <div className="px-6 border-b">
+            <div className="px-6 border-b" dir={detailsLang === "he" ? "ltr" : "rtl"}>
               <TabsList className="bg-transparent gap-6 h-12 p-0 w-full justify-start">
-                <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">التفاصيل</TabsTrigger>
-                <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">الملفات والصور</TabsTrigger>
-                <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">الدفعات</TabsTrigger>
-                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">سجل العلاج</TabsTrigger>
+                <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "פרטים" : "التفاصيل"}</TabsTrigger>
+                <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "קבצים ותמונות" : "الملفات والصور"}</TabsTrigger>
+                <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "תשלומים" : "الدفعات"}</TabsTrigger>
+                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "היסטוריית טיפולים" : "سجل العلاج"}</TabsTrigger>
               </TabsList>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
-              <TabsContent value="info" className="mt-0 space-y-6">
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5">
-                    <button
-                      onClick={() => setDetailsLang("ar")}
-                      className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "ar" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
-                      data-testid="button-lang-ar"
-                    >
-                      عربي
-                    </button>
-                    <button
-                      onClick={() => setDetailsLang("he")}
-                      className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "he" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
-                      data-testid="button-lang-he"
-                    >
-                      עברית
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+              <TabsContent value="info" className="mt-0 space-y-6" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white p-4 rounded-xl border border-slate-100">
                     <span className="text-xs text-slate-400 block mb-1">{detailsLang === "he" ? "טלפון" : "رقم الهاتف"}</span>
                     <span dir="ltr" className="font-bold text-slate-700">{selectedPatient?.phone}</span>
@@ -663,7 +662,7 @@ export default function Patients() {
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-100" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+                <div className="bg-white p-4 rounded-xl border border-slate-100">
                   <h4 className="font-bold text-[#0e8bab] mb-3 flex items-center gap-2">
                     <ActivityIcon className="w-4 h-4" />
                     {detailsLang === "he" ? "היסטוריה רפואית" : "السجل الطبي"}
@@ -684,7 +683,7 @@ export default function Patients() {
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-100" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+                <div className="bg-white p-4 rounded-xl border border-slate-100">
                   <h4 className="font-bold text-slate-700 mb-2">{detailsLang === "he" ? "הערות" : "ملاحظات"}</h4>
                   <p className="text-slate-600 text-sm leading-relaxed">
                     {selectedPatient?.notes || (detailsLang === "he" ? "אין הערות נוספות." : "لا توجد ملاحظات إضافية.")}
@@ -692,7 +691,7 @@ export default function Patients() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="files" className="mt-0 space-y-4">
+              <TabsContent value="files" className="mt-0 space-y-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                 <div className="bg-white rounded-xl border border-dashed border-slate-200 p-6 text-center relative">
                   <input
                     type="file"
@@ -712,16 +711,16 @@ export default function Patients() {
                       )}
                     </div>
                     <h4 className="text-slate-600 font-bold text-sm mb-1">
-                      {isUploadingFiles ? "جاري الرفع..." : "اضغط لرفع صور جديدة"}
+                      {isUploadingFiles ? (detailsLang === "he" ? "...מעלה" : "جاري الرفع...") : (detailsLang === "he" ? "לחץ להעלאת תמונות חדשות" : "اضغط لرفع صور جديدة")}
                     </h4>
-                    <p className="text-slate-400 text-xs">يمكنك اختيار أكثر من صورة في نفس الوقت</p>
+                    <p className="text-slate-400 text-xs">{detailsLang === "he" ? "ניתן לבחור מספר תמונות בו-זמנית" : "يمكنك اختيار أكثر من صورة في نفس الوقت"}</p>
                   </div>
                 </div>
 
                 {(() => {
                   const patientFiles = (selectedPatient?.files as any[]) || [];
                   if (patientFiles.length === 0) return (
-                    <div className="text-center py-6 text-slate-400 text-sm">لا توجد صور مرفقة بعد</div>
+                    <div className="text-center py-6 text-slate-400 text-sm">{detailsLang === "he" ? "אין תמונות מצורפות עדיין" : "لا توجد صور مرفقة بعد"}</div>
                   );
                   return (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -753,11 +752,11 @@ export default function Patients() {
                 })()}
               </TabsContent>
 
-              <TabsContent value="payments" className="mt-0 space-y-4">
+              <TabsContent value="payments" className="mt-0 space-y-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="text-sm text-slate-400 block">إجمالي الكاش</span>
+                      <span className="text-sm text-slate-400 block">{detailsLang === "he" ? "סה\"כ מזומן" : "إجمالي الكاش"}</span>
                       <div className="space-y-1">
                         {Object.entries(
                           ((selectedPatient?.payments as any[]) || [])
@@ -790,7 +789,7 @@ export default function Patients() {
 
                   <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="text-sm text-slate-400 block">إجمالي الشيكات</span>
+                      <span className="text-sm text-slate-400 block">{detailsLang === "he" ? "סה\"כ צ'קים" : "إجمالي الشيكات"}</span>
                       <div className="space-y-1">
                         {Object.entries(
                           ((selectedPatient?.payments as any[]) || [])
@@ -823,11 +822,11 @@ export default function Patients() {
                 </div>
                 
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <h4 className="text-sm font-bold text-slate-700 mb-4">آخر العمليات</h4>
+                  <h4 className="text-sm font-bold text-slate-700 mb-4">{detailsLang === "he" ? "פעולות אחרונות" : "آخر العمليات"}</h4>
                   <div className="space-y-3">
                     {((selectedPatient?.payments as any[]) || []).length === 0 ? (
                       <div className="text-center py-6 text-slate-400 text-sm">
-                        لا توجد عمليات دفع مسجلة حالياً
+                        {detailsLang === "he" ? "אין פעולות תשלום רשומות כרגע" : "لا توجد عمليات دفع مسجلة حالياً"}
                       </div>
                     ) : (
                       ((selectedPatient?.payments as any[]) || []).map((payment, i) => (
@@ -838,7 +837,7 @@ export default function Patients() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className={payment.method === 'cash' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}>
-                              {payment.method === 'cash' ? 'كاش' : 'شيك'}
+                              {payment.method === 'cash' ? (detailsLang === "he" ? "מזומן" : "كاش") : (detailsLang === "he" ? "צ'ק" : "شيك")}
                             </Badge>
                             {payment.method === 'check' && payment.checkImageUrl && (
                               <Button 
@@ -848,7 +847,7 @@ export default function Patients() {
                                 onClick={() => window.open(payment.checkImageUrl, '_blank')}
                               >
                                 <ImageIcon className="w-3 h-3 ml-1" />
-                                عرض الشيك
+                                {detailsLang === "he" ? "הצג צ'ק" : "عرض الشيك"}
                               </Button>
                             )}
                           </div>
@@ -861,17 +860,17 @@ export default function Patients() {
                 <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="w-full bg-[#0e8bab] h-11">
-                      إضافة دفعة جديدة
+                      {detailsLang === "he" ? "הוספת תשלום חדש" : "إضافة دفعة جديدة"}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md bg-slate-50 border-slate-200">
+                  <DialogContent className="max-w-md bg-slate-50 border-slate-200" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                     <DialogHeader>
-                      <DialogTitle className="font-bold">إضافة دفعة جديدة</DialogTitle>
+                      <DialogTitle className="font-bold">{detailsLang === "he" ? "הוספת תשלום חדש" : "إضافة دفعة جديدة"}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">المبلغ</label>
+                          <label className="text-sm font-medium">{detailsLang === "he" ? "סכום" : "المبلغ"}</label>
                           <Input 
                             type="number" 
                             placeholder="0" 
@@ -880,7 +879,7 @@ export default function Patients() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">رمز العملة</label>
+                          <label className="text-sm font-medium">{detailsLang === "he" ? "מטבע" : "رمز العملة"}</label>
                           <Input 
                             placeholder="₪, $, ريال..." 
                             value={paymentCurrency}
@@ -890,21 +889,21 @@ export default function Patients() {
                       </div>
                       
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">طريقة الدفع</label>
+                        <label className="text-sm font-medium">{detailsLang === "he" ? "אמצעי תשלום" : "طريقة الدفع"}</label>
                         <Select onValueChange={(val: any) => setPaymentMethod(val)} defaultValue="cash">
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-white border-slate-200">
-                            <SelectItem value="cash">كاش</SelectItem>
-                            <SelectItem value="check">شيك</SelectItem>
+                            <SelectItem value="cash">{detailsLang === "he" ? "מזומן" : "كاش"}</SelectItem>
+                            <SelectItem value="check">{detailsLang === "he" ? "צ'ק" : "شيك"}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       {paymentMethod === "check" && (
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">صورة الشيك</label>
+                          <label className="text-sm font-medium">{detailsLang === "he" ? "תמונת צ'ק" : "صورة الشيك"}</label>
                           <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center bg-white relative">
                             {checkImage ? (
                               <div className="relative group">
@@ -921,7 +920,7 @@ export default function Patients() {
                             ) : (
                               <>
                                 <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                <span className="text-xs text-slate-500 block mb-2">اضغط لرفع صورة الشيك</span>
+                                <span className="text-xs text-slate-500 block mb-2">{detailsLang === "he" ? "לחץ להעלאת תמונת צ'ק" : "اضغط لرفع صورة الشيك"}</span>
                                 <Input 
                                   type="file" 
                                   accept="image/*" 
@@ -935,10 +934,10 @@ export default function Patients() {
                       )}
 
                       <DialogFooter className="pt-4">
-                        <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>إلغاء</Button>
+                        <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>{detailsLang === "he" ? "ביטול" : "إلغاء"}</Button>
                         <Button className="bg-[#0e8bab]" onClick={handleAddPayment} disabled={isUpdating}>
                           {isUpdating && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                          تأكيد الدفعة
+                          {detailsLang === "he" ? "אישור תשלום" : "تأكيد الدفعة"}
                         </Button>
                       </DialogFooter>
                     </div>
@@ -946,11 +945,11 @@ export default function Patients() {
                 </Dialog>
               </TabsContent>
 
-              <TabsContent value="treatment-history" className="mt-0 space-y-4">
+              <TabsContent value="treatment-history" className="mt-0 space-y-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
                   <h4 className="font-bold text-[#0e8bab] mb-4 flex items-center gap-2" data-testid="text-treatment-history-title">
                     <Stethoscope className="w-4 h-4" />
-                    سجل متابعة العلاج
+                    {detailsLang === "he" ? "מעקב טיפולים" : "سجل متابعة العلاج"}
                   </h4>
                   {isLoadingNotes ? (
                     <div className="flex justify-center py-8">
@@ -959,8 +958,8 @@ export default function Patients() {
                   ) : !treatmentNotesData || treatmentNotesData.length === 0 ? (
                     <div className="text-center py-8 text-slate-400" data-testid="text-no-treatment-notes">
                       <ClipboardList className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-                      <p className="text-sm">لا توجد ملاحظات علاج مسجلة بعد</p>
-                      <p className="text-xs mt-1">ستظهر هنا الملاحظات عند إضافتها من السجل اليومي</p>
+                      <p className="text-sm">{detailsLang === "he" ? "אין הערות טיפול רשומות עדיין" : "لا توجد ملاحظات علاج مسجلة بعد"}</p>
+                      <p className="text-xs mt-1">{detailsLang === "he" ? "ההערות יופיעו כאן כשיתווספו מהיומן היומי" : "ستظهر هنا الملاحظات عند إضافتها من السجل اليومي"}</p>
                     </div>
                   ) : (
                     <div className="space-y-3" data-testid="treatment-notes-list">
