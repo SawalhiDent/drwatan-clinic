@@ -41,6 +41,22 @@ function requirePermission(...perms: Permission[]) {
   };
 }
 
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_LOGIN_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function checkLoginRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record || now - record.lastAttempt > LOGIN_WINDOW_MS) {
+    loginAttempts.set(ip, { count: 1, lastAttempt: now });
+    return true;
+  }
+  record.count++;
+  record.lastAttempt = now;
+  return record.count <= MAX_LOGIN_ATTEMPTS;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -48,6 +64,10 @@ export async function registerRoutes(
 
   // === Auth Routes (no middleware) ===
   app.post("/api/auth/login", async (req, res) => {
+    const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+    if (!checkLoginRateLimit(clientIp)) {
+      return res.status(429).json({ message: "محاولات كثيرة. حاول بعد قليل" });
+    }
     try {
       const { username, password } = loginSchema.parse(req.body);
       const user = await storage.getUserByUsername(username);
@@ -94,20 +114,18 @@ export async function registerRoutes(
     res.json(safeUsers);
   });
 
+  const createUserSchema = z.object({
+    username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل").max(50),
+    password: z.string().min(4, "كلمة المرور قصيرة جداً").max(100),
+    displayName: z.string().min(1, "الاسم مطلوب").max(100),
+    role: z.enum(["doctor", "assistant"], { errorMap: () => ({ message: "دور غير صالح" }) }),
+    permissions: z.array(z.string()).optional().default([]),
+  });
+
   app.post("/api/users", authMiddleware, requirePermission("user_management"), async (req, res) => {
     try {
-      const { username, password, displayName, role, permissions } = req.body;
-      if (!username || !password || !displayName) {
-        return res.status(400).json({ message: "جميع الحقول مطلوبة" });
-      }
-      if (password.length < 4) {
-        return res.status(400).json({ message: "كلمة المرور قصيرة جداً" });
-      }
-      const allowedRoles = ["doctor", "assistant"];
-      if (!allowedRoles.includes(role)) {
-        return res.status(400).json({ message: "دور غير صالح" });
-      }
-      const validPerms = (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission) && p !== "user_management");
+      const { username, password, displayName, role, permissions } = createUserSchema.parse(req.body);
+      const validPerms = permissions.filter((p: string) => PERMISSIONS.includes(p as Permission) && p !== "user_management") as Permission[];
       const existing = await storage.getUserByUsername(username);
       if (existing) {
         return res.status(409).json({ message: "اسم المستخدم مستخدم بالفعل" });
@@ -122,31 +140,50 @@ export async function registerRoutes(
       const { passwordHash, ...safeUser } = user;
       res.status(201).json(safeUser);
     } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
       throw err;
     }
   });
 
+  const updateUserSchema = z.object({
+    displayName: z.string().min(1).max(100).optional(),
+    role: z.string().optional(),
+    permissions: z.array(z.string()).optional(),
+    active: z.boolean().optional(),
+    password: z.string().min(4).max(100).optional().or(z.literal("")),
+  });
+
   app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {
-    const id = Number(req.params.id);
-    const target = await storage.getUser(id);
-    if (!target) return res.status(404).json({ message: "المستخدم غير موجود" });
-    if (target.role === "admin" && req.user!.id !== target.id) {
-      return res.status(403).json({ message: "لا يمكن تعديل المدير" });
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+      const target = await storage.getUser(id);
+      if (!target) return res.status(404).json({ message: "المستخدم غير موجود" });
+      if (target.role === "admin" && req.user!.id !== target.id) {
+        return res.status(403).json({ message: "لا يمكن تعديل المدير" });
+      }
+      const { displayName, role, permissions, active, password } = updateUserSchema.parse(req.body);
+      const allowedRoles = ["doctor", "assistant"];
+      const safeRole = target.role === "admin" ? undefined : (role && allowedRoles.includes(role) ? role : undefined);
+      const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission)) as Permission[] | undefined;
+      const updated = await storage.updateUser(id, {
+        displayName,
+        role: safeRole,
+        permissions: validPerms,
+        active,
+        password: password || undefined,
+      });
+      if (!updated) return res.status(404).json({ message: "المستخدم غير موجود" });
+      const { passwordHash, ...safeUser } = updated;
+      res.json(safeUser);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
     }
-    const { displayName, role, permissions, active, password } = req.body;
-    const allowedRoles = ["doctor", "assistant"];
-    const safeRole = target.role === "admin" ? undefined : (allowedRoles.includes(role) ? role : undefined);
-    const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission));
-    const updated = await storage.updateUser(id, {
-      displayName,
-      role: safeRole,
-      permissions: validPerms,
-      active,
-      password: password || undefined,
-    });
-    if (!updated) return res.status(404).json({ message: "المستخدم غير موجود" });
-    const { passwordHash, ...safeUser } = updated;
-    res.json(safeUser);
   });
 
   app.delete("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {

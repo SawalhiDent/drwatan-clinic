@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon, ClipboardList, Stethoscope } from "lucide-react";
+import { Search, UserPlus, Pencil, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon, ClipboardList, Stethoscope } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
 import { 
@@ -613,7 +613,7 @@ export default function Patients() {
 
       {/* Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-slate-200 bg-white">
+        <DialogContent className="max-w-2xl max-h-[85vh] w-[95vw] md:w-auto overflow-hidden flex flex-col p-0 border-slate-200 bg-white">
           <DialogHeader className="p-6 pb-2">
             <div className="flex items-center justify-between gap-4">
               <DialogTitle className="text-xl font-bold font-tajawal flex items-center gap-2">

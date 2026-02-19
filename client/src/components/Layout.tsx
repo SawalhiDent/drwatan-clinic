@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
-import { Calendar, Users, ClipboardList, Receipt, BarChart3, LogOut, Settings, MessageSquare, UserCircle2, ChevronDown } from "lucide-react";
+import { Calendar, Users, ClipboardList, Receipt, BarChart3, LogOut, Settings, MessageSquare, UserCircle2, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import logo from "@assets/pp_1770153797959.png";
 import type { Permission } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "مدير",
@@ -52,6 +52,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [controlPanelOpen, setControlPanelOpen] = useState(() => {
     return controlPanelItems.some((item) => location === item.href);
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
 
   const visibleMainItems = mainNavItems.filter((item) => !item.permission || hasPermission(item.permission));
   const visibleControlItems = controlPanelItems.filter((item) => !item.permission || hasPermission(item.permission));
@@ -107,32 +112,61 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
+      <header className="md:hidden bg-slate-900 text-white p-3 flex items-center justify-between shadow-md sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Logo" className="w-10 h-10 rounded-full bg-white p-0.5" />
-          <h1 className="font-bold font-tajawal">صوالحي دنت</h1>
+          <img src={logo} alt="Logo" className="w-9 h-9 rounded-full bg-white p-0.5" />
+          <h1 className="font-bold font-tajawal text-sm">صوالحي دنت</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <nav className="flex gap-2">
-            {[...visibleMainItems, ...visibleControlItems].map((item) => (
-              <Link key={item.href} href={item.href}>
-                <div className={`p-2 rounded-full ${location === item.href ? "bg-primary text-white" : "text-slate-300"}`}>
-                  <item.icon className="w-5 h-5" />
-                </div>
-              </Link>
-            ))}
-          </nav>
-          <button
-            onClick={logout}
-            className="p-2 rounded-full text-slate-300 hover:text-red-400"
-            data-testid="button-logout-mobile"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-lg text-slate-300 hover:text-white transition-colors"
+          data-testid="button-mobile-menu"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </header>
 
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 top-[60px] z-40 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
+          <nav
+            className="bg-slate-900 text-white w-64 h-full p-4 space-y-1 overflow-y-auto shadow-xl animate-in slide-in-from-right-full duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {visibleMainItems.map((item) => (
+              <NavLink key={item.href} item={item} location={location} />
+            ))}
+
+            {visibleControlItems.length > 0 && (
+              <div className="pt-4 border-t border-slate-800 mt-4">
+                <p className="px-4 py-2 text-xs text-slate-500 font-medium">لوحة التحكم</p>
+                {visibleControlItems.map((item) => (
+                  <NavLink key={item.href} item={item} location={location} />
+                ))}
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-slate-800 mt-4">
+              <div className="flex items-center gap-3 px-4 py-3 text-slate-400">
+                <UserCircle2 className="w-6 h-6" />
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-bold text-white">{user?.displayName}</span>
+                  <span className="text-xs">{ROLE_LABELS[user?.role || ""] || user?.role}</span>
+                </div>
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:bg-slate-800 transition-colors"
+                data-testid="button-logout-mobile"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">تسجيل الخروج</span>
+              </button>
+            </div>
+          </nav>
+        </div>
+      )}
+
+      <main className="flex-1 p-3 md:p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>

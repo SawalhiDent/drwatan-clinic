@@ -5,7 +5,7 @@ import { insertAppointmentSchema, type InsertAppointment, type Patient } from "@
 import { useCreateAppointment, useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
 import { Layout } from "@/components/Layout";
-import { format, addDays, setHours, setMinutes, getDay } from "date-fns";
+import { format, setHours, setMinutes, getDay } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Phone, ClipboardList } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
