@@ -16,7 +16,7 @@ type NavItem = { href: string; label: string; icon: any; permission?: Permission
 const mainNavItems: NavItem[] = [
   { href: "/booking", label: "حجز موعد", icon: Calendar, permission: "appointments" },
   { href: "/daily-schedule", label: "الجدول اليومي", icon: ClipboardList, permission: "appointments" },
-  { href: "/patients", label: "المرضى", icon: Users, permission: "patients_view" },
+  { href: "/patients", label: "ملفات المرضى", icon: Users, permission: "patients_view" },
 ];
 
 const controlPanelItems: NavItem[] = [
