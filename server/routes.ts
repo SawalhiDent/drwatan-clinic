@@ -79,6 +79,14 @@ export async function registerRoutes(
     res.json(safeUser);
   });
 
+  app.get("/api/doctors", authMiddleware, async (req, res) => {
+    const allUsers = await storage.getUsers();
+    const doctors = allUsers
+      .filter((u) => u.role === "doctor" || u.role === "admin")
+      .map(({ id, displayName, role }) => ({ id, displayName, role }));
+    res.json(doctors);
+  });
+
   // === Users (admin only) ===
   app.get("/api/users", authMiddleware, requirePermission("user_management"), async (req, res) => {
     const allUsers = await storage.getUsers();

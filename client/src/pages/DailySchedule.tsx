@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { format, addDays, subDays, getDay } from "date-fns";
 import { arSA } from "date-fns/locale";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,22 @@ function isWorkingDay(d: Date) { return WORKING_DAYS.includes(getDay(d)); }
 function getNextWorkingDay(from: Date) { let d = addDays(from, 1); while (!isWorkingDay(d)) d = addDays(d, 1); return d; }
 function getPrevWorkingDay(from: Date) { let d = subDays(from, 1); while (!isWorkingDay(d)) d = subDays(d, 1); return d; }
 
+const SERVICES = [
+  { value: "كشف عام", label: "كشف عام" },
+  { value: "تنظيف", label: "تنظيف" },
+  { value: "حشوة", label: "حشوة" },
+  { value: "علاج جذور", label: "علاج جذور" },
+  { value: "خلع", label: "خلع" },
+  { value: "تركيبات", label: "تركيبات" },
+  { value: "تقويم", label: "تقويم" },
+  { value: "زراعة", label: "زراعة" },
+  { value: "تبييض", label: "تبييض" },
+  { value: "جراحة", label: "جراحة" },
+  { value: "أشعة", label: "أشعة" },
+  { value: "متابعة", label: "متابعة" },
+  { value: "أخرى", label: "أخرى" },
+];
+
 export default function DailySchedule() {
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(() => {
@@ -50,11 +66,14 @@ export default function DailySchedule() {
     queryKey: [`${api.dailyEntries.list.path}?date=${formattedDate}`],
   });
 
+  const { data: doctors } = useQuery<{ id: number; displayName: string; role: string }[]>({
+    queryKey: ["/api/doctors"],
+  });
+
   const [showDialog, setShowDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DailyEntry | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const [entryTime, setEntryTime] = useState("");
   const [entryPatientName, setEntryPatientName] = useState("");
   const [entryTreatment, setEntryTreatment] = useState("");
   const [entryDoctor, setEntryDoctor] = useState("");
@@ -97,7 +116,6 @@ export default function DailySchedule() {
   });
 
   function resetForm() {
-    setEntryTime("");
     setEntryPatientName("");
     setEntryTreatment("");
     setEntryDoctor("");
@@ -114,7 +132,6 @@ export default function DailySchedule() {
 
   function openEdit(entry: DailyEntry) {
     setEditingEntry(entry);
-    setEntryTime(entry.time || "");
     setEntryPatientName(entry.patientName);
     setEntryTreatment(entry.treatment || "");
     setEntryDoctor(entry.doctor || "");
@@ -131,10 +148,10 @@ export default function DailySchedule() {
     }
     const data = {
       date: formattedDate,
-      time: entryTime || null,
+      time: null,
       patientName: entryPatientName.trim(),
-      treatment: entryTreatment.trim() || null,
-      doctor: entryDoctor.trim() || null,
+      treatment: entryTreatment || null,
+      doctor: entryDoctor || null,
       amount: entryAmount ? Number(entryAmount) : 0,
       currency: entryCurrency,
       notes: entryNotes.trim() || null,
@@ -172,7 +189,7 @@ export default function DailySchedule() {
             </Button>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 bg-white shadow-sm border-slate-200 text-slate-700 font-bold">
+                <Button variant="outline" className="flex items-center gap-2 bg-white shadow-sm border-slate-200 text-slate-700 font-bold" data-testid="button-date-picker">
                   <CalendarIcon className="w-5 h-5 text-primary" />
                   {format(date, "EEEE d/M", { locale: arSA })}
                 </Button>
@@ -201,7 +218,7 @@ export default function DailySchedule() {
             إضافة سجل
           </Button>
           {Object.keys(totalByCurrency).length > 0 && (
-            <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-3 flex-wrap bg-white rounded-lg px-4 py-2 border border-slate-100 shadow-sm">
               <DollarSign className="w-4 h-4 text-green-600" />
               <span className="text-sm text-slate-500">إجمالي اليوم:</span>
               {Object.entries(totalByCurrency).map(([curr, total]) => (
@@ -231,7 +248,6 @@ export default function DailySchedule() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50">
-                        <TableHead className="text-right font-bold text-slate-700 w-20">الساعة</TableHead>
                         <TableHead className="text-right font-bold text-slate-700">اسم المريض</TableHead>
                         <TableHead className="text-right font-bold text-slate-700">العلاج</TableHead>
                         <TableHead className="text-right font-bold text-slate-700">الطبيب</TableHead>
@@ -243,7 +259,6 @@ export default function DailySchedule() {
                     <TableBody>
                       {entries.map((entry) => (
                         <TableRow key={entry.id} data-testid={`row-entry-${entry.id}`}>
-                          <TableCell className="font-mono text-slate-600">{entry.time || "—"}</TableCell>
                           <TableCell className="font-bold text-slate-800">{entry.patientName}</TableCell>
                           <TableCell className="text-slate-600">{entry.treatment || "—"}</TableCell>
                           <TableCell className="text-slate-600">{entry.doctor || "—"}</TableCell>
@@ -294,26 +309,6 @@ export default function DailySchedule() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>الساعة</Label>
-                <Input
-                  type="time"
-                  value={entryTime}
-                  onChange={(e) => setEntryTime(e.target.value)}
-                  data-testid="input-entry-time"
-                />
-              </div>
-              <div>
-                <Label>الطبيب</Label>
-                <Input
-                  value={entryDoctor}
-                  onChange={(e) => setEntryDoctor(e.target.value)}
-                  placeholder="اسم الطبيب"
-                  data-testid="input-entry-doctor"
-                />
-              </div>
-            </div>
             <div>
               <Label>اسم المريض *</Label>
               <Input
@@ -323,14 +318,33 @@ export default function DailySchedule() {
                 data-testid="input-entry-patient"
               />
             </div>
-            <div>
-              <Label>العلاج</Label>
-              <Input
-                value={entryTreatment}
-                onChange={(e) => setEntryTreatment(e.target.value)}
-                placeholder="نوع العلاج"
-                data-testid="input-entry-treatment"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>العلاج</Label>
+                <Select value={entryTreatment} onValueChange={setEntryTreatment}>
+                  <SelectTrigger data-testid="select-entry-treatment">
+                    <SelectValue placeholder="اختر العلاج" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SERVICES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>الطبيب</Label>
+                <Select value={entryDoctor} onValueChange={setEntryDoctor}>
+                  <SelectTrigger data-testid="select-entry-doctor">
+                    <SelectValue placeholder="اختر الطبيب" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(doctors || []).map((doc) => (
+                      <SelectItem key={doc.id} value={doc.displayName}>{doc.displayName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
