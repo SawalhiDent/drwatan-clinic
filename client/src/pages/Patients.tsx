@@ -634,38 +634,59 @@ export default function Patients() {
               <TabsContent value="info" className="mt-0 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white p-4 rounded-xl border border-slate-100">
-                    <span className="text-xs text-slate-400 block mb-1">رقم الهاتف</span>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs text-slate-400">رقم الهاتف</span>
+                      <span dir="ltr" className="text-xs text-slate-400">טלפון</span>
+                    </div>
                     <span dir="ltr" className="font-bold text-slate-700">{selectedPatient?.phone}</span>
                   </div>
                   <div className="bg-white p-4 rounded-xl border border-slate-100">
-                    <span className="text-xs text-slate-400 block mb-1">العنوان</span>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs text-slate-400">العنوان</span>
+                      <span dir="ltr" className="text-xs text-slate-400">כתובת</span>
+                    </div>
                     <span className="font-bold text-slate-700">{selectedPatient?.address || "غير محدد"}</span>
                   </div>
                 </div>
 
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-[#0e8bab] mb-3 flex items-center gap-2">
-                    <ActivityIcon className="w-4 h-4" />
-                    السجل الطبي
+                  <h4 className="font-bold text-[#0e8bab] mb-3 flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <ActivityIcon className="w-4 h-4" />
+                      السجل الطبي
+                    </span>
+                    <span dir="ltr" className="text-sm">היסטוריה רפואית</span>
                   </h4>
                   <div className="space-y-3">
-                    <div className="flex justify-between border-b border-slate-50 pb-2">
-                      <span className="text-slate-500">الحساسية</span>
+                    <div className="border-b border-slate-50 pb-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-slate-500 text-sm">الحساسية</span>
+                        <span dir="ltr" className="text-slate-400 text-xs">אלרגיות</span>
+                      </div>
                       <span className="font-medium text-red-600">{selectedPatient?.allergies || "لا يوجد"}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-50 pb-2">
-                      <span className="text-slate-500">الأمراض المزمنة</span>
+                    <div className="border-b border-slate-50 pb-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-slate-500 text-sm">الأمراض المزمنة</span>
+                        <span dir="ltr" className="text-slate-400 text-xs">מחלות כרוניות</span>
+                      </div>
                       <span className="font-medium text-orange-600">{selectedPatient?.chronicDiseases || "لا يوجد"}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">الأدوية الحالية</span>
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-slate-500 text-sm">الأدوية الحالية</span>
+                        <span dir="ltr" className="text-slate-400 text-xs">תרופות נוכחיות</span>
+                      </div>
                       <span className="font-medium text-blue-600">{selectedPatient?.currentMeds || "لا يوجد"}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-slate-700 mb-2">ملاحظات</h4>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-bold text-slate-700">ملاحظات</h4>
+                    <span dir="ltr" className="text-xs text-slate-400">הערות</span>
+                  </div>
                   <p className="text-slate-600 text-sm leading-relaxed">
                     {selectedPatient?.notes || "لا توجد ملاحظات إضافية."}
                   </p>
