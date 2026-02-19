@@ -168,31 +168,31 @@ export default function UsersPage() {
             <p>لا يوجد مستخدمون</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3">
             {users.map((u) => (
               <Card key={u.id} className="border-0 shadow-lg shadow-slate-200/50" data-testid={`card-user-${u.id}`}>
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center",
-                        u.role === "admin" ? "bg-purple-100" : u.role === "doctor" ? "bg-blue-100" : "bg-green-100"
-                      )}>
-                        {u.role === "admin" ? (
-                          <Shield className="w-6 h-6 text-purple-600" />
-                        ) : (
-                          <UserCircle2 className={cn("w-6 h-6", u.role === "doctor" ? "text-blue-600" : "text-green-600")} />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-800">{u.displayName}</h3>
-                        <span className="text-xs text-slate-400">@{u.username}</span>
-                      </div>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                      u.role === "admin" ? "bg-purple-100" : u.role === "doctor" ? "bg-blue-100" : "bg-green-100"
+                    )}>
+                      {u.role === "admin" ? (
+                        <Shield className="w-5 h-5 text-purple-600" />
+                      ) : (
+                        <UserCircle2 className={cn("w-5 h-5", u.role === "doctor" ? "text-blue-600" : "text-green-600")} />
+                      )}
                     </div>
+
+                    <div className="min-w-[120px]">
+                      <h3 className="font-bold text-slate-800">{u.displayName}</h3>
+                      <span className="text-xs text-slate-400">@{u.username}</span>
+                    </div>
+
                     <Badge
                       variant="secondary"
                       className={cn(
-                        "text-xs",
+                        "text-xs shrink-0",
                         u.role === "admin" ? "bg-purple-50 text-purple-700" :
                         u.role === "doctor" ? "bg-blue-50 text-blue-700" :
                         "bg-green-50 text-green-700"
@@ -200,50 +200,50 @@ export default function UsersPage() {
                     >
                       {ROLE_LABELS[u.role] || u.role}
                     </Badge>
-                  </div>
 
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {u.role === "admin" ? (
-                      <Badge variant="outline" className="text-xs bg-purple-50/50">جميع الصلاحيات</Badge>
-                    ) : (
-                      (u.permissions || []).map((perm) => (
-                        <Badge key={perm} variant="outline" className="text-xs">
-                          {PERMISSION_LABELS[perm as Permission] || perm}
-                        </Badge>
-                      ))
-                    )}
-                    {u.role !== "admin" && (!u.permissions || u.permissions.length === 0) && (
-                      <span className="text-xs text-slate-400">لا توجد صلاحيات</span>
-                    )}
-                  </div>
-
-                  {u.role !== "admin" && (
-                    <div className="flex gap-2 border-t border-slate-100 pt-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEdit(u)}
-                        data-testid={`button-edit-user-${u.id}`}
-                      >
-                        <Pencil className="w-3.5 h-3.5 ml-1" />
-                        تعديل
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-200"
-                        onClick={() => {
-                          if (confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
-                            deleteMutation.mutate(u.id);
-                          }
-                        }}
-                        data-testid={`button-delete-user-${u.id}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5 ml-1" />
-                        حذف
-                      </Button>
+                    <div className="flex flex-wrap gap-1.5 flex-1">
+                      {u.role === "admin" ? (
+                        <Badge variant="outline" className="text-xs bg-purple-50/50">جميع الصلاحيات</Badge>
+                      ) : (
+                        (u.permissions || []).map((perm) => (
+                          <Badge key={perm} variant="outline" className="text-xs">
+                            {PERMISSION_LABELS[perm as Permission] || perm}
+                          </Badge>
+                        ))
+                      )}
+                      {u.role !== "admin" && (!u.permissions || u.permissions.length === 0) && (
+                        <span className="text-xs text-slate-400">لا توجد صلاحيات</span>
+                      )}
                     </div>
-                  )}
+
+                    {u.role !== "admin" && (
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEdit(u)}
+                          data-testid={`button-edit-user-${u.id}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5 ml-1" />
+                          تعديل
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-200"
+                          onClick={() => {
+                            if (confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
+                              deleteMutation.mutate(u.id);
+                            }
+                          }}
+                          data-testid={`button-delete-user-${u.id}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 ml-1" />
+                          حذف
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
