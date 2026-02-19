@@ -1,10 +1,9 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
-import Home from "@/pages/Home";
 import Booking from "@/pages/Booking";
 import Patients from "@/pages/Patients";
 import Dashboard from "@/pages/Dashboard";
@@ -34,7 +33,9 @@ function ProtectedRouter() {
 
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/">
+        <Redirect to="/booking" />
+      </Route>
       {hasPermission("appointments") && <Route path="/booking" component={Booking} />}
       {hasPermission("patients_view") && <Route path="/patients" component={Patients} />}
       {hasPermission("appointments") && <Route path="/dashboard" component={Dashboard} />}
