@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { format, addDays, subDays, getDay } from "date-fns";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Patient } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, ChevronRight, ChevronLeft, Calendar as CalendarIcon, Pencil, Trash2, ClipboardList, DollarSign } from "lucide-react";
+import { Loader2, Plus, ChevronRight, ChevronLeft, Calendar as CalendarIcon, Pencil, Trash2, ClipboardList, DollarSign, Search } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
@@ -80,6 +81,38 @@ export default function DailySchedule() {
   const [entryAmount, setEntryAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState("₪");
   const [entryNotes, setEntryNotes] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: patientResults } = useQuery<Patient[]>({
+    queryKey: [`/api/patients?search=${encodeURIComponent(patientSearch)}`],
+    enabled: patientSearch.length >= 2,
+  });
+
+  const handlePatientInput = useCallback((val: string) => {
+    setEntryPatientName(val);
+    setPatientSearch(val);
+    setShowSuggestions(val.length >= 2);
+  }, []);
+
+  const selectPatient = useCallback((patient: Patient) => {
+    setEntryPatientName(patient.fullName);
+    setPatientSearch("");
+    setShowSuggestions(false);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", api.dailyEntries.create.path, data),
@@ -123,6 +156,8 @@ export default function DailySchedule() {
     setEntryCurrency("₪");
     setEntryNotes("");
     setEditingEntry(null);
+    setPatientSearch("");
+    setShowSuggestions(false);
   }
 
   function openAdd() {
@@ -309,14 +344,40 @@ export default function DailySchedule() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
+            <div className="relative">
               <Label>اسم المريض *</Label>
-              <Input
-                value={entryPatientName}
-                onChange={(e) => setEntryPatientName(e.target.value)}
-                placeholder="اسم المريض"
-                data-testid="input-entry-patient"
-              />
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                <Input
+                  ref={inputRef}
+                  value={entryPatientName}
+                  onChange={(e) => handlePatientInput(e.target.value)}
+                  onFocus={() => { if (entryPatientName.length >= 2) setShowSuggestions(true); }}
+                  placeholder="ابحث أو اكتب اسم المريض"
+                  className="pr-9"
+                  data-testid="input-entry-patient"
+                />
+              </div>
+              {showSuggestions && patientResults && patientResults.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                  data-testid="patient-suggestions"
+                >
+                  {patientResults.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => selectPatient(p)}
+                      className="w-full text-right px-3 py-2 hover-elevate flex items-center justify-between gap-2 border-b border-slate-50 last:border-b-0"
+                      data-testid={`suggestion-patient-${p.id}`}
+                    >
+                      <span className="font-bold text-slate-800">{p.fullName}</span>
+                      <span className="text-xs text-slate-400">{p.phone}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
