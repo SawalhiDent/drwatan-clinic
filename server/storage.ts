@@ -8,6 +8,7 @@ import {
   expenseCategories,
   expenses,
   dailyEntries,
+  treatmentNotes,
   type InsertPatient,
   type InsertAppointment,
   type InsertWhatsappTemplate,
@@ -23,6 +24,7 @@ import {
   type ExpenseCategory,
   type Expense,
   type DailyEntry,
+  type TreatmentNote,
 } from "@shared/schema";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -84,6 +86,10 @@ export interface IStorage {
   createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry>;
   updateDailyEntry(id: number, data: Partial<InsertDailyEntry>): Promise<DailyEntry | undefined>;
   deleteDailyEntry(id: number): Promise<void>;
+
+  // Treatment Notes
+  getTreatmentNotes(patientId: number): Promise<TreatmentNote[]>;
+  createTreatmentNote(data: { patientId: number; date: string; treatment?: string | null; doctor?: string | null; notes: string; dailyEntryId?: number | null }): Promise<TreatmentNote>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -418,6 +424,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDailyEntry(id: number): Promise<void> {
     await db.delete(dailyEntries).where(eq(dailyEntries.id, id));
+  }
+
+  // Treatment Notes
+  async getTreatmentNotes(patientId: number): Promise<TreatmentNote[]> {
+    return await db.select().from(treatmentNotes)
+      .where(eq(treatmentNotes.patientId, patientId))
+      .orderBy(desc(treatmentNotes.date), desc(treatmentNotes.createdAt));
+  }
+
+  async createTreatmentNote(data: { patientId: number; date: string; treatment?: string | null; doctor?: string | null; notes: string; dailyEntryId?: number | null }): Promise<TreatmentNote> {
+    const [note] = await db.insert(treatmentNotes).values({
+      patientId: data.patientId,
+      date: data.date,
+      treatment: data.treatment || null,
+      doctor: data.doctor || null,
+      notes: data.notes,
+      dailyEntryId: data.dailyEntryId || null,
+    }).returning();
+    return note;
   }
 }
 

@@ -375,6 +375,12 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  // === Treatment Notes ===
+  app.get("/api/patients/:id/treatment-notes", authMiddleware, requirePermission("patients_view"), async (req, res) => {
+    const notes = await storage.getTreatmentNotes(Number(req.params.id));
+    res.json(notes);
+  });
+
   // === Daily Entries ===
   app.get(api.dailyEntries.list.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
     const date = req.query.date as string | undefined;
@@ -386,6 +392,24 @@ export async function registerRoutes(
     try {
       const input = api.dailyEntries.create.input.parse(req.body);
       const entry = await storage.createDailyEntry(input);
+
+      if (entry.notes && entry.notes.trim()) {
+        const allPatients = await storage.getPatients(entry.patientName);
+        const matchedPatient = allPatients.find(
+          (p) => p.fullName.trim() === entry.patientName.trim()
+        );
+        if (matchedPatient) {
+          await storage.createTreatmentNote({
+            patientId: matchedPatient.id,
+            date: entry.date,
+            treatment: entry.treatment,
+            doctor: entry.doctor,
+            notes: entry.notes.trim(),
+            dailyEntryId: entry.id,
+          });
+        }
+      }
+
       res.status(201).json(entry);
     } catch (err) {
       if (err instanceof z.ZodError) {
