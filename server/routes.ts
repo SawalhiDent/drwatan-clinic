@@ -393,21 +393,15 @@ export async function registerRoutes(
       const input = api.dailyEntries.create.input.parse(req.body);
       const entry = await storage.createDailyEntry(input);
 
-      if (entry.notes && entry.notes.trim()) {
-        const allPatients = await storage.getPatients(entry.patientName);
-        const matchedPatient = allPatients.find(
-          (p) => p.fullName.trim() === entry.patientName.trim()
-        );
-        if (matchedPatient) {
-          await storage.createTreatmentNote({
-            patientId: matchedPatient.id,
-            date: entry.date,
-            treatment: entry.treatment,
-            doctor: entry.doctor,
-            notes: entry.notes.trim(),
-            dailyEntryId: entry.id,
-          });
-        }
+      if (entry.notes && entry.notes.trim() && entry.patientId) {
+        await storage.createTreatmentNote({
+          patientId: entry.patientId,
+          date: entry.date,
+          treatment: entry.treatment,
+          doctor: entry.doctor,
+          notes: entry.notes.trim(),
+          dailyEntryId: entry.id,
+        });
       }
 
       res.status(201).json(entry);

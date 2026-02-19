@@ -423,6 +423,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteDailyEntry(id: number): Promise<void> {
+    await db.update(treatmentNotes).set({ dailyEntryId: null }).where(eq(treatmentNotes.dailyEntryId, id));
     await db.delete(dailyEntries).where(eq(dailyEntries.id, id));
   }
 

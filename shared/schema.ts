@@ -118,6 +118,7 @@ export const dailyEntries = pgTable("daily_entries", {
   id: serial("id").primaryKey(),
   date: text("date").notNull(),
   time: text("time"),
+  patientId: integer("patient_id").references(() => patients.id),
   patientName: text("patient_name").notNull(),
   treatment: text("treatment"),
   doctor: text("doctor"),

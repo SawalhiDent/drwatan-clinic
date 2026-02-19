@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPatientSchema, type InsertPatient, type Patient } from "@shared/schema";
+import { insertPatientSchema, type InsertPatient, type Patient, type TreatmentNote } from "@shared/schema";
 import { usePatients, useCreatePatient, useUpdatePatient } from "@/hooks/use-patients";
 import { useCreateAppointment } from "@/hooks/use-appointments";
 import { Layout } from "@/components/Layout";
@@ -15,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon } from "lucide-react";
+import { Search, UserPlus, Pencil, Phone, MapPin, AlertCircle, Pill, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon, ClipboardList, Stethoscope } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
 import { 
@@ -57,6 +58,11 @@ export default function Patients() {
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
   const { mutate: updatePatient, isPending: isUpdating } = useUpdatePatient();
+
+  const { data: treatmentNotesData, isLoading: isLoadingNotes } = useQuery<TreatmentNote[]>({
+    queryKey: [`/api/patients/${selectedPatient?.id}/treatment-notes`],
+    enabled: !!selectedPatient?.id && isDetailsOpen,
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -628,6 +634,7 @@ export default function Patients() {
                 <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">التفاصيل</TabsTrigger>
                 <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">الملفات والصور</TabsTrigger>
                 <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">الدفعات</TabsTrigger>
+                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">سجل العلاج</TabsTrigger>
               </TabsList>
             </div>
 
@@ -925,6 +932,60 @@ export default function Patients() {
                     </div>
                   </DialogContent>
                 </Dialog>
+              </TabsContent>
+
+              <TabsContent value="treatment-history" className="mt-0 space-y-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-100">
+                  <h4 className="font-bold text-[#0e8bab] mb-4 flex items-center gap-2" data-testid="text-treatment-history-title">
+                    <Stethoscope className="w-4 h-4" />
+                    سجل متابعة العلاج
+                  </h4>
+                  {isLoadingNotes ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#0e8bab]" />
+                    </div>
+                  ) : !treatmentNotesData || treatmentNotesData.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400" data-testid="text-no-treatment-notes">
+                      <ClipboardList className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+                      <p className="text-sm">لا توجد ملاحظات علاج مسجلة بعد</p>
+                      <p className="text-xs mt-1">ستظهر هنا الملاحظات عند إضافتها من السجل اليومي</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3" data-testid="treatment-notes-list">
+                      {treatmentNotesData.map((note) => (
+                        <div
+                          key={note.id}
+                          className="border border-slate-100 rounded-lg p-3 bg-slate-50/50"
+                          data-testid={`treatment-note-${note.id}`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-3.5 h-3.5 text-[#0e8bab]" />
+                              <span className="text-sm font-bold text-slate-700" data-testid={`treatment-note-date-${note.id}`}>
+                                {note.date}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {note.treatment && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs" data-testid={`treatment-note-service-${note.id}`}>
+                                  {note.treatment}
+                                </Badge>
+                              )}
+                              {note.doctor && (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 text-xs" data-testid={`treatment-note-doctor-${note.id}`}>
+                                  {note.doctor}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-600 leading-relaxed" data-testid={`treatment-note-text-${note.id}`}>
+                            {note.notes}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </TabsContent>
             </div>
           </Tabs>

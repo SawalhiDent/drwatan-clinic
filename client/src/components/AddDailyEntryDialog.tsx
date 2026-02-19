@@ -50,6 +50,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
   });
 
   const [patientName, setPatientName] = useState("");
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [treatment, setTreatment] = useState("");
   const [doctor, setDoctor] = useState("");
   const [amount, setAmount] = useState("");
@@ -76,6 +77,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
         setNotes(editingEntry.notes || "");
       } else {
         setPatientName("");
+        setSelectedPatientId(null);
         setTreatment("");
         setDoctor("");
         setAmount("");
@@ -89,12 +91,14 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
 
   const handlePatientInput = useCallback((val: string) => {
     setPatientName(val);
+    setSelectedPatientId(null);
     setPatientSearch(val);
     setShowSuggestions(val.length >= 2);
   }, []);
 
   const selectPatient = useCallback((patient: Patient) => {
     setPatientName(patient.fullName);
+    setSelectedPatientId(patient.id);
     setPatientSearch("");
     setShowSuggestions(false);
   }, []);
@@ -141,6 +145,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
     const data = {
       date: formattedDate,
       time: null,
+      patientId: selectedPatientId || null,
       patientName: patientName.trim(),
       treatment: treatment || null,
       doctor: doctor || null,
