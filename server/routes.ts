@@ -486,6 +486,11 @@ export async function registerRoutes(
     res.status(204).send();
   }));
 
+  // Catch-all for unknown /api/* routes — return JSON 404 instead of SPA HTML
+  app.all("/api/{*path}", (_req, res) => {
+    res.status(404).json({ message: "المسار غير موجود" });
+  });
+
   // Seed admin user, default templates, and expense categories
   await seedAdminUser();
   await storage.seedDefaultTemplates();

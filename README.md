@@ -39,7 +39,6 @@ cp .env.example .env
 | `PORT` | Server port (default: 5000) | No |
 | `ADMIN_USERNAME` | Admin login username (default: admin) | No |
 | `ADMIN_PASSWORD` | Admin login password (default: admin123) | Yes |
-| `SESSION_SECRET` | Secret for session signing | Recommended |
 | `NODE_ENV` | Environment: `development` or `production` | No |
 
 ### 4. إعداد قاعدة البيانات | Set up the database
