@@ -43,6 +43,7 @@ export default function Patients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isQuickBookingOpen, setIsQuickBookingOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [detailsLang, setDetailsLang] = useState<"ar" | "he">("ar");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -632,63 +633,61 @@ export default function Patients() {
 
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
               <TabsContent value="info" className="mt-0 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex justify-end">
+                  <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5">
+                    <button
+                      onClick={() => setDetailsLang("ar")}
+                      className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "ar" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
+                      data-testid="button-lang-ar"
+                    >
+                      عربي
+                    </button>
+                    <button
+                      onClick={() => setDetailsLang("he")}
+                      className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "he" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
+                      data-testid="button-lang-he"
+                    >
+                      עברית
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                   <div className="bg-white p-4 rounded-xl border border-slate-100">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-slate-400">رقم الهاتف</span>
-                      <span dir="ltr" className="text-xs text-slate-400">טלפון</span>
-                    </div>
+                    <span className="text-xs text-slate-400 block mb-1">{detailsLang === "he" ? "טלפון" : "رقم الهاتف"}</span>
                     <span dir="ltr" className="font-bold text-slate-700">{selectedPatient?.phone}</span>
                   </div>
                   <div className="bg-white p-4 rounded-xl border border-slate-100">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-slate-400">العنوان</span>
-                      <span dir="ltr" className="text-xs text-slate-400">כתובת</span>
-                    </div>
-                    <span className="font-bold text-slate-700">{selectedPatient?.address || "غير محدد"}</span>
+                    <span className="text-xs text-slate-400 block mb-1">{detailsLang === "he" ? "כתובת" : "العنوان"}</span>
+                    <span className="font-bold text-slate-700">{selectedPatient?.address || (detailsLang === "he" ? "לא צוין" : "غير محدد")}</span>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-[#0e8bab] mb-3 flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <ActivityIcon className="w-4 h-4" />
-                      السجل الطبي
-                    </span>
-                    <span dir="ltr" className="text-sm">היסטוריה רפואית</span>
+                <div className="bg-white p-4 rounded-xl border border-slate-100" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+                  <h4 className="font-bold text-[#0e8bab] mb-3 flex items-center gap-2">
+                    <ActivityIcon className="w-4 h-4" />
+                    {detailsLang === "he" ? "היסטוריה רפואית" : "السجل الطبي"}
                   </h4>
                   <div className="space-y-3">
-                    <div className="border-b border-slate-50 pb-2">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-slate-500 text-sm">الحساسية</span>
-                        <span dir="ltr" className="text-slate-400 text-xs">אלרגיות</span>
-                      </div>
-                      <span className="font-medium text-red-600">{selectedPatient?.allergies || "لا يوجد"}</span>
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span className="text-slate-500">{detailsLang === "he" ? "אלרגיות" : "الحساسية"}</span>
+                      <span className="font-medium text-red-600">{selectedPatient?.allergies || (detailsLang === "he" ? "אין" : "لا يوجد")}</span>
                     </div>
-                    <div className="border-b border-slate-50 pb-2">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-slate-500 text-sm">الأمراض المزمنة</span>
-                        <span dir="ltr" className="text-slate-400 text-xs">מחלות כרוניות</span>
-                      </div>
-                      <span className="font-medium text-orange-600">{selectedPatient?.chronicDiseases || "لا يوجد"}</span>
+                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                      <span className="text-slate-500">{detailsLang === "he" ? "מחלות כרוניות" : "الأمراض المزمنة"}</span>
+                      <span className="font-medium text-orange-600">{selectedPatient?.chronicDiseases || (detailsLang === "he" ? "אין" : "لا يوجد")}</span>
                     </div>
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-slate-500 text-sm">الأدوية الحالية</span>
-                        <span dir="ltr" className="text-slate-400 text-xs">תרופות נוכחיות</span>
-                      </div>
-                      <span className="font-medium text-blue-600">{selectedPatient?.currentMeds || "لا يوجد"}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{detailsLang === "he" ? "תרופות נוכחיות" : "الأدوية الحالية"}</span>
+                      <span className="font-medium text-blue-600">{selectedPatient?.currentMeds || (detailsLang === "he" ? "אין" : "لا يوجد")}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-bold text-slate-700">ملاحظات</h4>
-                    <span dir="ltr" className="text-xs text-slate-400">הערות</span>
-                  </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-100" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+                  <h4 className="font-bold text-slate-700 mb-2">{detailsLang === "he" ? "הערות" : "ملاحظات"}</h4>
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    {selectedPatient?.notes || "لا توجد ملاحظات إضافية."}
+                    {selectedPatient?.notes || (detailsLang === "he" ? "אין הערות נוספות." : "لا توجد ملاحظات إضافية.")}
                   </p>
                 </div>
               </TabsContent>
