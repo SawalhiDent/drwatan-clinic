@@ -12,6 +12,7 @@ Key features:
 - **Financial Reports**: Daily, weekly, and monthly payment summaries with cash/check breakdown by currency
 - **WhatsApp Templates**: Database-backed template management system with variable substitution ({name}, {date}, {time}, {service}, etc.). Templates stored in `whatsapp_templates` table, managed via /whatsapp-templates page. Templates are seeded with defaults on first run.
 - **Home Page**: Landing page with animated navigation cards
+- **PWA Support**: Progressive Web App with manifest.json, service worker for offline caching, and installable on iOS/Android
 
 ### Authentication & Permissions
 - Default admin credentials: username=admin, password=admin123 (or ADMIN_PASSWORD env var)

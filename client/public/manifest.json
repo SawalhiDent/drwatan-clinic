@@ -1,0 +1,26 @@
+{
+  "name": "صوالحي دنت - عيادة أسنان",
+  "short_name": "صوالحي دنت",
+  "description": "نظام إدارة عيادة الأسنان - صوالحي دنت",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a2647",
+  "theme_color": "#0e8bab",
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
