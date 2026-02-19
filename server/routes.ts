@@ -14,20 +14,30 @@ declare global {
   }
 }
 
+function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    fn(req, res, next).catch(next);
+  };
+}
+
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const sessionId = req.headers["x-session-id"] as string;
-  if (!sessionId) {
-    return res.status(401).json({ message: "غير مصرح" });
-  }
+  try {
+    const sessionId = req.headers["x-session-id"] as string;
+    if (!sessionId) {
+      return res.status(401).json({ message: "غير مصرح" });
+    }
 
-  const session = await storage.getSession(sessionId);
-  if (!session || !session.user.active) {
-    return res.status(401).json({ message: "الجلسة منتهية" });
-  }
+    const session = await storage.getSession(sessionId);
+    if (!session || !session.user.active) {
+      return res.status(401).json({ message: "الجلسة منتهية" });
+    }
 
-  req.user = session.user;
-  req.sessionId = sessionId;
-  next();
+    req.user = session.user;
+    req.sessionId = sessionId;
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
 function requirePermission(...perms: Permission[]) {
@@ -44,6 +54,15 @@ function requirePermission(...perms: Permission[]) {
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_LOGIN_ATTEMPTS = 10;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+setInterval(() => {
+  const now = Date.now();
+  loginAttempts.forEach((record, ip) => {
+    if (now - record.lastAttempt > LOGIN_WINDOW_MS) {
+      loginAttempts.delete(ip);
+    }
+  });
+}, 5 * 60 * 1000);
 
 function checkLoginRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -63,7 +82,7 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // === Auth Routes (no middleware) ===
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", asyncHandler(async (req, res) => {
     const clientIp = req.ip || req.socket.remoteAddress || "unknown";
     if (!checkLoginRateLimit(clientIp)) {
       return res.status(429).json({ message: "محاولات كثيرة. حاول بعد قليل" });
@@ -87,32 +106,32 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.post("/api/auth/logout", authMiddleware, async (req, res) => {
+  app.post("/api/auth/logout", authMiddleware, asyncHandler(async (req, res) => {
     if (req.sessionId) await storage.deleteSession(req.sessionId);
     res.json({ message: "تم تسجيل الخروج" });
-  });
+  }));
 
-  app.get("/api/auth/me", authMiddleware, async (req, res) => {
+  app.get("/api/auth/me", authMiddleware, asyncHandler(async (req, res) => {
     const { passwordHash, ...safeUser } = req.user!;
     res.json(safeUser);
-  });
+  }));
 
-  app.get("/api/doctors", authMiddleware, async (req, res) => {
+  app.get("/api/doctors", authMiddleware, asyncHandler(async (req, res) => {
     const allUsers = await storage.getUsers();
     const doctors = allUsers
       .filter((u) => u.role === "doctor" || u.role === "admin")
       .map(({ id, displayName, role }) => ({ id, displayName, role }));
     res.json(doctors);
-  });
+  }));
 
   // === Users (admin only) ===
-  app.get("/api/users", authMiddleware, requirePermission("user_management"), async (req, res) => {
+  app.get("/api/users", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
     const allUsers = await storage.getUsers();
     const safeUsers = allUsers.map(({ passwordHash, ...u }) => u);
     res.json(safeUsers);
-  });
+  }));
 
   const createUserSchema = z.object({
     username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل").max(50),
@@ -122,7 +141,7 @@ export async function registerRoutes(
     permissions: z.array(z.string()).optional().default([]),
   });
 
-  app.post("/api/users", authMiddleware, requirePermission("user_management"), async (req, res) => {
+  app.post("/api/users", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
     try {
       const { username, password, displayName, role, permissions } = createUserSchema.parse(req.body);
       const validPerms = permissions.filter((p: string) => PERMISSIONS.includes(p as Permission) && p !== "user_management") as Permission[];
@@ -145,7 +164,7 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
   const updateUserSchema = z.object({
     displayName: z.string().min(1).max(100).optional(),
@@ -155,7 +174,7 @@ export async function registerRoutes(
     password: z.string().min(4).max(100).optional().or(z.literal("")),
   });
 
-  app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {
+  app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
@@ -184,31 +203,31 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.delete("/api/users/:id", authMiddleware, requirePermission("user_management"), async (req, res) => {
+  app.delete("/api/users/:id", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     const user = await storage.getUser(id);
     if (!user) return res.status(404).json({ message: "المستخدم غير موجود" });
     if (user.role === "admin") return res.status(403).json({ message: "لا يمكن حذف المدير" });
     await storage.deleteUser(id);
     res.status(204).send();
-  });
+  }));
 
   // === Patients (protected) ===
-  app.get(api.patients.list.path, authMiddleware, requirePermission("patients_view"), async (req, res) => {
+  app.get(api.patients.list.path, authMiddleware, requirePermission("patients_view"), asyncHandler(async (req, res) => {
     const search = req.query.search as string | undefined;
     const patients = await storage.getPatients(search);
     res.json(patients);
-  });
+  }));
 
-  app.get(api.patients.get.path, authMiddleware, requirePermission("patients_view"), async (req, res) => {
+  app.get(api.patients.get.path, authMiddleware, requirePermission("patients_view"), asyncHandler(async (req, res) => {
     const patient = await storage.getPatient(Number(req.params.id));
     if (!patient) return res.status(404).json({ message: "Patient not found" });
     res.json(patient);
-  });
+  }));
 
-  app.post(api.patients.create.path, authMiddleware, requirePermission("patients_edit"), async (req, res) => {
+  app.post(api.patients.create.path, authMiddleware, requirePermission("patients_edit"), asyncHandler(async (req, res) => {
     try {
       const input = api.patients.create.input.parse(req.body);
       const existing = await storage.getPatientByPhone(input.phone);
@@ -223,9 +242,9 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.put(api.patients.update.path, authMiddleware, requirePermission("patients_edit"), async (req, res) => {
+  app.put(api.patients.update.path, authMiddleware, requirePermission("patients_edit"), asyncHandler(async (req, res) => {
     try {
       const input = api.patients.update.input.parse(req.body);
       const patient = await storage.updatePatient(Number(req.params.id), input);
@@ -237,19 +256,19 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
   // === Appointments (protected) ===
-  app.get(api.appointments.list.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.get(api.appointments.list.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     const date = req.query.date as string | undefined;
     const appointments = await storage.getAppointments(date);
     res.json(appointments);
-  });
+  }));
 
-  app.post(api.appointments.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.post(api.appointments.create.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.appointments.create.input.parse(req.body);
-      const slotsToCheck = [];
+      const slotsToCheck: string[] = [];
       let [sh, sm] = input.startTime.split(":").map(Number);
       const [eh, em] = input.endTime.split(":").map(Number);
       const endMinutes = eh * 60 + em;
@@ -258,11 +277,9 @@ export async function registerRoutes(
         sm += 30;
         if (sm >= 60) { sh += 1; sm -= 60; }
       }
-      for (const slot of slotsToCheck) {
-        const isAvailable = await storage.checkAvailability(input.date, slot);
-        if (!isAvailable) {
-          return res.status(409).json({ message: `الوقت ${slot} محجوز مسبقاً` });
-        }
+      const conflictSlot = await storage.checkSlotsAvailability(input.date, slotsToCheck);
+      if (conflictSlot) {
+        return res.status(409).json({ message: `الوقت ${conflictSlot} محجوز مسبقاً` });
       }
       const appointment = await storage.createAppointment(input);
       res.status(201).json(appointment);
@@ -272,9 +289,9 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.put(api.appointments.update.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.put(api.appointments.update.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.appointments.update.input.parse(req.body);
       const appointment = await storage.updateAppointment(Number(req.params.id), input);
@@ -286,20 +303,20 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.delete(api.appointments.delete.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.delete(api.appointments.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     await storage.deleteAppointment(Number(req.params.id));
     res.status(204).send();
-  });
+  }));
 
   // WhatsApp Templates
-  app.get(api.whatsappTemplates.list.path, authMiddleware, async (_req, res) => {
+  app.get(api.whatsappTemplates.list.path, authMiddleware, asyncHandler(async (_req, res) => {
     const templates = await storage.getWhatsappTemplates();
     res.json(templates);
-  });
+  }));
 
-  app.post(api.whatsappTemplates.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.post(api.whatsappTemplates.create.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.whatsappTemplates.create.input.parse(req.body);
       const template = await storage.createWhatsappTemplate(input);
@@ -310,9 +327,9 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.put(api.whatsappTemplates.update.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.put(api.whatsappTemplates.update.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.whatsappTemplates.update.input.parse(req.body);
       const template = await storage.updateWhatsappTemplate(Number(req.params.id), input);
@@ -324,20 +341,20 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.delete(api.whatsappTemplates.delete.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.delete(api.whatsappTemplates.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     await storage.deleteWhatsappTemplate(Number(req.params.id));
     res.status(204).send();
-  });
+  }));
 
   // === Expense Categories ===
-  app.get(api.expenseCategories.list.path, authMiddleware, requirePermission("payments"), async (_req, res) => {
+  app.get(api.expenseCategories.list.path, authMiddleware, requirePermission("payments"), asyncHandler(async (_req, res) => {
     const categories = await storage.getExpenseCategories();
     res.json(categories);
-  });
+  }));
 
-  app.post(api.expenseCategories.create.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.post(api.expenseCategories.create.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     try {
       const input = api.expenseCategories.create.input.parse(req.body);
       const category = await storage.createExpenseCategory(input);
@@ -351,9 +368,9 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.put(api.expenseCategories.update.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.put(api.expenseCategories.update.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     try {
       const input = api.expenseCategories.update.input.parse(req.body);
       const category = await storage.updateExpenseCategory(Number(req.params.id), input);
@@ -365,22 +382,22 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.delete(api.expenseCategories.delete.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.delete(api.expenseCategories.delete.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     await storage.deleteExpenseCategory(Number(req.params.id));
     res.status(204).send();
-  });
+  }));
 
   // === Expenses ===
-  app.get(api.expenses.list.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.get(api.expenses.list.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     const startDate = req.query.startDate as string | undefined;
     const endDate = req.query.endDate as string | undefined;
     const expensesList = await storage.getExpenses(startDate, endDate);
     res.json(expensesList);
-  });
+  }));
 
-  app.post(api.expenses.create.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.post(api.expenses.create.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     try {
       const input = api.expenses.create.input.parse(req.body);
       const expense = await storage.createExpense(input);
@@ -391,9 +408,9 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.put(api.expenses.update.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.put(api.expenses.update.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     try {
       const input = api.expenses.update.input.parse(req.body);
       const expense = await storage.updateExpense(Number(req.params.id), input);
@@ -405,27 +422,27 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.delete(api.expenses.delete.path, authMiddleware, requirePermission("payments"), async (req, res) => {
+  app.delete(api.expenses.delete.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
     await storage.deleteExpense(Number(req.params.id));
     res.status(204).send();
-  });
+  }));
 
   // === Treatment Notes ===
-  app.get("/api/patients/:id/treatment-notes", authMiddleware, requirePermission("patients_view"), async (req, res) => {
+  app.get("/api/patients/:id/treatment-notes", authMiddleware, requirePermission("patients_view"), asyncHandler(async (req, res) => {
     const notes = await storage.getTreatmentNotes(Number(req.params.id));
     res.json(notes);
-  });
+  }));
 
   // === Daily Entries ===
-  app.get(api.dailyEntries.list.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.get(api.dailyEntries.list.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     const date = req.query.date as string | undefined;
     const entries = await storage.getDailyEntries(date);
     res.json(entries);
-  });
+  }));
 
-  app.post(api.dailyEntries.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.post(api.dailyEntries.create.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.dailyEntries.create.input.parse(req.body);
       const entry = await storage.createDailyEntry(input);
@@ -448,9 +465,9 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.put(api.dailyEntries.update.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.put(api.dailyEntries.update.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.dailyEntries.update.input.parse(req.body);
       const entry = await storage.updateDailyEntry(Number(req.params.id), input);
@@ -462,12 +479,12 @@ export async function registerRoutes(
       }
       throw err;
     }
-  });
+  }));
 
-  app.delete(api.dailyEntries.delete.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+  app.delete(api.dailyEntries.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     await storage.deleteDailyEntry(Number(req.params.id));
     res.status(204).send();
-  });
+  }));
 
   // Seed admin user, default templates, and expense categories
   await seedAdminUser();

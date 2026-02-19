@@ -44,6 +44,7 @@ export interface IStorage {
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
   deleteAppointment(id: number): Promise<void>;
   checkAvailability(date: string, startTime: string): Promise<boolean>;
+  checkSlotsAvailability(date: string, slots: string[]): Promise<string | null>;
 
   // Users
   getUsers(): Promise<User[]>;
@@ -95,12 +96,11 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // Patients
   async getPatients(search?: string): Promise<Patient[]> {
-    let query = db.select().from(patients);
     if (search) {
       const lowerSearch = `%${search.toLowerCase()}%`;
       return await db.select().from(patients).where(
         sql`lower(${patients.fullName}) LIKE ${lowerSearch} OR ${patients.phone} LIKE ${lowerSearch}`
-      );
+      ).orderBy(desc(patients.createdAt));
     }
     return await db.select().from(patients).orderBy(desc(patients.createdAt));
   }
@@ -116,12 +116,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPatient(patient: InsertPatient): Promise<Patient> {
-    const [newPatient] = await db.insert(patients).values(patient).returning();
+    const [newPatient] = await db.insert(patients).values(patient as any).returning();
     return newPatient;
   }
 
   async updatePatient(id: number, updates: Partial<InsertPatient>): Promise<Patient> {
-    const [updated] = await db.update(patients).set(updates).where(eq(patients.id, id)).returning();
+    const [updated] = await db.update(patients).set(updates as any).where(eq(patients.id, id)).returning();
     return updated;
   }
 
@@ -150,19 +150,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkAvailability(date: string, slotTime: string): Promise<boolean> {
-    const dayAppointments = await db.select().from(appointments).where(
+    const result = await this.checkSlotsAvailability(date, [slotTime]);
+    return result === null;
+  }
+
+  async checkSlotsAvailability(date: string, slots: string[]): Promise<string | null> {
+    const dayAppointments = await db.select({
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+    }).from(appointments).where(
       and(
         eq(appointments.date, date),
         sql`${appointments.status} != 'cancelled'`
       )
     );
-    const slotMin = parseInt(slotTime.split(":")[0]) * 60 + parseInt(slotTime.split(":")[1]);
-    const conflict = dayAppointments.some(apt => {
-      const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
-      const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);
-      return slotMin >= startMin && slotMin < endMin;
-    });
-    return !conflict;
+    for (const slotTime of slots) {
+      const slotMin = parseInt(slotTime.split(":")[0]) * 60 + parseInt(slotTime.split(":")[1]);
+      const conflict = dayAppointments.some(apt => {
+        const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
+        const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);
+        return slotMin >= startMin && slotMin < endMin;
+      });
+      if (conflict) return slotTime;
+    }
+    return null;
   }
 
   // Users
