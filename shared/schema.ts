@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb, varchar } from "drizzle-orm/pg-core";
+import { mysqlTable, text, int, timestamp, boolean, json, varchar } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -24,44 +24,44 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   user_management: "إدارة المستخدمين",
 };
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+export const users = mysqlTable("users", {
+  id: int("id").primaryKey().autoincrement(),
+  username: varchar("username", { length: 255 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  displayName: text("display_name").notNull(),
-  role: text("role").notNull().default("assistant"),
-  permissions: jsonb("permissions").$type<Permission[]>().default([]),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 50 }).notNull().default("assistant"),
+  permissions: json("permissions").$type<Permission[]>().default([]),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const sessions = pgTable("sessions", {
-  id: text("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+export const sessions = mysqlTable("sessions", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id),
   expiresAt: timestamp("expires_at").notNull(),
 });
 
-export const patients = pgTable("patients", {
-  id: serial("id").primaryKey(),
-  fullName: text("full_name").notNull(),
-  phone: text("phone").notNull().unique(),
-  age: integer("age"),
-  gender: text("gender"), // "male" | "female"
+export const patients = mysqlTable("patients", {
+  id: int("id").primaryKey().autoincrement(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull().unique(),
+  age: int("age"),
+  gender: varchar("gender", { length: 20 }),
   address: text("address"),
   allergies: text("allergies"),
   chronicDiseases: text("chronic_diseases"),
   currentMeds: text("current_meds"),
   notes: text("notes"),
-  paidAmount: integer("paid_amount").default(0),
-  currencySymbol: text("currency_symbol").default("₪"),
-  payments: jsonb("payments").$type<{
+  paidAmount: int("paid_amount").default(0),
+  currencySymbol: varchar("currency_symbol", { length: 10 }).default("₪"),
+  payments: json("payments").$type<{
     amount: number;
     date: string;
     method: "cash" | "check";
     checkImageUrl?: string;
     currency: string;
   }[]>().default([]),
-  files: jsonb("files").$type<{
+  files: json("files").$type<{
     id: string;
     name: string;
     data: string;
@@ -70,72 +70,72 @@ export const patients = pgTable("patients", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const appointments = pgTable("appointments", {
-  id: serial("id").primaryKey(),
-  patientId: integer("patient_id").references(() => patients.id),
-  patientName: text("patient_name").notNull(), // Denormalized for ease or direct entry
-  phone: text("phone").notNull(), // Denormalized for direct entry
-  service: text("service").notNull(),
+export const appointments = mysqlTable("appointments", {
+  id: int("id").primaryKey().autoincrement(),
+  patientId: int("patient_id").references(() => patients.id),
+  patientName: varchar("patient_name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  service: varchar("service", { length: 255 }).notNull(),
   notes: text("notes"),
-  date: text("date").notNull(), // YYYY-MM-DD
-  startTime: text("start_time").notNull(), // HH:mm
-  endTime: text("end_time").notNull(), // HH:mm
-  status: text("status").default("scheduled"), // scheduled, completed, cancelled
+  date: varchar("date", { length: 10 }).notNull(),
+  startTime: varchar("start_time", { length: 5 }).notNull(),
+  endTime: varchar("end_time", { length: 5 }).notNull(),
+  status: varchar("status", { length: 20 }).default("scheduled"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const whatsappTemplates = pgTable("whatsapp_templates", {
-  id: serial("id").primaryKey(),
-  templateKey: text("template_key").notNull().unique(),
-  label: text("label").notNull(),
-  iconName: text("icon_name").notNull().default("MessageCircle"),
+export const whatsappTemplates = mysqlTable("whatsapp_templates", {
+  id: int("id").primaryKey().autoincrement(),
+  templateKey: varchar("template_key", { length: 255 }).notNull().unique(),
+  label: varchar("label", { length: 255 }).notNull(),
+  iconName: varchar("icon_name", { length: 50 }).notNull().default("MessageCircle"),
   messageBody: text("message_body").notNull(),
   needsAppointment: boolean("needs_appointment").default(false),
-  sortOrder: integer("sort_order").default(0),
+  sortOrder: int("sort_order").default(0),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const expenseCategories = pgTable("expense_categories", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  icon: text("icon").notNull().default("Folder"),
-  color: text("color").notNull().default("#6b7280"),
+export const expenseCategories = mysqlTable("expense_categories", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  icon: varchar("icon", { length: 50 }).notNull().default("Folder"),
+  color: varchar("color", { length: 20 }).notNull().default("#6b7280"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const expenses = pgTable("expenses", {
-  id: serial("id").primaryKey(),
-  categoryId: integer("category_id").notNull().references(() => expenseCategories.id),
-  amount: integer("amount").notNull(),
-  currency: text("currency").notNull().default("₪"),
+export const expenses = mysqlTable("expenses", {
+  id: int("id").primaryKey().autoincrement(),
+  categoryId: int("category_id").notNull().references(() => expenseCategories.id),
+  amount: int("amount").notNull(),
+  currency: varchar("currency", { length: 10 }).notNull().default("₪"),
   description: text("description"),
-  date: text("date").notNull(),
+  date: varchar("date", { length: 10 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const dailyEntries = pgTable("daily_entries", {
-  id: serial("id").primaryKey(),
-  date: text("date").notNull(),
-  time: text("time"),
-  patientId: integer("patient_id").references(() => patients.id),
-  patientName: text("patient_name").notNull(),
+export const dailyEntries = mysqlTable("daily_entries", {
+  id: int("id").primaryKey().autoincrement(),
+  date: varchar("date", { length: 10 }).notNull(),
+  time: varchar("time", { length: 5 }),
+  patientId: int("patient_id").references(() => patients.id),
+  patientName: varchar("patient_name", { length: 255 }).notNull(),
   treatment: text("treatment"),
-  doctor: text("doctor"),
-  amount: integer("amount").default(0),
-  currency: text("currency").default("₪"),
+  doctor: varchar("doctor", { length: 255 }),
+  amount: int("amount").default(0),
+  currency: varchar("currency", { length: 10 }).default("₪"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const treatmentNotes = pgTable("treatment_notes", {
-  id: serial("id").primaryKey(),
-  patientId: integer("patient_id").notNull().references(() => patients.id),
-  date: text("date").notNull(),
+export const treatmentNotes = mysqlTable("treatment_notes", {
+  id: int("id").primaryKey().autoincrement(),
+  patientId: int("patient_id").notNull().references(() => patients.id),
+  date: varchar("date", { length: 10 }).notNull(),
   treatment: text("treatment"),
-  doctor: text("doctor"),
+  doctor: varchar("doctor", { length: 255 }),
   notes: text("notes").notNull(),
-  dailyEntryId: integer("daily_entry_id").references(() => dailyEntries.id),
+  dailyEntryId: int("daily_entry_id").references(() => dailyEntries.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

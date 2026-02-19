@@ -116,12 +116,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPatient(patient: InsertPatient): Promise<Patient> {
-    const [newPatient] = await db.insert(patients).values(patient as any).returning();
+    await db.insert(patients).values(patient as any);
+    const [newPatient] = await db.select().from(patients).where(eq(patients.phone, patient.phone));
     return newPatient;
   }
 
   async updatePatient(id: number, updates: Partial<InsertPatient>): Promise<Patient> {
-    const [updated] = await db.update(patients).set(updates as any).where(eq(patients.id, id)).returning();
+    await db.update(patients).set(updates as any).where(eq(patients.id, id));
+    const [updated] = await db.select().from(patients).where(eq(patients.id, id));
     return updated;
   }
 
@@ -136,12 +138,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
+    const result = await db.insert(appointments).values(appointment);
+    const insertId = result[0].insertId;
+    const [newAppointment] = await db.select().from(appointments).where(eq(appointments.id, insertId));
     return newAppointment;
   }
 
   async updateAppointment(id: number, updates: Partial<InsertAppointment>): Promise<Appointment> {
-    const [updated] = await db.update(appointments).set(updates).where(eq(appointments.id, id)).returning();
+    await db.update(appointments).set(updates).where(eq(appointments.id, id));
+    const [updated] = await db.select().from(appointments).where(eq(appointments.id, id));
     return updated;
   }
 
@@ -193,13 +198,15 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[] }): Promise<User> {
     const passwordHash = await bcrypt.hash(data.password, 10);
-    const [user] = await db.insert(users).values({
+    const result = await db.insert(users).values({
       username: data.username,
       passwordHash,
       displayName: data.displayName,
       role: data.role,
       permissions: data.permissions,
-    }).returning();
+    });
+    const insertId = result[0].insertId;
+    const [user] = await db.select().from(users).where(eq(users.id, insertId));
     return user;
   }
 
@@ -211,7 +218,8 @@ export class DatabaseStorage implements IStorage {
     if (data.active !== undefined) updates.active = data.active;
     if (data.password) updates.passwordHash = await bcrypt.hash(data.password, 10);
 
-    const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    await db.update(users).set(updates).where(eq(users.id, id));
+    const [updated] = await db.select().from(users).where(eq(users.id, id));
     return updated;
   }
 
@@ -228,7 +236,8 @@ export class DatabaseStorage implements IStorage {
   async createSession(userId: number): Promise<Session> {
     const id = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const [session] = await db.insert(sessions).values({ id, userId, expiresAt }).returning();
+    await db.insert(sessions).values({ id, userId, expiresAt });
+    const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
     return session;
   }
 
@@ -271,12 +280,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createWhatsappTemplate(data: InsertWhatsappTemplate): Promise<WhatsappTemplate> {
-    const [t] = await db.insert(whatsappTemplates).values(data).returning();
+    const result = await db.insert(whatsappTemplates).values(data);
+    const insertId = result[0].insertId;
+    const [t] = await db.select().from(whatsappTemplates).where(eq(whatsappTemplates.id, insertId));
     return t;
   }
 
   async updateWhatsappTemplate(id: number, data: Partial<InsertWhatsappTemplate>): Promise<WhatsappTemplate | undefined> {
-    const [t] = await db.update(whatsappTemplates).set(data).where(eq(whatsappTemplates.id, id)).returning();
+    await db.update(whatsappTemplates).set(data).where(eq(whatsappTemplates.id, id));
+    const [t] = await db.select().from(whatsappTemplates).where(eq(whatsappTemplates.id, id));
     return t;
   }
 
@@ -356,12 +368,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExpenseCategory(data: InsertExpenseCategory): Promise<ExpenseCategory> {
-    const [cat] = await db.insert(expenseCategories).values(data).returning();
+    const result = await db.insert(expenseCategories).values(data);
+    const insertId = result[0].insertId;
+    const [cat] = await db.select().from(expenseCategories).where(eq(expenseCategories.id, insertId));
     return cat;
   }
 
   async updateExpenseCategory(id: number, data: Partial<InsertExpenseCategory>): Promise<ExpenseCategory | undefined> {
-    const [cat] = await db.update(expenseCategories).set(data).where(eq(expenseCategories.id, id)).returning();
+    await db.update(expenseCategories).set(data).where(eq(expenseCategories.id, id));
+    const [cat] = await db.select().from(expenseCategories).where(eq(expenseCategories.id, id));
     return cat;
   }
 
@@ -400,12 +415,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExpense(data: InsertExpense): Promise<Expense> {
-    const [exp] = await db.insert(expenses).values(data).returning();
+    const result = await db.insert(expenses).values(data);
+    const insertId = result[0].insertId;
+    const [exp] = await db.select().from(expenses).where(eq(expenses.id, insertId));
     return exp;
   }
 
   async updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense | undefined> {
-    const [exp] = await db.update(expenses).set(data).where(eq(expenses.id, id)).returning();
+    await db.update(expenses).set(data).where(eq(expenses.id, id));
+    const [exp] = await db.select().from(expenses).where(eq(expenses.id, id));
     return exp;
   }
 
@@ -424,12 +442,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry> {
-    const [entry] = await db.insert(dailyEntries).values(data).returning();
+    const result = await db.insert(dailyEntries).values(data);
+    const insertId = result[0].insertId;
+    const [entry] = await db.select().from(dailyEntries).where(eq(dailyEntries.id, insertId));
     return entry;
   }
 
   async updateDailyEntry(id: number, data: Partial<InsertDailyEntry>): Promise<DailyEntry | undefined> {
-    const [entry] = await db.update(dailyEntries).set(data).where(eq(dailyEntries.id, id)).returning();
+    await db.update(dailyEntries).set(data).where(eq(dailyEntries.id, id));
+    const [entry] = await db.select().from(dailyEntries).where(eq(dailyEntries.id, id));
     return entry;
   }
 
@@ -446,14 +467,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTreatmentNote(data: { patientId: number; date: string; treatment?: string | null; doctor?: string | null; notes: string; dailyEntryId?: number | null }): Promise<TreatmentNote> {
-    const [note] = await db.insert(treatmentNotes).values({
+    const result = await db.insert(treatmentNotes).values({
       patientId: data.patientId,
       date: data.date,
       treatment: data.treatment || null,
       doctor: data.doctor || null,
       notes: data.notes,
       dailyEntryId: data.dailyEntryId || null,
-    }).returning();
+    });
+    const insertId = result[0].insertId;
+    const [note] = await db.select().from(treatmentNotes).where(eq(treatmentNotes.id, insertId));
     return note;
   }
 }

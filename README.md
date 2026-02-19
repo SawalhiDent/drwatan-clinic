@@ -5,7 +5,7 @@ Sawalehi Dent - Dental Clinic Management System
 ## المتطلبات | Requirements
 
 - **Node.js** v20 or later
-- **PostgreSQL** v14 or later
+- **MySQL** v8.0 or later
 - **npm** v9 or later
 
 ## التثبيت | Installation
@@ -35,7 +35,7 @@ cp .env.example .env
 
 | Variable | Description | Required |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `DATABASE_URL` | MySQL connection string | Yes |
 | `PORT` | Server port (default: 5000) | No |
 | `ADMIN_USERNAME` | Admin login username (default: admin) | No |
 | `ADMIN_PASSWORD` | Admin login password (default: admin123) | Yes |
@@ -44,8 +44,25 @@ cp .env.example .env
 
 ### 4. إعداد قاعدة البيانات | Set up the database
 
+أنشئ قاعدة بيانات MySQL أولاً، ثم ادفع الجداول:
+
 ```bash
 npm run db:push
+```
+
+**ملاحظة مهمة**: قبل تشغيل `db:push`، تأكد من تحديث ملف `drizzle.config.ts` ليكون:
+
+```typescript
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./migrations",
+  schema: "./shared/schema.ts",
+  dialect: "mysql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL,
+  },
+});
 ```
 
 ### 5. بناء المشروع للإنتاج | Build for production
@@ -76,7 +93,7 @@ The server will start on the port specified by `PORT` (default: 5000).
 │   ├── index.ts          # Entry point
 │   ├── routes.ts         # API routes
 │   ├── storage.ts        # Database operations
-│   ├── db.ts             # Database connection
+│   ├── db.ts             # Database connection (MySQL)
 │   └── static.ts         # Static file serving
 ├── shared/               # Shared code (frontend + backend)
 │   ├── schema.ts         # Database schema (Drizzle ORM)
@@ -111,13 +128,17 @@ git push origin main
 ```
 
 2. في لوحة تحكم Hostinger:
+   - أنشئ قاعدة بيانات MySQL من لوحة التحكم
    - اربط مستودع GitHub بالاستضافة
-   - أضف متغيرات البيئة (`DATABASE_URL`, `ADMIN_PASSWORD`, `NODE_ENV=production`)
+   - أضف متغيرات البيئة:
+     - `DATABASE_URL=mysql://user:password@localhost:3306/database_name`
+     - `ADMIN_PASSWORD=your_secure_password`
+     - `NODE_ENV=production`
    - اضبط أمر البناء: `npm install && npm run build`
    - اضبط أمر التشغيل: `npm start`
-   - اضبط نقطة الدخول: `dist/index.cjs`
+   - نقطة الدخول: `dist/index.cjs`
 
-3. تأكد من إعداد قاعدة بيانات PostgreSQL على Hostinger وتحديث `DATABASE_URL`.
+3. بعد الربط، شغّل `npm run db:push` لإنشاء الجداول في قاعدة البيانات.
 
 ## الميزات | Features
 
@@ -138,5 +159,5 @@ git push origin main
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui, Vite
 - **Backend**: Node.js, Express 5, TypeScript
-- **Database**: PostgreSQL, Drizzle ORM
+- **Database**: MySQL 8, Drizzle ORM
 - **Auth**: Session-based with bcrypt password hashing
