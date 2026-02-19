@@ -321,7 +321,7 @@ export default function Patients() {
                         name="paidAmount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>المبلغ المدفوع (ريال)</FormLabel>
+                            <FormLabel>المبلغ المدفوع</FormLabel>
                             <FormControl>
                               <Input 
                                 type="number" 
