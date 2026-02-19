@@ -127,6 +127,17 @@ export const dailyEntries = pgTable("daily_entries", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const treatmentNotes = pgTable("treatment_notes", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").notNull().references(() => patients.id),
+  date: text("date").notNull(),
+  treatment: text("treatment"),
+  doctor: text("doctor"),
+  notes: text("notes").notNull(),
+  dailyEntryId: integer("daily_entry_id").references(() => dailyEntries.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas
 export const insertPatientSchema = createInsertSchema(patients).omit({ 
   id: true, 
@@ -195,3 +206,5 @@ export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 
 export type DailyEntry = typeof dailyEntries.$inferSelect;
 export type InsertDailyEntry = z.infer<typeof insertDailyEntrySchema>;
+
+export type TreatmentNote = typeof treatmentNotes.$inferSelect;
