@@ -5,10 +5,11 @@ import { insertAppointmentSchema, type InsertAppointment, type Patient } from "@
 import { useCreateAppointment, useAppointments } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
 import { Layout } from "@/components/Layout";
-import { format, addDays, setHours, setMinutes } from "date-fns";
+import { format, addDays, setHours, setMinutes, getDay } from "date-fns";
 import { arSA } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
+import { AddDailyEntryDialog } from "@/components/AddDailyEntryDialog";
 import { 
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage 
 } from "@/components/ui/form";
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Phone } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Phone, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -26,12 +27,16 @@ const START_HOUR = 12;
 const END_HOUR = 21;
 const SLOT_DURATION = 30;
 
+const WORKING_DAYS = [0, 1, 4, 6];
+function isWorkingDay(d: Date) { return WORKING_DAYS.includes(getDay(d)); }
+
 export default function Booking() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [patientSearch, setPatientSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [showDailyEntry, setShowDailyEntry] = useState(false);
 
   const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined;
   const { data: existingAppointments, isLoading: isLoadingSlots } = useAppointments(formattedDate);
@@ -178,9 +183,15 @@ export default function Booking() {
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-tajawal text-slate-900">حجز موعد جديد</h1>
-        <p className="text-slate-500 mt-2">اختر التاريخ والوقت المناسب لحجز الموعد.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold font-tajawal text-slate-900">حجز موعد جديد</h1>
+          <p className="text-slate-500 mt-2">اختر التاريخ والوقت المناسب لحجز الموعد.</p>
+        </div>
+        <Button onClick={() => setShowDailyEntry(true)} variant="outline" data-testid="button-add-daily-entry">
+          <ClipboardList className="w-4 h-4 ml-2" />
+          إضافة سجل يومي
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -497,6 +508,12 @@ export default function Booking() {
           </Card>
         </div>
       </div>
+
+      <AddDailyEntryDialog
+        open={showDailyEntry}
+        onOpenChange={setShowDailyEntry}
+        date={selectedDate && isWorkingDay(selectedDate) ? selectedDate : new Date()}
+      />
     </Layout>
   );
 }
