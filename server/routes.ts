@@ -363,7 +363,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
-      if (err?.code === "ER_DUP_ENTRY" || err?.errno === 1062) {
+      if (err?.code === "23505") {
         return res.status(409).json({ message: "هذا القسم موجود بالفعل" });
       }
       throw err;

@@ -45,11 +45,10 @@ Preferred communication style: Simple, everyday language.
 - **Validation**: Zod schemas shared between frontend and backend via `shared/` directory
 
 ### Data Layer
-- **Database**: MySQL 8+ (required, connection via `DATABASE_URL` environment variable)
-- **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation, using `mysql2` driver
-- **Schema Location**: `shared/schema.ts` — uses `mysqlTable` definitions with `json` columns (instead of PostgreSQL `jsonb`)
+- **Database**: PostgreSQL (required, connection via `DATABASE_URL` environment variable)
+- **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation
+- **Schema Location**: `shared/schema.ts` — contains `patients` and `appointments` tables
 - **Migrations**: Drizzle Kit with `db:push` command for schema synchronization
-- **Note**: MySQL does not support `.returning()` on INSERT/UPDATE, so storage layer uses insert-then-select pattern
 
 ### Database Schema
 Two tables:
@@ -74,10 +73,10 @@ Two tables:
 ## External Dependencies
 
 ### Required Services
-- **MySQL Database**: Connected via `DATABASE_URL` environment variable. Uses `mysql2` pool for Drizzle ORM connection
+- **PostgreSQL Database**: Connected via `DATABASE_URL` environment variable. Uses `connect-pg-simple` for session storage and `pg` Pool for Drizzle ORM connection
 
 ### Key npm Packages
-- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling for MySQL
+- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling for PostgreSQL
 - **express** (v5): HTTP server framework
 - **@tanstack/react-query**: Async state management
 - **react-hook-form** + **zod**: Form handling and validation
