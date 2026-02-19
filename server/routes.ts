@@ -367,6 +367,45 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  // === Daily Entries ===
+  app.get(api.dailyEntries.list.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    const date = req.query.date as string | undefined;
+    const entries = await storage.getDailyEntries(date);
+    res.json(entries);
+  });
+
+  app.post(api.dailyEntries.create.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    try {
+      const input = api.dailyEntries.create.input.parse(req.body);
+      const entry = await storage.createDailyEntry(input);
+      res.status(201).json(entry);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.put(api.dailyEntries.update.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    try {
+      const input = api.dailyEntries.update.input.parse(req.body);
+      const entry = await storage.updateDailyEntry(Number(req.params.id), input);
+      if (!entry) return res.status(404).json({ message: "السجل غير موجود" });
+      res.json(entry);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.dailyEntries.delete.path, authMiddleware, requirePermission("appointments"), async (req, res) => {
+    await storage.deleteDailyEntry(Number(req.params.id));
+    res.status(204).send();
+  });
+
   // Seed admin user, default templates, and expense categories
   await seedAdminUser();
   await storage.seedDefaultTemplates();

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertPatientSchema, insertAppointmentSchema, insertWhatsappTemplateSchema, insertExpenseCategorySchema, insertExpenseSchema, patients, appointments, whatsappTemplates, expenseCategories, expenses } from './schema';
+import { insertPatientSchema, insertAppointmentSchema, insertWhatsappTemplateSchema, insertExpenseCategorySchema, insertExpenseSchema, insertDailyEntrySchema, patients, appointments, whatsappTemplates, expenseCategories, expenses, dailyEntries } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -197,6 +197,44 @@ export const api = {
     delete: {
       method: 'DELETE' as const,
       path: '/api/expenses/:id',
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  dailyEntries: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/daily-entries',
+      input: z.object({
+        date: z.string().optional(),
+      }).optional(),
+      responses: {
+        200: z.array(z.custom<typeof dailyEntries.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/daily-entries',
+      input: insertDailyEntrySchema,
+      responses: {
+        201: z.custom<typeof dailyEntries.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/daily-entries/:id',
+      input: insertDailyEntrySchema.partial(),
+      responses: {
+        200: z.custom<typeof dailyEntries.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/daily-entries/:id',
       responses: {
         204: z.void(),
         404: errorSchemas.notFound,

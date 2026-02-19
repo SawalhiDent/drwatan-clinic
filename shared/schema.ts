@@ -114,6 +114,19 @@ export const expenses = pgTable("expenses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const dailyEntries = pgTable("daily_entries", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull(),
+  time: text("time"),
+  patientName: text("patient_name").notNull(),
+  treatment: text("treatment"),
+  doctor: text("doctor"),
+  amount: integer("amount").default(0),
+  currency: text("currency").default("₪"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas
 export const insertPatientSchema = createInsertSchema(patients).omit({ 
   id: true, 
@@ -150,6 +163,11 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
   createdAt: true,
 });
 
+export const insertDailyEntrySchema = createInsertSchema(dailyEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const loginSchema = z.object({
   username: z.string().min(1, "أدخل اسم المستخدم"),
   password: z.string().min(1, "أدخل كلمة المرور"),
@@ -174,3 +192,6 @@ export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
 
 export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+
+export type DailyEntry = typeof dailyEntries.$inferSelect;
+export type InsertDailyEntry = z.infer<typeof insertDailyEntrySchema>;

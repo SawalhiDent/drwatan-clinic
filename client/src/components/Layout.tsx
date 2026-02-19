@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, Users, LayoutDashboard, UserCircle2, BarChart3, LogOut, Shield, Settings, MessageSquare, Receipt } from "lucide-react";
+import { Home, Calendar, Users, LayoutDashboard, UserCircle2, BarChart3, LogOut, Shield, Settings, MessageSquare, Receipt, ClipboardList } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import logo from "@assets/pp_1770153797959.png";
 import type { Permission } from "@shared/schema";
@@ -19,6 +19,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/booking", label: "حجز موعد", icon: Calendar, permission: "appointments" },
     { href: "/patients", label: "المرضى", icon: Users, permission: "patients_view" },
     { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard, permission: "appointments" },
+    { href: "/daily-schedule", label: "الجدول اليومي", icon: ClipboardList, permission: "appointments" },
     { href: "/expenses", label: "المصروفات", icon: Receipt, permission: "payments" },
     { href: "/reports", label: "التقارير", icon: BarChart3, permission: "reports" },
     { href: "/whatsapp-templates", label: "قوالب واتساب", icon: MessageSquare, permission: "appointments" },

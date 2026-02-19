@@ -7,11 +7,13 @@ import {
   whatsappTemplates,
   expenseCategories,
   expenses,
+  dailyEntries,
   type InsertPatient,
   type InsertAppointment,
   type InsertWhatsappTemplate,
   type InsertExpenseCategory,
   type InsertExpense,
+  type InsertDailyEntry,
   type Patient,
   type Appointment,
   type User,
@@ -20,6 +22,7 @@ import {
   type WhatsappTemplate,
   type ExpenseCategory,
   type Expense,
+  type DailyEntry,
 } from "@shared/schema";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -75,6 +78,12 @@ export interface IStorage {
   createExpense(data: InsertExpense): Promise<Expense>;
   updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense | undefined>;
   deleteExpense(id: number): Promise<void>;
+
+  // Daily Entries
+  getDailyEntries(date?: string): Promise<DailyEntry[]>;
+  createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry>;
+  updateDailyEntry(id: number, data: Partial<InsertDailyEntry>): Promise<DailyEntry | undefined>;
+  deleteDailyEntry(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -385,6 +394,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExpense(id: number): Promise<void> {
     await db.delete(expenses).where(eq(expenses.id, id));
+  }
+
+  // Daily Entries
+  async getDailyEntries(date?: string): Promise<DailyEntry[]> {
+    if (date) {
+      return await db.select().from(dailyEntries)
+        .where(eq(dailyEntries.date, date))
+        .orderBy(asc(dailyEntries.time));
+    }
+    return await db.select().from(dailyEntries).orderBy(desc(dailyEntries.date), asc(dailyEntries.time));
+  }
+
+  async createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry> {
+    const [entry] = await db.insert(dailyEntries).values(data).returning();
+    return entry;
+  }
+
+  async updateDailyEntry(id: number, data: Partial<InsertDailyEntry>): Promise<DailyEntry | undefined> {
+    const [entry] = await db.update(dailyEntries).set(data).where(eq(dailyEntries.id, id)).returning();
+    return entry;
+  }
+
+  async deleteDailyEntry(id: number): Promise<void> {
+    await db.delete(dailyEntries).where(eq(dailyEntries.id, id));
   }
 }
 
