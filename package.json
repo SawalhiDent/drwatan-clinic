@@ -5,7 +5,7 @@
 "main": "dist/index.cjs",
 "scripts": {
 "dev": "tsx server/index.ts",
-"build": "npm install && ./node_modules/.bin/vite build",
+"build": "npm install && npx vite build --outDir dist",
 "start": "node dist/index.cjs"
 },
 "dependencies": {
