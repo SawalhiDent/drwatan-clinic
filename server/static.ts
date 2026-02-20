@@ -4,7 +4,7 @@ import path from "path";
 
 export function serveStatic(app: Express) {
 // هذا هو المسار الذي اكتشفناه في صور مدير الملفات الخاصة بك
-const distPath = path.resolve(process.cwd(), "public_html", "public");
+  const distPath = path.resolve(process.cwd(), "dist");
 
 if (!fs.existsSync(distPath)) {
 console.log("Warning: Path not found: " + distPath);
