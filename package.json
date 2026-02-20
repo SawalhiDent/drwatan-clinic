@@ -5,10 +5,11 @@
 "main": "dist/index.cjs",
 "scripts": {
 "dev": "tsx server/index.ts",
-"build": "npm install && npx vite build --config ./vite.config.ts",
+"build": "npx vite build --config ./vite.config.ts",
 "start": "node dist/index.cjs"
 },
 "dependencies": {
+"vite": "^5.2.11",
 "@libsql/client": "^0.14.0",
 "drizzle-orm": "^0.39.3",
 "drizzle-zod": "^0.7.0",
@@ -16,7 +17,6 @@
 "path": "^0.12.7"
 },
 "devDependencies": {
-"vite": "^5.2.11",
 "tsx": "^4.7.2",
 "typescript": "^5.4.5"
 }
