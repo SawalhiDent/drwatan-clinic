@@ -3,10 +3,11 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-const distPath = path.resolve(process.cwd(), "dist");
+// هذا هو المسار الذي اكتشفناه في صور مدير الملفات الخاصة بك
+const distPath = path.resolve(process.cwd(), "public_html", "public");
 
 if (!fs.existsSync(distPath)) {
-throw new Error(Could not find the build directory: ${distPath}, make sure to build the client first);
+console.log("Warning: Path not found: " + distPath);
 }
 
 app.use(express.static(distPath));
