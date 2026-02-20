@@ -6,7 +6,7 @@
 "scripts": {
 "dev": "tsx server/index.ts",
 "build": "npx vite build --config ./vite.config.ts",
-"start": "node dist/index.cjs"
+"start": "npm run build && node dist/index.cjs"
 },
 "dependencies": {
 "vite": "^5.2.11",
