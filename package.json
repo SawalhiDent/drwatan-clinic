@@ -26,6 +26,7 @@
 "lucide-react": "^0.395.0",
 "clsx": "^2.1.1",
 "tailwind-merge": "^2.3.0",
+"class-variance-authority": "^0.7.0",
 "radix-ui": "^1.0.1",
 "@libsql/client": "^0.14.0",
 "drizzle-orm": "^0.39.3",
