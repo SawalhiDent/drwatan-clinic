@@ -19,6 +19,7 @@
 "tailwindcss-animate": "^1.0.7",
 "@tailwindcss/typography": "^0.5.13",
 "autoprefixer": "^10.4.19",
+"date-fns": "^3.6.0",
 "lucide-react": "^0.395.0",
 "clsx": "^2.1.1",
 "tailwind-merge": "^2.3.0",
