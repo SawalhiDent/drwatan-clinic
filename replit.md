@@ -45,9 +45,10 @@ Preferred communication style: Simple, everyday language.
 - **Validation**: Zod schemas shared between frontend and backend via `shared/` directory
 
 ### Data Layer
-- **Database**: PostgreSQL (required, connection via `DATABASE_URL` environment variable)
+- **Database**: SQLite (local file `database.db`, no external database service required)
 - **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation
-- **Schema Location**: `shared/schema.ts` — contains `patients` and `appointments` tables
+- **Driver**: `better-sqlite3` for synchronous, high-performance SQLite access
+- **Schema Location**: `shared/schema.ts` — contains all table definitions
 - **Migrations**: Drizzle Kit with `db:push` command for schema synchronization
 
 ### Database Schema
@@ -73,10 +74,11 @@ Two tables:
 ## External Dependencies
 
 ### Required Services
-- **PostgreSQL Database**: Connected via `DATABASE_URL` environment variable. Uses `connect-pg-simple` for session storage and `pg` Pool for Drizzle ORM connection
+- **SQLite Database**: Local file `database.db` (auto-created on first run, no external service needed)
 
 ### Key npm Packages
-- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling for PostgreSQL
+- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling for SQLite
+- **better-sqlite3**: SQLite driver for Node.js
 - **express** (v5): HTTP server framework
 - **@tanstack/react-query**: Async state management
 - **react-hook-form** + **zod**: Form handling and validation
