@@ -5,7 +5,7 @@
 "main": "index.js",
 "scripts": {
 "dev": "tsx server/index.ts",
-"build": "npx vite build --config ./vite.config.ts && cp dist/index.js ./index.js",
+  "build": "npx vite build --config ./vite.config.ts && cp dist/index.js ./index.js",
 "start": "node index.js"
 },
 "engines": {
