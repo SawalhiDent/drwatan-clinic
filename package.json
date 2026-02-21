@@ -2,11 +2,11 @@
 "name": "rest-express",
 "version": "1.0.0",
 "type": "module",
-"main": "index.cjs",
+"main": "dist/index.cjs",
 "scripts": {
 "dev": "tsx server/index.ts",
-"build": "npx vite build --config ./vite.config.ts",
-"start": "node index.cjs"
+"build": "npx vite build --config ./vite.config.ts --outDir dist",
+"start": "node dist/index.cjs"
 },
 "engines": {
 "node": "20.x"
