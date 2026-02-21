@@ -6,10 +6,10 @@
 "scripts": {
 "dev": "tsx server/index.ts",
 "build": "npx vite build --config ./vite.config.ts",
-"start": "npm run build && node dist/index.cjs"
+"start": "node dist/index.cjs"
 },
 "engines": {
-"node": ">=18.0.0"
+"node": "20.x"
 },
 "dependencies": {
 "vite": "^5.2.11",
