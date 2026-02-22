@@ -1,8 +1,23 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "@shared/schema";
+import path from "path";
+import fs from "fs";
 
-const sqlite = new Database("database.db");
+const dataDir = path.resolve(process.cwd(), "data");
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+let dbPath = path.join(dataDir, "database.db");
+if (process.env.SQLITE_PATH) {
+  dbPath = process.env.SQLITE_PATH;
+} else if (process.env.DATABASE_URL && (process.env.DATABASE_URL.startsWith("file:") || process.env.DATABASE_URL.endsWith(".db"))) {
+  const raw = process.env.DATABASE_URL;
+  dbPath = raw.startsWith("file:") ? raw.replace(/^file:/, "") : raw;
+}
+
+const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
 sqlite.pragma("busy_timeout = 5000");

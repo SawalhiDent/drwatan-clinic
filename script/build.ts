@@ -2,15 +2,11 @@ import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
 
-// server deps to bundle to reduce openat(2) syscalls
-// which helps cold start times
 const allowlist = [
-  "bcrypt",
   "date-fns",
   "drizzle-orm",
   "drizzle-zod",
   "express",
-  "better-sqlite3",
   "ws",
   "zod",
   "zod-validation-error",
@@ -42,6 +38,9 @@ async function buildAll() {
     minify: true,
     external: externals,
     logLevel: "info",
+    alias: {
+      "@shared": "./shared",
+    },
   });
 }
 

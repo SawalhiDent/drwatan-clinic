@@ -5,7 +5,6 @@ Sawalehi Dent - Dental Clinic Management System
 ## المتطلبات | Requirements
 
 - **Node.js** v20 or later
-- **PostgreSQL** v14 or later
 - **npm** v9 or later
 
 ## التثبيت | Installation
@@ -35,31 +34,26 @@ cp .env.example .env
 
 | Variable | Description | Required |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `PORT` | Server port (default: 5000) | No |
+| `PORT` | Server port (default: 3000) | No |
+| `NODE_ENV` | Environment: `development` or `production` | Yes |
+| `DATABASE_URL` | SQLite database file path (e.g., file:./data/database.db) | No |
+| `SESSION_SECRET` | Secret key for session encryption | Yes |
 | `ADMIN_USERNAME` | Admin login username (default: admin) | No |
-| `ADMIN_PASSWORD` | Admin login password (default: admin123) | Yes |
-| `NODE_ENV` | Environment: `development` or `production` | No |
+| `ADMIN_PASSWORD` | Admin login password | Yes |
 
-### 4. إعداد قاعدة البيانات | Set up the database
-
-```bash
-npm run db:push
-```
-
-### 5. بناء المشروع للإنتاج | Build for production
+### 4. بناء المشروع للإنتاج | Build for production
 
 ```bash
 npm run build
 ```
 
-### 6. تشغيل الخادم | Start the server
+### 5. تشغيل الخادم | Start the server
 
 ```bash
 npm start
 ```
 
-The server will start on the port specified by `PORT` (default: 5000).
+The server will start on the port specified by `PORT` (default: 3000).
 
 ## البنية | Project Structure
 
@@ -82,9 +76,12 @@ The server will start on the port specified by `PORT` (default: 5000).
 │   └── routes.ts         # API route contracts
 ├── script/
 │   └── build.ts          # Production build script
+├── data/                 # SQLite database directory
+│   └── database.db       # Database file (auto-created)
 ├── dist/                 # Production build output (generated)
 │   ├── index.cjs         # Bundled server
 │   └── public/           # Bundled frontend
+├── .env.example          # Environment variables template
 └── package.json
 ```
 
@@ -95,28 +92,66 @@ The server will start on the port specified by `PORT` (default: 5000).
 | `npm run dev` | Start development server with HMR |
 | `npm run build` | Build for production |
 | `npm start` | Run production server |
-| `npm run db:push` | Push database schema changes |
 | `npm run check` | Run TypeScript type checking |
 
-## النشر على Hostinger | Deploying to Hostinger
+## النشر على Hostinger Cloud | Deploying to Hostinger Cloud
 
-### باستخدام Node.js على Hostinger | Using Hostinger Node.js Hosting
+### خطوات النشر | Deployment Steps
 
-1. ادفع الكود إلى GitHub:
+#### 1. تجهيز الملفات | Prepare files
+
 ```bash
-git add .
-git commit -m "Initial commit"
-git push origin main
+npm install
+npm run build
 ```
 
-2. في لوحة تحكم Hostinger:
-   - اربط مستودع GitHub بالاستضافة
-   - أضف متغيرات البيئة (`DATABASE_URL`, `ADMIN_PASSWORD`, `NODE_ENV=production`)
-   - اضبط أمر البناء: `npm install && npm run build`
-   - اضبط أمر التشغيل: `npm start`
-   - اضبط نقطة الدخول: `dist/index.cjs`
+#### 2. رفع الملفات إلى Hostinger | Upload to Hostinger
 
-3. تأكد من إعداد قاعدة بيانات PostgreSQL على Hostinger وتحديث `DATABASE_URL`.
+ارفع الملفات التالية إلى مجلد `public_html` على Hostinger:
+
+```
+public_html/
+├── dist/
+│   ├── index.cjs          # Entry file
+│   └── public/            # Frontend files
+├── data/                  # Database directory (create manually)
+├── node_modules/          # Dependencies
+├── package.json
+├── package-lock.json
+└── .env                   # Environment variables
+```
+
+أو ارفع ملف ZIP يحتوي على كل الملفات.
+
+#### 3. إنشاء مجلد قاعدة البيانات | Create database directory
+
+```bash
+mkdir -p /home/USER/public_html/data
+```
+
+#### 4. إعداد متغيرات البيئة | Set environment variables
+
+في لوحة تحكم Hostinger، أضف المتغيرات التالية:
+
+| Variable | Value |
+|---|---|
+| `PORT` | 3000 |
+| `NODE_ENV` | production |
+| `DATABASE_URL` | file:./data/database.db |
+| `SESSION_SECRET` | (generate a random secret) |
+| `ADMIN_PASSWORD` | (your admin password) |
+
+#### 5. إعداد التطبيق على Hostinger Cloud | Configure on Hostinger
+
+- **Build command**: `npm install && npm run build`
+- **Entry file**: `dist/index.cjs`
+- **Node.js version**: 20
+
+#### 6. تأكد من التالي | Verify
+
+- مجلد `data` موجود داخل `public_html`
+- متغيرات البيئة مضافة بشكل صحيح
+- Entry file يشير إلى `dist/index.cjs`
 
 ## الميزات | Features
 
@@ -137,5 +172,5 @@ git push origin main
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui, Vite
 - **Backend**: Node.js, Express 5, TypeScript
-- **Database**: PostgreSQL, Drizzle ORM
+- **Database**: SQLite (better-sqlite3), Drizzle ORM
 - **Auth**: Session-based with bcrypt password hashing

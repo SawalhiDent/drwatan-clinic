@@ -45,7 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Validation**: Zod schemas shared between frontend and backend via `shared/` directory
 
 ### Data Layer
-- **Database**: SQLite via `better-sqlite3` (local `database.db` file, no external service needed)
+- **Database**: SQLite via `better-sqlite3` (stored in `data/database.db`, auto-created on startup)
 - **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation
 - **Schema Location**: `shared/schema.ts` — uses `sqliteTable` with SQLite-compatible types
 - **Table Creation**: Programmatic via `server/db.ts` on startup (CREATE TABLE IF NOT EXISTS)
@@ -77,7 +77,7 @@ Tables: patients, appointments, users, sessions, whatsapp_templates, treatment_n
 ## External Dependencies
 
 ### Required Services
-- **No external services required**: SQLite database stored locally as `database.db` file. No DATABASE_URL needed.
+- **No external services required**: SQLite database stored locally in `data/database.db`. Database path configurable via `SQLITE_PATH` env var or `DATABASE_URL` (with `file:` prefix). Directory auto-created on startup.
 
 ### Key npm Packages
 - **better-sqlite3**: SQLite driver for Node.js

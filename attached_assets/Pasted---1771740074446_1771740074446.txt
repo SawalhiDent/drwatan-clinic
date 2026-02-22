@@ -1,0 +1,95 @@
+نفّذ جميع التعديلات المطلوبة الآن داخل المشروع.
+لا تكتب شرحًا.
+لا تكتب تحليلًا.
+لا تكتب نصائح.
+قم بتعديل الملفات فعليًا داخل المشروع وأظهر النسخ النهائية للملفات بعد تعديلها فقط.
+
+========================================
+الهدف:
+تحويل هذا المشروع (Vite + Express + TypeScript + SQLite)
+إلى نسخة إنتاج كاملة (Production Ready – Plug & Play)
+قابلة للنقل اليدوي إلى Hostinger Cloud عن طريق تحميل ZIP وتشغيلها مباشرة.
+
+========================================
+A) إعداد Build حقيقي للإنتاج
+========================================
+
+1) عدّل tsconfig.json ليكون مناسبًا للإنتاج:
+- noEmit = false
+- outDir = "./dist"
+- rootDir = "."
+- module = "commonjs"
+- target = "es2019"
+
+2) عدّل package.json ليحتوي على:
+
+- "main": "dist/server/index.js"
+- "build": "vite build && tsc"
+- "start": "node dist/server/index.js"
+
+3) تأكد أن الأوامر التالية تعمل بدون أخطاء:
+- npm install
+- npm run build
+- npm start
+
+========================================
+B) تشغيل الواجهة من السيرفر
+========================================
+
+4) عدّل server/index.ts بحيث:
+- يخدم ملفات الواجهة المبنية من dist بعد vite build
+- أي مسار غير API يعيد index.html
+- يستخدم process.env.PORT وليس رقم ثابت
+
+========================================
+C) قاعدة البيانات SQLite قابلة للنقل
+========================================
+
+5) اجعل الاتصال بقاعدة البيانات يعتمد على:
+process.env.DATABASE_URL
+
+وإذا لم يكن موجودًا يستخدم:
+file:./data/database.db
+
+6) أضف كود عند بدء السيرفر يقوم بـ:
+- التحقق من وجود مجلد ./data
+- إذا لم يكن موجودًا، يقوم بإنشائه تلقائيًا
+
+7) تأكد أن ملف database.db يكون داخل مجلد data فقط
+وليس داخل dist
+
+========================================
+D) ملفات البيئة
+========================================
+
+8) أنشئ ملف .env.example يحتوي على:
+
+PORT=3000
+NODE_ENV=production
+DATABASE_URL=file:/home/USER/public_html/data/database.db
+SESSION_SECRET=change_this_secret
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change_this_password
+
+========================================
+E) الجاهزية للنقل
+========================================
+
+9) لا تعتمد على أي ميزة خاصة بـ Replit.
+10) تأكد أن مجلد dist يتم إنشاؤه عند build.
+11) لا تحذف ملفات المصدر، لكن اجعل التشغيل يعتمد فقط على dist.
+12) حدّث README.md ليحتوي على خطوات النشر على Hostinger Cloud:
+
+- Build command: npm install && npm run build
+- Entry file: dist/server/index.js
+- إضافة Environment Variables
+- إنشاء مجلد data داخل public_html
+
+بعد الانتهاء:
+اعرض النسخ النهائية المعدلة من:
+- package.json
+- tsconfig.json
+- server/index.ts
+- ملف إعداد قاعدة البيانات
+- .env.example
+- README.md
