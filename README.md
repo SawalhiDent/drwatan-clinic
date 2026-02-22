@@ -5,6 +5,7 @@ Sawalehi Dent - Dental Clinic Management System
 ## المتطلبات | Requirements
 
 - **Node.js** v20 or later
+- **PostgreSQL** v14 or later
 - **npm** v9 or later
 
 ## التثبيت | Installation
@@ -34,6 +35,7 @@ cp .env.example .env
 
 | Variable | Description | Required |
 |---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
 | `PORT` | Server port (default: 5000) | No |
 | `ADMIN_USERNAME` | Admin login username (default: admin) | No |
 | `ADMIN_PASSWORD` | Admin login password (default: admin123) | Yes |
@@ -109,12 +111,12 @@ git push origin main
 
 2. في لوحة تحكم Hostinger:
    - اربط مستودع GitHub بالاستضافة
-   - أضف متغيرات البيئة (`ADMIN_PASSWORD`, `NODE_ENV=production`)
+   - أضف متغيرات البيئة (`DATABASE_URL`, `ADMIN_PASSWORD`, `NODE_ENV=production`)
    - اضبط أمر البناء: `npm install && npm run build`
    - اضبط أمر التشغيل: `npm start`
    - اضبط نقطة الدخول: `dist/index.cjs`
 
-3. قاعدة البيانات SQLite تعمل تلقائياً (ملف `database.db` محلي)، لا حاجة لإعداد قاعدة بيانات خارجية.
+3. تأكد من إعداد قاعدة بيانات PostgreSQL على Hostinger وتحديث `DATABASE_URL`.
 
 ## الميزات | Features
 
@@ -135,5 +137,5 @@ git push origin main
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui, Vite
 - **Backend**: Node.js, Express 5, TypeScript
-- **Database**: SQLite (better-sqlite3), Drizzle ORM
+- **Database**: PostgreSQL, Drizzle ORM
 - **Auth**: Session-based with bcrypt password hashing

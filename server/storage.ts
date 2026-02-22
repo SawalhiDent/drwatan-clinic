@@ -227,7 +227,7 @@ export class DatabaseStorage implements IStorage {
   // Sessions
   async createSession(userId: number): Promise<Session> {
     const id = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const [session] = await db.insert(sessions).values({ id, userId, expiresAt }).returning();
     return session;
   }
@@ -242,7 +242,7 @@ export class DatabaseStorage implements IStorage {
     if (results.length === 0) return undefined;
 
     const row = results[0];
-    if (new Date() > new Date(row.sessions.expiresAt)) {
+    if (new Date() > row.sessions.expiresAt) {
       await this.deleteSession(id);
       return undefined;
     }
@@ -255,8 +255,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanExpiredSessions(): Promise<void> {
-    const now = new Date().toISOString();
-    await db.delete(sessions).where(sql`${sessions.expiresAt} < ${now}`);
+    await db.delete(sessions).where(sql`${sessions.expiresAt} < NOW()`);
   }
 
   // WhatsApp Templates

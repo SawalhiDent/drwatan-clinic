@@ -36,10 +36,5 @@ replit.nix
 server/public
 vite.config.ts.*
 
-# SQLite database (user data - should be backed up separately)
-database.db
-database.db-wal
-database.db-shm
-
 # Uploaded files (user data - should be backed up separately)
 uploads/
