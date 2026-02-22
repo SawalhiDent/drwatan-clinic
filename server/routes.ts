@@ -207,6 +207,7 @@ export async function registerRoutes(
 
   app.delete("/api/users/:id", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
     const user = await storage.getUser(id);
     if (!user) return res.status(404).json({ message: "المستخدم غير موجود" });
     if (user.role === "admin") return res.status(403).json({ message: "لا يمكن حذف المدير" });
@@ -236,9 +237,12 @@ export async function registerRoutes(
       }
       const patient = await storage.createPatient(input);
       res.status(201).json(patient);
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
+      }
+      if (err?.code === "SQLITE_CONSTRAINT_UNIQUE" || err?.message?.includes("UNIQUE constraint failed")) {
+        return res.status(409).json({ message: "رقم الهاتف مسجل بالفعل لمريض آخر" });
       }
       throw err;
     }
@@ -306,7 +310,9 @@ export async function registerRoutes(
   }));
 
   app.delete(api.appointments.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
-    await storage.deleteAppointment(Number(req.params.id));
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+    await storage.deleteAppointment(id);
     res.status(204).send();
   }));
 
@@ -344,7 +350,9 @@ export async function registerRoutes(
   }));
 
   app.delete(api.whatsappTemplates.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
-    await storage.deleteWhatsappTemplate(Number(req.params.id));
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+    await storage.deleteWhatsappTemplate(id);
     res.status(204).send();
   }));
 
@@ -363,7 +371,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
-      if (err?.code === "23505") {
+      if (err?.code === "SQLITE_CONSTRAINT_UNIQUE" || err?.message?.includes("UNIQUE constraint failed")) {
         return res.status(409).json({ message: "هذا القسم موجود بالفعل" });
       }
       throw err;
@@ -385,7 +393,9 @@ export async function registerRoutes(
   }));
 
   app.delete(api.expenseCategories.delete.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
-    await storage.deleteExpenseCategory(Number(req.params.id));
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+    await storage.deleteExpenseCategory(id);
     res.status(204).send();
   }));
 
@@ -425,7 +435,9 @@ export async function registerRoutes(
   }));
 
   app.delete(api.expenses.delete.path, authMiddleware, requirePermission("payments"), asyncHandler(async (req, res) => {
-    await storage.deleteExpense(Number(req.params.id));
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+    await storage.deleteExpense(id);
     res.status(204).send();
   }));
 
@@ -482,7 +494,9 @@ export async function registerRoutes(
   }));
 
   app.delete(api.dailyEntries.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
-    await storage.deleteDailyEntry(Number(req.params.id));
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+    await storage.deleteDailyEntry(id);
     res.status(204).send();
   }));
 

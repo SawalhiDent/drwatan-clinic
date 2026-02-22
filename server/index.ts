@@ -4,6 +4,13 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { storage } from "./storage";
 
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Promise Rejection:", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
+
 const app = express();
 const httpServer = createServer(app);
 

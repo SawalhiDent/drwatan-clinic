@@ -5,6 +5,9 @@ import * as schema from "@shared/schema";
 const sqlite = new Database("database.db");
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
+sqlite.pragma("busy_timeout = 5000");
+sqlite.pragma("synchronous = NORMAL");
+sqlite.pragma("cache_size = -20000");
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -110,6 +113,13 @@ sqlite.exec(`
     daily_entry_id INTEGER REFERENCES daily_entries(id),
     created_at TEXT
   );
+
+  CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(date);
+  CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
+  CREATE INDEX IF NOT EXISTS idx_daily_entries_date ON daily_entries(date);
+  CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
+  CREATE INDEX IF NOT EXISTS idx_treatment_notes_patient ON treatment_notes(patient_id);
+  CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 `);
 
 export const db = drizzle(sqlite, { schema });
