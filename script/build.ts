@@ -10,7 +10,7 @@ const allowlist = [
   "drizzle-orm",
   "drizzle-zod",
   "express",
-  "pg",
+  "better-sqlite3",
   "ws",
   "zod",
   "zod-validation-error",

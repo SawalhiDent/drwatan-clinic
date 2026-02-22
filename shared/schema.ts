@@ -1,4 +1,5 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb, varchar } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -24,29 +25,29 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   user_management: "إدارة المستخدمين",
 };
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   displayName: text("display_name").notNull(),
   role: text("role").notNull().default("assistant"),
-  permissions: jsonb("permissions").$type<Permission[]>().default([]),
-  active: boolean("active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  permissions: text("permissions", { mode: "json" }).$type<Permission[]>().default([]),
+  active: integer("active", { mode: "boolean" }).default(true),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const sessions = pgTable("sessions", {
+export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  expiresAt: timestamp("expires_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
 });
 
-export const patients = pgTable("patients", {
-  id: serial("id").primaryKey(),
+export const patients = sqliteTable("patients", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   fullName: text("full_name").notNull(),
   phone: text("phone").notNull().unique(),
   age: integer("age"),
-  gender: text("gender"), // "male" | "female"
+  gender: text("gender"),
   address: text("address"),
   allergies: text("allergies"),
   chronicDiseases: text("chronic_diseases"),
@@ -54,68 +55,68 @@ export const patients = pgTable("patients", {
   notes: text("notes"),
   paidAmount: integer("paid_amount").default(0),
   currencySymbol: text("currency_symbol").default("₪"),
-  payments: jsonb("payments").$type<{
+  payments: text("payments", { mode: "json" }).$type<{
     amount: number;
     date: string;
     method: "cash" | "check";
     checkImageUrl?: string;
     currency: string;
   }[]>().default([]),
-  files: jsonb("files").$type<{
+  files: text("files", { mode: "json" }).$type<{
     id: string;
     name: string;
     data: string;
     date: string;
   }[]>().default([]),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const appointments = pgTable("appointments", {
-  id: serial("id").primaryKey(),
+export const appointments = sqliteTable("appointments", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   patientId: integer("patient_id").references(() => patients.id),
-  patientName: text("patient_name").notNull(), // Denormalized for ease or direct entry
-  phone: text("phone").notNull(), // Denormalized for direct entry
+  patientName: text("patient_name").notNull(),
+  phone: text("phone").notNull(),
   service: text("service").notNull(),
   notes: text("notes"),
-  date: text("date").notNull(), // YYYY-MM-DD
-  startTime: text("start_time").notNull(), // HH:mm
-  endTime: text("end_time").notNull(), // HH:mm
-  status: text("status").default("scheduled"), // scheduled, completed, cancelled
-  createdAt: timestamp("created_at").defaultNow(),
+  date: text("date").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  status: text("status").default("scheduled"),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const whatsappTemplates = pgTable("whatsapp_templates", {
-  id: serial("id").primaryKey(),
+export const whatsappTemplates = sqliteTable("whatsapp_templates", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   templateKey: text("template_key").notNull().unique(),
   label: text("label").notNull(),
   iconName: text("icon_name").notNull().default("MessageCircle"),
   messageBody: text("message_body").notNull(),
-  needsAppointment: boolean("needs_appointment").default(false),
+  needsAppointment: integer("needs_appointment", { mode: "boolean" }).default(false),
   sortOrder: integer("sort_order").default(0),
-  active: boolean("active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  active: integer("active", { mode: "boolean" }).default(true),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const expenseCategories = pgTable("expense_categories", {
-  id: serial("id").primaryKey(),
+export const expenseCategories = sqliteTable("expense_categories", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
   icon: text("icon").notNull().default("Folder"),
   color: text("color").notNull().default("#6b7280"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const expenses = pgTable("expenses", {
-  id: serial("id").primaryKey(),
+export const expenses = sqliteTable("expenses", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   categoryId: integer("category_id").notNull().references(() => expenseCategories.id),
   amount: integer("amount").notNull(),
   currency: text("currency").notNull().default("₪"),
   description: text("description"),
   date: text("date").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const dailyEntries = pgTable("daily_entries", {
-  id: serial("id").primaryKey(),
+export const dailyEntries = sqliteTable("daily_entries", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   date: text("date").notNull(),
   time: text("time"),
   patientId: integer("patient_id").references(() => patients.id),
@@ -125,18 +126,18 @@ export const dailyEntries = pgTable("daily_entries", {
   amount: integer("amount").default(0),
   currency: text("currency").default("₪"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
-export const treatmentNotes = pgTable("treatment_notes", {
-  id: serial("id").primaryKey(),
+export const treatmentNotes = sqliteTable("treatment_notes", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   patientId: integer("patient_id").notNull().references(() => patients.id),
   date: text("date").notNull(),
   treatment: text("treatment"),
   doctor: text("doctor"),
   notes: text("notes").notNull(),
   dailyEntryId: integer("daily_entry_id").references(() => dailyEntries.id),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
 // Schemas
