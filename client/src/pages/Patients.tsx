@@ -614,11 +614,11 @@ export default function Patients() {
       {/* Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] w-[95vw] md:w-auto overflow-hidden flex flex-col p-0 border-slate-200 bg-white">
-          <DialogHeader className="p-6 pb-2">
-            <div className="flex items-center justify-between gap-4">
-              <DialogTitle className="text-xl font-bold font-tajawal flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#0e8bab]" />
-                {detailsLang === "he" ? `תיק מטופל: ${selectedPatient?.fullName}` : `ملف المريض: ${selectedPatient?.fullName}`}
+          <DialogHeader className="p-4 md:p-6 pb-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <DialogTitle className="text-base md:text-xl font-bold font-tajawal flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#0e8bab] shrink-0" />
+                <span className="truncate">{detailsLang === "he" ? `תיק מטופל: ${selectedPatient?.fullName}` : `ملف المريض: ${selectedPatient?.fullName}`}</span>
               </DialogTitle>
               <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 shrink-0">
                 <button
@@ -640,16 +640,16 @@ export default function Patients() {
           </DialogHeader>
 
           <Tabs defaultValue="info" className="flex-1 flex flex-col">
-            <div className="px-6 border-b" dir={detailsLang === "he" ? "ltr" : "rtl"}>
-              <TabsList className="bg-transparent gap-6 h-12 p-0 w-full justify-start">
-                <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "פרטים" : "التفاصيل"}</TabsTrigger>
-                <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "קבצים ותמונות" : "الملفات والصور"}</TabsTrigger>
-                <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "תשלומים" : "الدفعات"}</TabsTrigger>
-                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-slate-500 data-[state=active]:text-[#0e8bab]">{detailsLang === "he" ? "היסטוריית טיפולים" : "سجل العلاج"}</TabsTrigger>
+            <div className="px-4 md:px-6 border-b overflow-x-auto" dir={detailsLang === "he" ? "ltr" : "rtl"}>
+              <TabsList className="bg-transparent gap-2 md:gap-6 h-12 p-0 w-max md:w-full justify-start">
+                <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "פרטים" : "التفاصيل"}</TabsTrigger>
+                <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "קבצים" : "الملفات"}</TabsTrigger>
+                <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "תשלומים" : "الدفعات"}</TabsTrigger>
+                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "היסטוריית טיפולים" : "سجل العلاج"}</TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/30">
               <TabsContent value="info" className="mt-0 space-y-6" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white p-4 rounded-xl border border-slate-100">

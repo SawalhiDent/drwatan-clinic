@@ -40,24 +40,26 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-slate-700">اسم المستخدم</Label>
+              <Label htmlFor="username" className="text-sky-700 font-bold text-sm">اسم المستخدم</Label>
               <Input
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="أدخل اسم المستخدم"
                 autoFocus
+                className="bg-sky-50/60 border-sky-200 placeholder:text-sky-300 focus:border-sky-400 focus:ring-sky-400/20"
                 data-testid="input-username"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700">كلمة المرور</Label>
+              <Label htmlFor="password" className="text-sky-700 font-bold text-sm">كلمة المرور</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="أدخل كلمة المرور"
+                className="bg-sky-50/60 border-sky-200 placeholder:text-sky-300 focus:border-sky-400 focus:ring-sky-400/20"
                 data-testid="input-password"
               />
             </div>
