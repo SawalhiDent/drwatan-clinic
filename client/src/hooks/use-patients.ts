@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertPatient, type Patient } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 export function usePatients() {
   return useQuery<Patient[]>({
     queryKey: [api.patients.list.path],
+    placeholderData: keepPreviousData,
   });
 }
 

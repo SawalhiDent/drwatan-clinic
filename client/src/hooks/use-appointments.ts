@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertAppointment, type Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,7 @@ export function useAppointments(date?: string) {
       const res = await apiRequest("GET", url);
       return api.appointments.list.responses[200].parse(await res.json());
     },
+    placeholderData: keepPreviousData,
   });
 }
 
