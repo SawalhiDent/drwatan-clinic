@@ -59,3 +59,30 @@
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
+
+@layer utilities {
+  .hover-elevate {
+    @apply transition-all duration-150;
+  }
+  .hover-elevate:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  .active-elevate-2 {
+    @apply transition-all duration-100;
+  }
+  .active-elevate-2:active {
+    transform: translateY(1px);
+    box-shadow: 0 0px 2px rgba(0, 0, 0, 0.05);
+  }
+  .toggle-elevate {
+    @apply transition-all duration-150;
+  }
+  .toggle-elevate.toggle-elevated {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) inset;
+  }
+  .no-default-active-elevate:active {
+    transform: none;
+    box-shadow: none;
+  }
+}
