@@ -45,15 +45,19 @@ Preferred communication style: Simple, everyday language.
 - **Validation**: Zod schemas shared between frontend and backend via `shared/` directory
 
 ### Data Layer
-- **Database**: PostgreSQL (required, connection via `DATABASE_URL` environment variable)
+- **Database**: SQLite via `better-sqlite3` (local `database.db` file, no external service needed)
 - **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation
-- **Schema Location**: `shared/schema.ts` — contains `patients` and `appointments` tables
-- **Migrations**: Drizzle Kit with `db:push` command for schema synchronization
+- **Schema Location**: `shared/schema.ts` — uses `sqliteTable` with SQLite-compatible types
+- **Table Creation**: Programmatic via `server/db.ts` on startup (CREATE TABLE IF NOT EXISTS)
+- **SQLite Config**: WAL mode enabled, foreign keys enforced
 
 ### Database Schema
-Two tables:
-1. **patients**: id, full_name, phone (unique), age, gender, address, allergies, chronic_diseases, current_meds, notes, created_at
-2. **appointments**: id, patient_id (FK to patients, optional), patient_name, phone, service, notes, date (YYYY-MM-DD text), start_time (HH:mm text), end_time (HH:mm text), status (scheduled/completed/cancelled), created_at
+Tables: patients, appointments, users, sessions, whatsapp_templates, treatment_notes, expenses, expense_categories, daily_entries
+- **SQLite Type Conventions**: 
+  - IDs: `integer` with autoincrement (primary key)
+  - Timestamps: `text` storing ISO 8601 strings (e.g., `2025-01-15T10:30:00.000Z`)
+  - Booleans: `integer` with `{ mode: 'boolean' }` (0/1)
+  - JSON data: `text` with `{ mode: 'json' }` (serialized JSON strings)
 
 ### Shared Code (`shared/` directory)
 - `schema.ts`: Drizzle table definitions, Zod insert schemas, TypeScript types — single source of truth
@@ -73,10 +77,11 @@ Two tables:
 ## External Dependencies
 
 ### Required Services
-- **PostgreSQL Database**: Connected via `DATABASE_URL` environment variable. Uses `connect-pg-simple` for session storage and `pg` Pool for Drizzle ORM connection
+- **No external services required**: SQLite database stored locally as `database.db` file. No DATABASE_URL needed.
 
 ### Key npm Packages
-- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling for PostgreSQL
+- **better-sqlite3**: SQLite driver for Node.js
+- **drizzle-orm** + **drizzle-kit**: ORM and migration tooling
 - **express** (v5): HTTP server framework
 - **@tanstack/react-query**: Async state management
 - **react-hook-form** + **zod**: Form handling and validation
