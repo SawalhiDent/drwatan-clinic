@@ -30,6 +30,41 @@ import { eq, and, sql, desc, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
+class MemoryCache<T> {
+  private cache = new Map<string, { data: T; expiresAt: number }>();
+  private ttlMs: number;
+
+  constructor(ttlSeconds: number) {
+    this.ttlMs = ttlSeconds * 1000;
+  }
+
+  get(key: string): { hit: true; data: T } | { hit: false } {
+    const entry = this.cache.get(key);
+    if (!entry) return { hit: false };
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(key);
+      return { hit: false };
+    }
+    return { hit: true, data: entry.data };
+  }
+
+  set(key: string, data: T): void {
+    this.cache.set(key, { data, expiresAt: Date.now() + this.ttlMs });
+  }
+
+  invalidate(key: string): void {
+    this.cache.delete(key);
+  }
+
+  invalidateAll(): void {
+    this.cache.clear();
+  }
+}
+
+const sessionCache = new MemoryCache<(Session & { user: User }) | undefined>(60);
+const templatesCache = new MemoryCache<WhatsappTemplate[]>(300);
+const categoriesCache = new MemoryCache<ExpenseCategory[]>(300);
+
 export interface IStorage {
   // Patients
   getPatients(search?: string): Promise<Patient[]>;
@@ -233,13 +268,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSession(id: string): Promise<(Session & { user: User }) | undefined> {
+    const cached = sessionCache.get(id);
+    if (cached.hit) return cached.data;
+
     const results = await db
       .select()
       .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
       .where(eq(sessions.id, id));
 
-    if (results.length === 0) return undefined;
+    if (results.length === 0) {
+      sessionCache.set(id, undefined);
+      return undefined;
+    }
 
     const row = results[0];
     if (new Date().toISOString() > row.sessions.expiresAt) {
@@ -247,23 +288,31 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
 
-    return { ...row.sessions, user: row.users };
+    const result = { ...row.sessions, user: row.users };
+    sessionCache.set(id, result);
+    return result;
   }
 
   async deleteSession(id: string): Promise<void> {
+    sessionCache.invalidate(id);
     await db.delete(sessions).where(eq(sessions.id, id));
   }
 
   async cleanExpiredSessions(): Promise<void> {
+    sessionCache.invalidateAll();
     const now = new Date().toISOString();
     await db.delete(sessions).where(sql`${sessions.expiresAt} < ${now}`);
   }
 
   // WhatsApp Templates
   async getWhatsappTemplates(): Promise<WhatsappTemplate[]> {
-    return await db.select().from(whatsappTemplates)
+    const cached = templatesCache.get("all");
+    if (cached.hit) return cached.data;
+    const result = await db.select().from(whatsappTemplates)
       .where(eq(whatsappTemplates.active, true))
       .orderBy(asc(whatsappTemplates.sortOrder));
+    templatesCache.set("all", result);
+    return result;
   }
 
   async getWhatsappTemplate(id: number): Promise<WhatsappTemplate | undefined> {
@@ -272,16 +321,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createWhatsappTemplate(data: InsertWhatsappTemplate): Promise<WhatsappTemplate> {
+    templatesCache.invalidateAll();
     const [t] = await db.insert(whatsappTemplates).values(data).returning();
     return t;
   }
 
   async updateWhatsappTemplate(id: number, data: Partial<InsertWhatsappTemplate>): Promise<WhatsappTemplate | undefined> {
+    templatesCache.invalidateAll();
     const [t] = await db.update(whatsappTemplates).set(data).where(eq(whatsappTemplates.id, id)).returning();
     return t;
   }
 
   async deleteWhatsappTemplate(id: number): Promise<void> {
+    templatesCache.invalidateAll();
     await db.delete(whatsappTemplates).where(eq(whatsappTemplates.id, id));
   }
 
@@ -353,20 +405,27 @@ export class DatabaseStorage implements IStorage {
 
   // Expense Categories
   async getExpenseCategories(): Promise<ExpenseCategory[]> {
-    return await db.select().from(expenseCategories).orderBy(asc(expenseCategories.name));
+    const cached = categoriesCache.get("all");
+    if (cached.hit) return cached.data;
+    const result = await db.select().from(expenseCategories).orderBy(asc(expenseCategories.name));
+    categoriesCache.set("all", result);
+    return result;
   }
 
   async createExpenseCategory(data: InsertExpenseCategory): Promise<ExpenseCategory> {
+    categoriesCache.invalidateAll();
     const [cat] = await db.insert(expenseCategories).values(data).returning();
     return cat;
   }
 
   async updateExpenseCategory(id: number, data: Partial<InsertExpenseCategory>): Promise<ExpenseCategory | undefined> {
+    categoriesCache.invalidateAll();
     const [cat] = await db.update(expenseCategories).set(data).where(eq(expenseCategories.id, id)).returning();
     return cat;
   }
 
   async deleteExpenseCategory(id: number): Promise<void> {
+    categoriesCache.invalidateAll();
     await db.delete(expenses).where(eq(expenses.categoryId, id));
     await db.delete(expenseCategories).where(eq(expenseCategories.id, id));
   }
