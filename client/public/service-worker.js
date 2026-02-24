@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sawalehi-dent-v2';
+const CACHE_NAME = 'sawalehi-dent-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -7,8 +7,6 @@ const STATIC_ASSETS = [
   '/icon-192x192.png',
   '/icon-512x512.png'
 ];
-
-const AUTH_PATHS = ['/api/auth/', '/api/login', '/api/logout'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -38,31 +36,15 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return;
 
-  if (AUTH_PATHS.some((p) => url.pathname.startsWith(p))) {
-    return;
-  }
-
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, clone);
-          });
-          return response;
-        })
-        .catch(() => {
-          return caches.match(request);
-        })
-    );
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const networkUpdate = fetch(request)
-        .then((response) => {
+  if (url.pathname.startsWith('/uploads/')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
           if (response && response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -70,12 +52,27 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return response;
-        })
-        .catch(() => {
-          return cached;
         });
+      })
+    );
+    return;
+  }
 
-      return cached || networkUpdate;
-    })
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, clone);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request).then((cached) => {
+          return cached || new Response('Offline', { status: 503 });
+        });
+      })
   );
 });

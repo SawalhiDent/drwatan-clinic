@@ -21,8 +21,30 @@ const sqlite = new Database(dbPath);
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
 sqlite.pragma("busy_timeout = 5000");
-sqlite.pragma("synchronous = NORMAL");
+sqlite.pragma("synchronous = FULL");
 sqlite.pragma("cache_size = -20000");
+
+setInterval(() => {
+  try {
+    sqlite.pragma("wal_checkpoint(TRUNCATE)");
+  } catch (_) {}
+}, 30000);
+
+process.on("SIGTERM", () => {
+  try {
+    sqlite.pragma("wal_checkpoint(TRUNCATE)");
+    sqlite.close();
+  } catch (_) {}
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  try {
+    sqlite.pragma("wal_checkpoint(TRUNCATE)");
+    sqlite.close();
+  } catch (_) {}
+  process.exit(0);
+});
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS users (
