@@ -241,7 +241,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
-      if (err?.code === "SQLITE_CONSTRAINT_UNIQUE" || err?.message?.includes("UNIQUE constraint failed")) {
+      if (err?.code === "23505" || err?.message?.includes("UNIQUE constraint failed") || err?.message?.includes("duplicate key")) {
         return res.status(409).json({ message: "رقم الهاتف مسجل بالفعل لمريض آخر" });
       }
       throw err;
@@ -371,7 +371,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
-      if (err?.code === "SQLITE_CONSTRAINT_UNIQUE" || err?.message?.includes("UNIQUE constraint failed")) {
+      if (err?.code === "23505" || err?.message?.includes("UNIQUE constraint failed") || err?.message?.includes("duplicate key")) {
         return res.status(409).json({ message: "هذا القسم موجود بالفعل" });
       }
       throw err;

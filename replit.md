@@ -45,19 +45,19 @@ Preferred communication style: Simple, everyday language.
 - **Validation**: Zod schemas shared between frontend and backend via `shared/` directory
 
 ### Data Layer
-- **Database**: SQLite via `better-sqlite3` (stored in `data/database.db`, auto-created on startup)
+- **Database**: PostgreSQL via `pg` (node-postgres). Connects using `DATABASE_URL` environment variable.
 - **ORM**: Drizzle ORM with `drizzle-zod` for automatic schema-to-validation generation
-- **Schema Location**: `shared/schema.ts` — uses `sqliteTable` with SQLite-compatible types
-- **Table Creation**: Programmatic via `server/db.ts` on startup (CREATE TABLE IF NOT EXISTS)
-- **SQLite Config**: WAL mode enabled, foreign keys enforced
+- **Schema Location**: `shared/schema.ts` — uses `pgTable` with PostgreSQL-compatible types
+- **Table Creation**: Programmatic via `server/db.ts` `initDatabase()` on startup (CREATE TABLE IF NOT EXISTS)
+- **Connection Pool**: max 10 connections, 30s idle timeout, SSL in production
 
 ### Database Schema
 Tables: patients, appointments, users, sessions, whatsapp_templates, treatment_notes, expenses, expense_categories, daily_entries
-- **SQLite Type Conventions**: 
-  - IDs: `integer` with autoincrement (primary key)
+- **PostgreSQL Type Conventions**: 
+  - IDs: `serial` (auto-incrementing primary key)
   - Timestamps: `text` storing ISO 8601 strings (e.g., `2025-01-15T10:30:00.000Z`)
-  - Booleans: `integer` with `{ mode: 'boolean' }` (0/1)
-  - JSON data: `text` with `{ mode: 'json' }` (serialized JSON strings)
+  - Booleans: `boolean` (native PostgreSQL boolean)
+  - JSON data: `jsonb` (native PostgreSQL JSONB)
 
 ### Shared Code (`shared/` directory)
 - `schema.ts`: Drizzle table definitions, Zod insert schemas, TypeScript types — single source of truth
@@ -77,10 +77,10 @@ Tables: patients, appointments, users, sessions, whatsapp_templates, treatment_n
 ## External Dependencies
 
 ### Required Services
-- **No external services required**: SQLite database stored locally in `data/database.db`. Database path configurable via `SQLITE_PATH` env var or `DATABASE_URL` (with `file:` prefix). Directory auto-created on startup.
+- **PostgreSQL database**: Connected via `DATABASE_URL` environment variable. Hosted on Render (free tier). Tables auto-created on startup.
 
 ### Key npm Packages
-- **better-sqlite3**: SQLite driver for Node.js
+- **pg**: PostgreSQL driver for Node.js
 - **drizzle-orm** + **drizzle-kit**: ORM and migration tooling
 - **express** (v5): HTTP server framework
 - **@tanstack/react-query**: Async state management
