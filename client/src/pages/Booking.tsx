@@ -37,6 +37,7 @@ export default function Booking() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [showDailyEntry, setShowDailyEntry] = useState(false);
+  const [phonePrefix, setPhonePrefix] = useState("972");
 
   const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined;
   const { data: existingAppointments, isLoading: isLoadingSlots } = useAppointments(formattedDate);
@@ -76,11 +77,24 @@ export default function Booking() {
   ) || [];
 
   const selectPatient = (patient: Patient) => {
+    const rawPhone = (patient.phone || "").replace(/\D/g, "");
+    let localNumber = rawPhone;
+    let detectedPrefix = "972";
+    if (rawPhone.startsWith("970")) {
+      detectedPrefix = "970";
+      localNumber = rawPhone.substring(3);
+    } else if (rawPhone.startsWith("972")) {
+      detectedPrefix = "972";
+      localNumber = rawPhone.substring(3);
+    } else if (rawPhone.startsWith("0")) {
+      localNumber = rawPhone.substring(1);
+    }
     form.setValue("patientName", patient.fullName);
-    form.setValue("phone", patient.phone);
+    form.setValue("phone", localNumber);
     form.setValue("patientId", patient.id);
     setPatientSearch(patient.fullName);
     setShowSuggestions(false);
+    setPhonePrefix(detectedPrefix);
   };
 
   const generateTimeSlots = () => {
@@ -163,7 +177,17 @@ export default function Booking() {
   };
 
   const onSubmit = (data: InsertAppointment) => {
-    createAppointment(data, {
+    let phone = (data.phone || "").replace(/\D/g, "");
+    if (phone.startsWith("0")) {
+      phone = phone.substring(1);
+    }
+    if (phone.startsWith("972") || phone.startsWith("970")) {
+      phone = phonePrefix + phone.substring(3);
+    } else {
+      phone = phonePrefix + phone;
+    }
+    const submitData = { ...data, phone };
+    createAppointment(submitData, {
       onSuccess: () => {
         form.reset({
           patientName: "",
@@ -396,25 +420,13 @@ export default function Booking() {
                         <FormItem>
                           <FormLabel>رقم الهاتف</FormLabel>
                           <div className="flex gap-2">
-                            <Select 
-                              defaultValue="972" 
-                              onValueChange={(val) => {
-                                const current = field.value || "";
-                                if (current.startsWith("972") || current.startsWith("970")) {
-                                  field.onChange(val + current.substring(3));
-                                } else if (current.startsWith("0")) {
-                                  field.onChange(val + current.substring(1));
-                                } else {
-                                  field.onChange(val + current);
-                                }
-                              }}
-                            >
+                            <Select value={phonePrefix} onValueChange={setPhonePrefix}>
                               <SelectTrigger className="w-[120px] h-12 bg-slate-50" data-testid="select-phone-prefix">
-                                <SelectValue placeholder="المقدمة" />
+                                <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="970">+970</SelectItem>
                                 <SelectItem value="972">+972</SelectItem>
+                                <SelectItem value="970">+970</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormControl>

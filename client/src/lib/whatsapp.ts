@@ -30,15 +30,36 @@ export function renderTemplate(messageBody: string, ctx: WhatsAppTemplateContext
   return msg;
 }
 
-export function sendWhatsAppMessage(phone: string, message: string) {
-  let cleanPhone = phone.replace(/\D/g, "");
+export function formatPhoneForWhatsApp(phone: string): string {
+  let cleanPhone = phone.replace(/[\s\-\(\)]/g, "");
 
-  if (cleanPhone.startsWith("0")) {
-    cleanPhone = "972" + cleanPhone.substring(1);
-  } else if (!cleanPhone.startsWith("972") && !cleanPhone.startsWith("970")) {
-    cleanPhone = "972" + cleanPhone;
+  if (cleanPhone.startsWith("+")) {
+    cleanPhone = cleanPhone.substring(1);
   }
 
+  if (cleanPhone.startsWith("00")) {
+    cleanPhone = cleanPhone.substring(2);
+  }
+
+  cleanPhone = cleanPhone.replace(/\D/g, "");
+
+  if (cleanPhone.startsWith("972") || cleanPhone.startsWith("970")) {
+    return cleanPhone;
+  }
+
+  if (cleanPhone.startsWith("0")) {
+    return "972" + cleanPhone.substring(1);
+  }
+
+  if (cleanPhone.length > 0 && cleanPhone.length <= 10) {
+    return "972" + cleanPhone;
+  }
+
+  return cleanPhone;
+}
+
+export function sendWhatsAppMessage(phone: string, message: string) {
+  const cleanPhone = formatPhoneForWhatsApp(phone);
   const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
 }

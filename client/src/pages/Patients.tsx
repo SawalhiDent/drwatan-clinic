@@ -55,6 +55,7 @@ export default function Patients() {
   const [quickBookTime, setQuickBookTime] = useState<string | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [phonePrefix, setPhonePrefix] = useState("972");
 
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
@@ -190,9 +191,22 @@ export default function Patients() {
   const handleOpenDialog = (patient?: Patient) => {
     if (patient) {
       setEditingPatient(patient);
+      const phone = (patient.phone || "").replace(/\D/g, "");
+      let detectedPrefix = "972";
+      let localNumber = phone;
+      if (phone.startsWith("970")) {
+        detectedPrefix = "970";
+        localNumber = phone.substring(3);
+      } else if (phone.startsWith("972")) {
+        detectedPrefix = "972";
+        localNumber = phone.substring(3);
+      } else if (phone.startsWith("0")) {
+        localNumber = phone.substring(1);
+      }
+      setPhonePrefix(detectedPrefix);
       form.reset({
         fullName: patient.fullName,
-        phone: patient.phone,
+        phone: localNumber,
         age: patient.age,
         gender: patient.gender,
         address: patient.address || "",
@@ -204,6 +218,7 @@ export default function Patients() {
       });
     } else {
       setEditingPatient(null);
+      setPhonePrefix("972");
       form.reset(defaultValues);
     }
     setIsDialogOpen(true);
@@ -222,12 +237,23 @@ export default function Patients() {
   };
 
   const onSubmit = (data: InsertPatient) => {
+    let phone = (data.phone || "").replace(/\D/g, "");
+    if (phone.startsWith("0")) {
+      phone = phone.substring(1);
+    }
+    if (phone.startsWith("972") || phone.startsWith("970")) {
+      phone = phonePrefix + phone.substring(3);
+    } else {
+      phone = phonePrefix + phone;
+    }
+    const submitData = { ...data, phone };
+
     if (editingPatient) {
-      updatePatient({ id: editingPatient.id, ...data }, {
+      updatePatient({ id: editingPatient.id, ...submitData }, {
         onSuccess: () => setIsDialogOpen(false)
       });
     } else {
-      createPatient(data, {
+      createPatient(submitData, {
         onSuccess: () => setIsDialogOpen(false)
       });
     }
@@ -310,9 +336,30 @@ export default function Patients() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>رقم الهاتف</FormLabel>
-                            <FormControl>
-                              <Input placeholder="05xxxxxxxx" {...field} dir="ltr" />
-                            </FormControl>
+                            <div className="flex gap-2">
+                              <Select value={phonePrefix} onValueChange={setPhonePrefix}>
+                                <SelectTrigger className="w-[110px]" data-testid="select-phone-prefix">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="972">+972</SelectItem>
+                                  <SelectItem value="970">+970</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormControl>
+                                <Input
+                                  placeholder="5xxxxxxxx"
+                                  {...field}
+                                  dir="ltr"
+                                  className="flex-1"
+                                  data-testid="input-phone"
+                                  onChange={(e) => {
+                                    let val = e.target.value.replace(/[^\d]/g, "");
+                                    field.onChange(val);
+                                  }}
+                                />
+                              </FormControl>
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
