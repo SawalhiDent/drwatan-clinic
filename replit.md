@@ -9,7 +9,8 @@ Key features:
 - **Patient Management**: CRUD operations for patient records including medical history (allergies, chronic diseases, current medications)
 - **Appointment Booking**: Calendar-based booking with specific day/time constraints (Sat, Sun, Mon, Thu only; 12:00–21:00 hours; 30-minute slots)
 - **Dashboard**: Daily appointment overview with statistics and management controls
-- **Financial Reports**: Daily, weekly, and monthly payment summaries with cash/check breakdown by currency
+- **Financial Reports**: Daily, weekly, and monthly payment summaries with cash/check breakdown by currency. Revenue sourced from patient payments (manual + auto-synced from daily entries)
+- **Daily Entries**: Daily operations log with patient name, treatment, doctor, amount, payment method (cash/check), and currency. Payments auto-sync to patient records with `dailyEntryId` tracking for edit/delete sync
 - **WhatsApp Templates**: Database-backed template management system with variable substitution ({name}, {date}, {time}, {service}, etc.). Templates stored in `whatsapp_templates` table, managed via /whatsapp-templates page. Templates are seeded with defaults on first run.
 - **Home Page**: Landing page with animated navigation cards
 - **PWA Support**: Progressive Web App with manifest.json, service worker for offline caching, and installable on iOS/Android

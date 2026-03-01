@@ -114,6 +114,7 @@ export async function initDatabase() {
         doctor TEXT,
         amount INTEGER DEFAULT 0,
         currency TEXT DEFAULT '₪',
+        payment_method TEXT DEFAULT 'cash',
         notes TEXT,
         created_at TEXT
       );
@@ -135,6 +136,8 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
       CREATE INDEX IF NOT EXISTS idx_treatment_notes_patient ON treatment_notes(patient_id);
       CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+      ALTER TABLE daily_entries ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
     `);
     console.log("Database tables initialized successfully");
   } finally {

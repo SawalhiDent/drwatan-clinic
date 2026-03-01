@@ -51,6 +51,7 @@ export default function DailySchedule() {
       apiRequest("DELETE", api.dailyEntries.delete.path.replace(":id", String(id))),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${api.dailyEntries.list.path}?date=${formattedDate}`] });
+      queryClient.invalidateQueries({ queryKey: [api.patients.list.path] });
       toast({ title: "تم حذف السجل" });
       setDeleteId(null);
     },
@@ -168,9 +169,14 @@ export default function DailySchedule() {
                           <TableCell className="text-slate-600">{entry.doctor || "—"}</TableCell>
                           <TableCell>
                             {entry.amount ? (
-                              <span className="font-bold text-green-600">
-                                {entry.amount.toLocaleString()} {entry.currency || "₪"}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-green-600">
+                                  {entry.amount.toLocaleString()} {entry.currency || "₪"}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {entry.paymentMethod === "check" ? "شيك" : "كاش"}
+                                </span>
+                              </div>
                             ) : "—"}
                           </TableCell>
                           <TableCell className="text-slate-500 text-sm">{entry.notes || "—"}</TableCell>

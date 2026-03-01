@@ -119,6 +119,7 @@ export interface IStorage {
 
   // Daily Entries
   getDailyEntries(date?: string): Promise<DailyEntry[]>;
+  getDailyEntry(id: number): Promise<DailyEntry | undefined>;
   createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry>;
   updateDailyEntry(id: number, data: Partial<InsertDailyEntry>): Promise<DailyEntry | undefined>;
   deleteDailyEntry(id: number): Promise<void>;
@@ -481,6 +482,11 @@ export class DatabaseStorage implements IStorage {
         .orderBy(asc(dailyEntries.time));
     }
     return await db.select().from(dailyEntries).orderBy(desc(dailyEntries.date), asc(dailyEntries.time));
+  }
+
+  async getDailyEntry(id: number): Promise<DailyEntry | undefined> {
+    const [entry] = await db.select().from(dailyEntries).where(eq(dailyEntries.id, id));
+    return entry;
   }
 
   async createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry> {

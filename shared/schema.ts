@@ -61,6 +61,7 @@ export const patients = pgTable("patients", {
     method: "cash" | "check";
     checkImageUrl?: string;
     currency: string;
+    dailyEntryId?: number;
   }[]>().default([]),
   files: jsonb("files").$type<{
     id: string;
@@ -125,6 +126,7 @@ export const dailyEntries = pgTable("daily_entries", {
   doctor: text("doctor"),
   amount: integer("amount").default(0),
   currency: text("currency").default("₪"),
+  paymentMethod: text("payment_method").default("cash"),
   notes: text("notes"),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });

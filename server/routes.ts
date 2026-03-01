@@ -478,8 +478,9 @@ export async function registerRoutes(
             const newPayment = {
               amount: entry.amount,
               date: entry.date,
-              method: "cash" as const,
+              method: (entry.paymentMethod === "check" ? "check" : "cash") as "cash" | "check",
               currency: entry.currency || "₪",
+              dailyEntryId: entry.id,
             };
             const updatedPayments = [...currentPayments, newPayment];
             const totalPaid = updatedPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
@@ -503,8 +504,48 @@ export async function registerRoutes(
   app.put(api.dailyEntries.update.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.dailyEntries.update.input.parse(req.body);
-      const entry = await storage.updateDailyEntry(Number(req.params.id), input);
+      const entryId = Number(req.params.id);
+      const oldEntry = await storage.getDailyEntry(entryId);
+      if (!oldEntry) return res.status(404).json({ message: "السجل غير موجود" });
+
+      const entry = await storage.updateDailyEntry(entryId, input);
       if (!entry) return res.status(404).json({ message: "السجل غير موجود" });
+
+      const oldPatientId = oldEntry.patientId;
+      const newPatientId = entry.patientId;
+      const oldAmount = oldEntry.amount || 0;
+      const newAmount = entry.amount || 0;
+
+      if (oldPatientId && oldAmount > 0) {
+        const oldPatient = await storage.getPatient(oldPatientId);
+        if (oldPatient) {
+          const filtered = ((oldPatient.payments as any[]) || []).filter(
+            (p: any) => p.dailyEntryId !== entryId
+          );
+          const totalPaid = filtered.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+          await storage.updatePatient(oldPatientId, { payments: filtered, paidAmount: totalPaid });
+        }
+      }
+
+      if (newPatientId && newAmount > 0) {
+        const patient = await storage.getPatient(newPatientId);
+        if (patient) {
+          const currentPayments = ((patient.payments as any[]) || []).filter(
+            (p: any) => p.dailyEntryId !== entryId
+          );
+          const newPayment = {
+            amount: newAmount,
+            date: entry.date,
+            method: (entry.paymentMethod === "check" ? "check" : "cash") as "cash" | "check",
+            currency: entry.currency || "₪",
+            dailyEntryId: entryId,
+          };
+          const updatedPayments = [...currentPayments, newPayment];
+          const totalPaid = updatedPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+          await storage.updatePatient(newPatientId, { payments: updatedPayments, paidAmount: totalPaid });
+        }
+      }
+
       res.json(entry);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -517,6 +558,19 @@ export async function registerRoutes(
   app.delete(api.dailyEntries.delete.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
+
+    const entry = await storage.getDailyEntry(id);
+    if (entry && entry.patientId && entry.amount && entry.amount > 0) {
+      const patient = await storage.getPatient(entry.patientId);
+      if (patient) {
+        const filtered = ((patient.payments as any[]) || []).filter(
+          (p: any) => p.dailyEntryId !== id
+        );
+        const totalPaid = filtered.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+        await storage.updatePatient(entry.patientId, { payments: filtered, paidAmount: totalPaid });
+      }
+    }
+
     await storage.deleteDailyEntry(id);
     res.status(204).send();
   }));

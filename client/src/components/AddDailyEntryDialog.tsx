@@ -55,6 +55,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
   const [doctor, setDoctor] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("₪");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [notes, setNotes] = useState("");
   const [patientSearch, setPatientSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -74,6 +75,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
         setDoctor(editingEntry.doctor || "");
         setAmount(editingEntry.amount ? String(editingEntry.amount) : "");
         setCurrency(editingEntry.currency || "₪");
+        setPaymentMethod(editingEntry.paymentMethod || "cash");
         setNotes(editingEntry.notes || "");
       } else {
         setPatientName("");
@@ -82,6 +84,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
         setDoctor("");
         setAmount("");
         setCurrency("₪");
+        setPaymentMethod("cash");
         setNotes("");
       }
       setPatientSearch("");
@@ -134,6 +137,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
       apiRequest("PUT", api.dailyEntries.update.path.replace(":id", String(id)), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${api.dailyEntries.list.path}?date=${formattedDate}`] });
+      queryClient.invalidateQueries({ queryKey: [api.patients.list.path] });
       toast({ title: "تم تحديث السجل" });
       onOpenChange(false);
       onSuccess?.();
@@ -155,6 +159,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
       doctor: doctor || null,
       amount: amount ? Number(amount) : 0,
       currency,
+      paymentMethod,
       notes: notes.trim() || null,
     };
     if (editingEntry) {
@@ -236,7 +241,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <Label>المبلغ المدفوع</Label>
               <Input
@@ -246,6 +251,18 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
                 placeholder="0"
                 data-testid="input-entry-amount"
               />
+            </div>
+            <div>
+              <Label>طريقة الدفع</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger data-testid="select-entry-payment-method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">كاش</SelectItem>
+                  <SelectItem value="check">شيك</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>العملة</Label>
