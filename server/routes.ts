@@ -459,15 +459,36 @@ export async function registerRoutes(
       const input = api.dailyEntries.create.input.parse(req.body);
       const entry = await storage.createDailyEntry(input);
 
-      if (entry.notes && entry.notes.trim() && entry.patientId) {
-        await storage.createTreatmentNote({
-          patientId: entry.patientId,
-          date: entry.date,
-          treatment: entry.treatment,
-          doctor: entry.doctor,
-          notes: entry.notes.trim(),
-          dailyEntryId: entry.id,
-        });
+      if (entry.patientId) {
+        if (entry.notes && entry.notes.trim()) {
+          await storage.createTreatmentNote({
+            patientId: entry.patientId,
+            date: entry.date,
+            treatment: entry.treatment,
+            doctor: entry.doctor,
+            notes: entry.notes.trim(),
+            dailyEntryId: entry.id,
+          });
+        }
+
+        if (entry.amount && entry.amount > 0) {
+          const patient = await storage.getPatient(entry.patientId);
+          if (patient) {
+            const currentPayments = (patient.payments as any[]) || [];
+            const newPayment = {
+              amount: entry.amount,
+              date: entry.date,
+              method: "cash" as const,
+              currency: entry.currency || "₪",
+            };
+            const updatedPayments = [...currentPayments, newPayment];
+            const totalPaid = updatedPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+            await storage.updatePatient(entry.patientId, {
+              payments: updatedPayments,
+              paidAmount: totalPaid,
+            });
+          }
+        }
       }
 
       res.status(201).json(entry);

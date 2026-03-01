@@ -118,6 +118,10 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
     mutationFn: (data: any) => apiRequest("POST", api.dailyEntries.create.path, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`${api.dailyEntries.list.path}?date=${formattedDate}`] });
+      queryClient.invalidateQueries({ queryKey: [api.patients.list.path] });
+      if (selectedPatientId) {
+        queryClient.invalidateQueries({ queryKey: [api.patients.get.path, selectedPatientId] });
+      }
       toast({ title: "تم إضافة السجل بنجاح" });
       onOpenChange(false);
       onSuccess?.();
