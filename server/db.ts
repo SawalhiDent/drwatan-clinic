@@ -138,6 +138,9 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 
       ALTER TABLE daily_entries ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS salary INTEGER DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 0;
     `);
     console.log("Database tables initialized successfully");
   } finally {

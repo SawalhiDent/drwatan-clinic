@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, UserCircle2, Shield, Pencil, Trash2, Users } from "lucide-react";
+import { Loader2, Plus, UserCircle2, Shield, Pencil, Trash2, Users, Phone, Banknote, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -29,6 +29,9 @@ type SafeUser = {
   role: string;
   permissions: Permission[];
   active: boolean | null;
+  phone: string | null;
+  salary: number | null;
+  commissionRate: number | null;
 };
 
 export default function UsersPage() {
@@ -42,6 +45,9 @@ export default function UsersPage() {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("assistant");
   const [selectedPerms, setSelectedPerms] = useState<Permission[]>([]);
+  const [phone, setPhone] = useState("");
+  const [salary, setSalary] = useState("");
+  const [commissionRate, setCommissionRate] = useState("");
 
   const { data: users = [], isLoading } = useQuery<SafeUser[]>({
     queryKey: ["/api/users"],
@@ -98,6 +104,9 @@ export default function UsersPage() {
     setDisplayName("");
     setRole("assistant");
     setSelectedPerms([]);
+    setPhone("");
+    setSalary("");
+    setCommissionRate("");
     setEditUser(null);
   };
 
@@ -113,18 +122,26 @@ export default function UsersPage() {
     setDisplayName(u.displayName);
     setRole(u.role);
     setSelectedPerms(u.permissions || []);
+    setPhone(u.phone || "");
+    setSalary(u.salary ? String(u.salary) : "");
+    setCommissionRate(u.commissionRate ? String(u.commissionRate) : "");
     setPassword("");
     setDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const extraFields = {
+      phone,
+      salary: salary ? Number(salary) : 0,
+      commissionRate: commissionRate ? Number(commissionRate) : 0,
+    };
     if (editUser) {
-      const data: any = { displayName, role, permissions: selectedPerms };
+      const data: any = { displayName, role, permissions: selectedPerms, ...extraFields };
       if (password) data.password = password;
       updateMutation.mutate({ id: editUser.id, data });
     } else {
-      createMutation.mutate({ username, password, displayName, role, permissions: selectedPerms });
+      createMutation.mutate({ username, password, displayName, role, permissions: selectedPerms, ...extraFields });
     }
   };
 
@@ -187,6 +204,25 @@ export default function UsersPage() {
                     <div className="min-w-[120px]">
                       <h3 className="font-bold text-slate-800">{u.displayName}</h3>
                       <span className="text-xs text-slate-400">@{u.username}</span>
+                      {u.role === "doctor" && (u.phone || u.salary || u.commissionRate) && (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {u.phone && (
+                            <span className="text-xs text-slate-500 flex items-center gap-0.5">
+                              <Phone className="w-3 h-3" /> {u.phone}
+                            </span>
+                          )}
+                          {(u.salary ?? 0) > 0 && (
+                            <span className="text-xs text-emerald-600 flex items-center gap-0.5">
+                              <Banknote className="w-3 h-3" /> {u.salary?.toLocaleString()} ₪
+                            </span>
+                          )}
+                          {(u.commissionRate ?? 0) > 0 && (
+                            <span className="text-xs text-blue-600 flex items-center gap-0.5">
+                              <Percent className="w-3 h-3" /> {u.commissionRate}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <Badge
@@ -307,6 +343,42 @@ export default function UsersPage() {
                   </Select>
                 </div>
               </div>
+
+              {role === "doctor" && (
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>رقم الهاتف</Label>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="05xxxxxxxx"
+                      data-testid="input-user-phone"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>الراتب الثابت (₪)</Label>
+                    <Input
+                      type="number"
+                      value={salary}
+                      onChange={(e) => setSalary(e.target.value)}
+                      placeholder="0"
+                      data-testid="input-user-salary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>نسبة العمولة (%)</Label>
+                    <Input
+                      type="number"
+                      value={commissionRate}
+                      onChange={(e) => setCommissionRate(e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                      data-testid="input-user-commission"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

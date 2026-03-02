@@ -122,7 +122,7 @@ export async function registerRoutes(
     const allUsers = await storage.getUsers();
     const doctors = allUsers
       .filter((u) => u.role === "doctor" || u.role === "admin")
-      .map(({ id, displayName, role }) => ({ id, displayName, role }));
+      .map(({ id, displayName, role, phone, salary, commissionRate }) => ({ id, displayName, role, phone, salary, commissionRate }));
     res.json(doctors);
   }));
 
@@ -139,11 +139,14 @@ export async function registerRoutes(
     displayName: z.string().min(1, "الاسم مطلوب").max(100),
     role: z.enum(["doctor", "assistant"], { errorMap: () => ({ message: "دور غير صالح" }) }),
     permissions: z.array(z.string()).optional().default([]),
+    phone: z.string().optional().default(""),
+    salary: z.number().optional().default(0),
+    commissionRate: z.number().optional().default(0),
   });
 
   app.post("/api/users", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
     try {
-      const { username, password, displayName, role, permissions } = createUserSchema.parse(req.body);
+      const { username, password, displayName, role, permissions, phone, salary, commissionRate } = createUserSchema.parse(req.body);
       const validPerms = permissions.filter((p: string) => PERMISSIONS.includes(p as Permission) && p !== "user_management") as Permission[];
       const existing = await storage.getUserByUsername(username);
       if (existing) {
@@ -155,6 +158,9 @@ export async function registerRoutes(
         displayName,
         role,
         permissions: validPerms,
+        phone,
+        salary,
+        commissionRate,
       });
       const { passwordHash, ...safeUser } = user;
       res.status(201).json(safeUser);
@@ -172,6 +178,9 @@ export async function registerRoutes(
     permissions: z.array(z.string()).optional(),
     active: z.boolean().optional(),
     password: z.string().min(4).max(100).optional().or(z.literal("")),
+    phone: z.string().optional(),
+    salary: z.number().optional(),
+    commissionRate: z.number().optional(),
   });
 
   app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
@@ -183,7 +192,7 @@ export async function registerRoutes(
       if (target.role === "admin" && req.user!.id !== target.id) {
         return res.status(403).json({ message: "لا يمكن تعديل المدير" });
       }
-      const { displayName, role, permissions, active, password } = updateUserSchema.parse(req.body);
+      const { displayName, role, permissions, active, password, phone, salary, commissionRate } = updateUserSchema.parse(req.body);
       const allowedRoles = ["doctor", "assistant"];
       const safeRole = target.role === "admin" ? undefined : (role && allowedRoles.includes(role) ? role : undefined);
       const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission)) as Permission[] | undefined;
@@ -193,6 +202,9 @@ export async function registerRoutes(
         permissions: validPerms,
         active,
         password: password || undefined,
+        phone,
+        salary,
+        commissionRate,
       });
       if (!updated) return res.status(404).json({ message: "المستخدم غير موجود" });
       const { passwordHash, ...safeUser } = updated;
@@ -448,6 +460,21 @@ export async function registerRoutes(
   }));
 
   // === Daily Entries ===
+  app.get("/api/daily-entries/range", authMiddleware, asyncHandler(async (req, res) => {
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    const date = req.query.date as string | undefined;
+    if (date) {
+      const entries = await storage.getDailyEntries(date);
+      return res.json(entries);
+    }
+    if (!from || !to) {
+      return res.status(400).json({ message: "يجب تحديد from و to أو date" });
+    }
+    const entries = await storage.getDailyEntriesByRange(from, to);
+    res.json(entries);
+  }));
+
   app.get(api.dailyEntries.list.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     const date = req.query.date as string | undefined;
     const entries = await storage.getDailyEntries(date);

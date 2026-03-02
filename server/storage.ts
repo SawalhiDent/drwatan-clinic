@@ -26,7 +26,7 @@ import {
   type DailyEntry,
   type TreatmentNote,
 } from "@shared/schema";
-import { eq, and, sql, desc, asc } from "drizzle-orm";
+import { eq, and, sql, desc, asc, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -85,8 +85,8 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[] }): Promise<User>;
-  updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string }): Promise<User | undefined>;
+  createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[]; phone?: string; salary?: number; commissionRate?: number }): Promise<User>;
+  updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string; phone?: string; salary?: number; commissionRate?: number }): Promise<User | undefined>;
   deleteUser(id: number): Promise<void>;
   verifyPassword(user: User, password: string): Promise<boolean>;
 
@@ -119,6 +119,7 @@ export interface IStorage {
 
   // Daily Entries
   getDailyEntries(date?: string): Promise<DailyEntry[]>;
+  getDailyEntriesByRange(from: string, to: string): Promise<DailyEntry[]>;
   getDailyEntry(id: number): Promise<DailyEntry | undefined>;
   createDailyEntry(data: InsertDailyEntry): Promise<DailyEntry>;
   updateDailyEntry(id: number, data: Partial<InsertDailyEntry>): Promise<DailyEntry | undefined>;
@@ -227,7 +228,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[] }): Promise<User> {
+  async createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[]; phone?: string; salary?: number; commissionRate?: number }): Promise<User> {
     const passwordHash = await bcrypt.hash(data.password, 10);
     const [user] = await db.insert(users).values({
       username: data.username,
@@ -235,17 +236,23 @@ export class DatabaseStorage implements IStorage {
       displayName: data.displayName,
       role: data.role,
       permissions: data.permissions,
+      phone: data.phone || null,
+      salary: data.salary || 0,
+      commissionRate: data.commissionRate || 0,
     }).returning();
     return user;
   }
 
-  async updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string }): Promise<User | undefined> {
+  async updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string; phone?: string; salary?: number; commissionRate?: number }): Promise<User | undefined> {
     const updates: any = {};
     if (data.displayName !== undefined) updates.displayName = data.displayName;
     if (data.role !== undefined) updates.role = data.role;
     if (data.permissions !== undefined) updates.permissions = data.permissions;
     if (data.active !== undefined) updates.active = data.active;
     if (data.password) updates.passwordHash = await bcrypt.hash(data.password, 10);
+    if (data.phone !== undefined) updates.phone = data.phone;
+    if (data.salary !== undefined) updates.salary = data.salary;
+    if (data.commissionRate !== undefined) updates.commissionRate = data.commissionRate;
 
     const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return updated;
@@ -482,6 +489,12 @@ export class DatabaseStorage implements IStorage {
         .orderBy(asc(dailyEntries.time));
     }
     return await db.select().from(dailyEntries).orderBy(desc(dailyEntries.date), asc(dailyEntries.time));
+  }
+
+  async getDailyEntriesByRange(from: string, to: string): Promise<DailyEntry[]> {
+    return await db.select().from(dailyEntries)
+      .where(and(gte(dailyEntries.date, from), lte(dailyEntries.date, to)))
+      .orderBy(asc(dailyEntries.date), asc(dailyEntries.time));
   }
 
   async getDailyEntry(id: number): Promise<DailyEntry | undefined> {

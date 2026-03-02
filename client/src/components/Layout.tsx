@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Calendar, Users, ClipboardList, Receipt, BarChart3, LogOut, Settings, MessageSquare, UserCircle2, ChevronDown, Menu, X } from "lucide-react";
+import { Calendar, Users, ClipboardList, Receipt, BarChart3, LogOut, Settings, MessageSquare, UserCircle2, ChevronDown, Menu, X, Stethoscope } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import logo from "@assets/pp_1770153797959.png";
 import type { Permission } from "@shared/schema";
@@ -24,6 +24,7 @@ const controlPanelItems: NavItem[] = [
   { href: "/expenses", label: "المصروفات", icon: Receipt, permission: "payments" },
   { href: "/whatsapp-templates", label: "قوالب واتساب", icon: MessageSquare, permission: "appointments" },
   { href: "/reports", label: "التقارير", icon: BarChart3, permission: "reports" },
+  { href: "/doctor-report", label: "جرد الأطباء", icon: Stethoscope, permission: "reports" },
 ];
 
 function NavLink({ item, location }: { item: NavItem; location: string }) {

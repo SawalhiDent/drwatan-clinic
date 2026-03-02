@@ -28,6 +28,7 @@ const UsersPage = lazyRetry(() => import("@/pages/Users"));
 const WhatsAppTemplatesPage = lazyRetry(() => import("@/pages/WhatsAppTemplates"));
 const ExpensesPage = lazyRetry(() => import("@/pages/Expenses"));
 const DailySchedulePage = lazyRetry(() => import("@/pages/DailySchedule"));
+const DoctorReportPage = lazyRetry(() => import("@/pages/DoctorReport"));
 const NotFound = lazyRetry(() => import("@/pages/not-found"));
 
 function PageLoader() {
@@ -107,6 +108,7 @@ function ProtectedRouter() {
           {hasPermission("appointments") && <Route path="/daily-schedule" component={DailySchedulePage} />}
           {hasPermission("payments") && <Route path="/expenses" component={ExpensesPage} />}
           {hasPermission("reports") && <Route path="/reports" component={Reports} />}
+          {hasPermission("reports") && <Route path="/doctor-report" component={DoctorReportPage} />}
           {hasPermission("user_management") && <Route path="/users" component={UsersPage} />}
           {hasPermission("appointments") && <Route path="/whatsapp-templates" component={WhatsAppTemplatesPage} />}
           <Route component={NotFound} />

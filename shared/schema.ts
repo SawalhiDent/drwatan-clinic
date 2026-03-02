@@ -32,6 +32,9 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   role: text("role").notNull().default("assistant"),
   permissions: jsonb("permissions").$type<Permission[]>().default([]),
+  phone: text("phone"),
+  salary: integer("salary").default(0),
+  commissionRate: integer("commission_rate").default(0),
   active: boolean("active").default(true),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
