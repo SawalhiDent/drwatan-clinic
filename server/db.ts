@@ -137,6 +137,25 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_treatment_notes_patient ON treatment_notes(patient_id);
       CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 
+      CREATE TABLE IF NOT EXISTS doctor_settlements (
+        id SERIAL PRIMARY KEY,
+        doctor_name TEXT NOT NULL,
+        period_from TEXT NOT NULL,
+        period_to TEXT NOT NULL,
+        period_type TEXT NOT NULL DEFAULT 'weekly',
+        total_revenue INTEGER DEFAULT 0,
+        commission INTEGER DEFAULT 0,
+        salary INTEGER DEFAULT 0,
+        total_due INTEGER DEFAULT 0,
+        amount_paid INTEGER NOT NULL,
+        currency TEXT NOT NULL DEFAULT '₪',
+        notes TEXT,
+        created_at TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_doctor_settlements_doctor ON doctor_settlements(doctor_name);
+      CREATE INDEX IF NOT EXISTS idx_doctor_settlements_period ON doctor_settlements(period_from, period_to);
+
       ALTER TABLE daily_entries ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS salary INTEGER DEFAULT 0;

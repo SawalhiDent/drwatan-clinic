@@ -9,12 +9,14 @@ import {
   expenses,
   dailyEntries,
   treatmentNotes,
+  doctorSettlements,
   type InsertPatient,
   type InsertAppointment,
   type InsertWhatsappTemplate,
   type InsertExpenseCategory,
   type InsertExpense,
   type InsertDailyEntry,
+  type InsertDoctorSettlement,
   type Patient,
   type Appointment,
   type User,
@@ -25,6 +27,7 @@ import {
   type Expense,
   type DailyEntry,
   type TreatmentNote,
+  type DoctorSettlement,
 } from "@shared/schema";
 import { eq, and, sql, desc, asc, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -128,6 +131,12 @@ export interface IStorage {
   // Treatment Notes
   getTreatmentNotes(patientId: number): Promise<TreatmentNote[]>;
   createTreatmentNote(data: { patientId: number; date: string; treatment?: string | null; doctor?: string | null; notes: string; dailyEntryId?: number | null }): Promise<TreatmentNote>;
+
+  // Doctor Settlements
+  getDoctorSettlements(doctorName: string): Promise<DoctorSettlement[]>;
+  getDoctorSettlementsByPeriod(doctorName: string, periodFrom: string, periodTo: string): Promise<DoctorSettlement[]>;
+  createDoctorSettlement(data: InsertDoctorSettlement): Promise<DoctorSettlement>;
+  deleteDoctorSettlement(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -534,6 +543,31 @@ export class DatabaseStorage implements IStorage {
       dailyEntryId: data.dailyEntryId || null,
     }).returning();
     return note;
+  }
+  // Doctor Settlements
+  async getDoctorSettlements(doctorName: string): Promise<DoctorSettlement[]> {
+    return await db.select().from(doctorSettlements)
+      .where(eq(doctorSettlements.doctorName, doctorName))
+      .orderBy(desc(doctorSettlements.createdAt));
+  }
+
+  async getDoctorSettlementsByPeriod(doctorName: string, periodFrom: string, periodTo: string): Promise<DoctorSettlement[]> {
+    return await db.select().from(doctorSettlements)
+      .where(and(
+        eq(doctorSettlements.doctorName, doctorName),
+        eq(doctorSettlements.periodFrom, periodFrom),
+        eq(doctorSettlements.periodTo, periodTo),
+      ))
+      .orderBy(desc(doctorSettlements.createdAt));
+  }
+
+  async createDoctorSettlement(data: InsertDoctorSettlement): Promise<DoctorSettlement> {
+    const [settlement] = await db.insert(doctorSettlements).values(data).returning();
+    return settlement;
+  }
+
+  async deleteDoctorSettlement(id: number): Promise<void> {
+    await db.delete(doctorSettlements).where(eq(doctorSettlements.id, id));
   }
 }
 

@@ -602,6 +602,38 @@ export async function registerRoutes(
     res.status(204).send();
   }));
 
+  // === Doctor Settlements ===
+  app.get("/api/doctor-settlements", authMiddleware, asyncHandler(async (req, res) => {
+    const doctorName = req.query.doctor as string;
+    const periodFrom = req.query.from as string | undefined;
+    const periodTo = req.query.to as string | undefined;
+
+    if (!doctorName) {
+      return res.status(400).json({ message: "اسم الطبيب مطلوب" });
+    }
+
+    if (periodFrom && periodTo) {
+      const settlements = await storage.getDoctorSettlementsByPeriod(doctorName, periodFrom, periodTo);
+      return res.json(settlements);
+    }
+
+    const settlements = await storage.getDoctorSettlements(doctorName);
+    res.json(settlements);
+  }));
+
+  app.post("/api/doctor-settlements", authMiddleware, requirePermission("reports"), asyncHandler(async (req, res) => {
+    const { insertDoctorSettlementSchema } = await import("@shared/schema");
+    const data = insertDoctorSettlementSchema.parse(req.body);
+    const settlement = await storage.createDoctorSettlement(data);
+    res.status(201).json(settlement);
+  }));
+
+  app.delete("/api/doctor-settlements/:id", authMiddleware, requirePermission("reports"), asyncHandler(async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteDoctorSettlement(id);
+    res.json({ success: true });
+  }));
+
   // Catch-all for unknown /api/* routes — return JSON 404 instead of SPA HTML
   app.all("/api/{*path}", (_req, res) => {
     res.status(404).json({ message: "المسار غير موجود" });

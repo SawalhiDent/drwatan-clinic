@@ -145,6 +145,22 @@ export const treatmentNotes = pgTable("treatment_notes", {
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 
+export const doctorSettlements = pgTable("doctor_settlements", {
+  id: serial("id").primaryKey(),
+  doctorName: text("doctor_name").notNull(),
+  periodFrom: text("period_from").notNull(),
+  periodTo: text("period_to").notNull(),
+  periodType: text("period_type").notNull().default("weekly"),
+  totalRevenue: integer("total_revenue").default(0),
+  commission: integer("commission").default(0),
+  salary: integer("salary").default(0),
+  totalDue: integer("total_due").default(0),
+  amountPaid: integer("amount_paid").notNull(),
+  currency: text("currency").notNull().default("₪"),
+  notes: text("notes"),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+});
+
 // Schemas
 export const insertPatientSchema = createInsertSchema(patients).omit({ 
   id: true, 
@@ -186,6 +202,11 @@ export const insertDailyEntrySchema = createInsertSchema(dailyEntries).omit({
   createdAt: true,
 });
 
+export const insertDoctorSettlementSchema = createInsertSchema(doctorSettlements).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const loginSchema = z.object({
   username: z.string().min(1, "أدخل اسم المستخدم"),
   password: z.string().min(1, "أدخل كلمة المرور"),
@@ -215,3 +236,6 @@ export type DailyEntry = typeof dailyEntries.$inferSelect;
 export type InsertDailyEntry = z.infer<typeof insertDailyEntrySchema>;
 
 export type TreatmentNote = typeof treatmentNotes.$inferSelect;
+
+export type DoctorSettlement = typeof doctorSettlements.$inferSelect;
+export type InsertDoctorSettlement = z.infer<typeof insertDoctorSettlementSchema>;

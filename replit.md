@@ -11,7 +11,7 @@ Key features:
 - **Dashboard**: Daily appointment overview with statistics and management controls
 - **Financial Reports**: Daily, weekly, and monthly payment summaries with cash/check breakdown by currency. Revenue sourced from patient payments (manual + auto-synced from daily entries)
 - **Daily Entries**: Daily operations log with patient name, treatment, doctor, amount, payment method (cash/check), and currency. Payments auto-sync to patient records with `dailyEntryId` tracking for edit/delete sync
-- **Doctor Reports**: Per-doctor financial inventory with salary, commission calculations, PDF export, and WhatsApp send. Uses `/api/daily-entries/range` endpoint for date range queries
+- **Doctor Reports**: Per-doctor financial inventory with salary, commission calculations, PDF export, and WhatsApp send. Uses `/api/daily-entries/range` endpoint for date range queries. Includes **settlement tracking** via `doctor_settlements` table — admin can mark periods as paid ("تم التسليم") with amount, currency, and notes. Settlement status shown per period with delete capability
 - **WhatsApp Templates**: Database-backed template management system with variable substitution ({name}, {date}, {time}, {service}, etc.). Templates stored in `whatsapp_templates` table, managed via /whatsapp-templates page. Templates are seeded with defaults on first run.
 - **Home Page**: Landing page with animated navigation cards
 - **PWA Support**: Progressive Web App with manifest.json, service worker for offline caching, and installable on iOS/Android
@@ -54,7 +54,7 @@ Preferred communication style: Simple, everyday language.
 - **Connection Pool**: max 10 connections, 30s idle timeout, SSL in production
 
 ### Database Schema
-Tables: patients, appointments, users, sessions, whatsapp_templates, treatment_notes, expenses, expense_categories, daily_entries
+Tables: patients, appointments, users, sessions, whatsapp_templates, treatment_notes, expenses, expense_categories, daily_entries, doctor_settlements
 - **Users**: Added `phone`, `salary` (integer), `commissionRate` (integer %) fields for doctor financial tracking
 - **PostgreSQL Type Conventions**: 
   - IDs: `serial` (auto-incrementing primary key)

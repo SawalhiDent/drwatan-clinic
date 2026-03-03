@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths } from "date-fns";
 import { arSA } from "date-fns/locale";
@@ -7,10 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Calendar, CalendarDays, TrendingUp, ChevronRight, ChevronLeft, UserCircle2, Banknote, Percent, FileDown, Send, Stethoscope } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Loader2, Calendar, CalendarDays, TrendingUp, ChevronRight, ChevronLeft, UserCircle2, Banknote, Percent, FileDown, Send, Stethoscope, CheckCircle2, Trash2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import type { DailyEntry } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { DailyEntry, DoctorSettlement } from "@shared/schema";
 
 type Doctor = {
   id: number;
@@ -22,15 +27,20 @@ type Doctor = {
 };
 
 export default function DoctorReport() {
+  const { toast } = useToast();
   const { data: doctors, isLoading: doctorsLoading } = useQuery<Doctor[]>({
     queryKey: ["/api/doctors"],
   });
 
   const [selectedDoctorName, setSelectedDoctorName] = useState<string>("");
-  const [view, setView] = useState<"daily" | "weekly" | "monthly">("monthly");
+  const [view, setView] = useState<"daily" | "weekly" | "monthly">("weekly");
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
+  const [showSettlementDialog, setShowSettlementDialog] = useState(false);
+  const [settlementAmount, setSettlementAmount] = useState("");
+  const [settlementCurrency, setSettlementCurrency] = useState("₪");
+  const [settlementNotes, setSettlementNotes] = useState("");
   const reportRef = useRef<HTMLDivElement>(null);
 
   const selectedDay = useMemo(() => subDays(new Date(), dayOffset), [dayOffset]);
@@ -40,14 +50,28 @@ export default function DoctorReport() {
   const selectedMonthStart = useMemo(() => startOfMonth(selectedMonthDate), [selectedMonthDate]);
   const selectedMonthEnd = useMemo(() => endOfMonth(selectedMonthDate), [selectedMonthDate]);
 
-  const dateQueryParam = useMemo(() => {
-    if (view === "daily") return `date=${format(selectedDay, "yyyy-MM-dd")}`;
-    if (view === "weekly") return `from=${format(selectedWeekStart, "yyyy-MM-dd")}&to=${format(selectedWeekEnd, "yyyy-MM-dd")}`;
-    return `from=${format(selectedMonthStart, "yyyy-MM-dd")}&to=${format(selectedMonthEnd, "yyyy-MM-dd")}`;
+  const periodDates = useMemo(() => {
+    if (view === "daily") return { from: format(selectedDay, "yyyy-MM-dd"), to: format(selectedDay, "yyyy-MM-dd") };
+    if (view === "weekly") return { from: format(selectedWeekStart, "yyyy-MM-dd"), to: format(selectedWeekEnd, "yyyy-MM-dd") };
+    return { from: format(selectedMonthStart, "yyyy-MM-dd"), to: format(selectedMonthEnd, "yyyy-MM-dd") };
   }, [view, selectedDay, selectedWeekStart, selectedWeekEnd, selectedMonthStart, selectedMonthEnd]);
+
+  const dateQueryParam = useMemo(() => {
+    if (view === "daily") return `date=${periodDates.from}`;
+    return `from=${periodDates.from}&to=${periodDates.to}`;
+  }, [view, periodDates]);
 
   const { data: allEntries = [], isLoading: entriesLoading } = useQuery<DailyEntry[]>({
     queryKey: [`/api/daily-entries/range?${dateQueryParam}`],
+  });
+
+  const settlementUrl = selectedDoctorName
+    ? `/api/doctor-settlements?doctor=${encodeURIComponent(selectedDoctorName)}&from=${periodDates.from}&to=${periodDates.to}`
+    : null;
+
+  const { data: periodSettlements = [] } = useQuery<DoctorSettlement[]>({
+    queryKey: [settlementUrl],
+    enabled: !!settlementUrl,
   });
 
   const selectedDoctor = useMemo(() => {
@@ -104,6 +128,74 @@ export default function DoctorReport() {
     if (view === "weekly") return `${format(selectedWeekStart, "d MMM", { locale: arSA })} — ${format(selectedWeekEnd, "d MMM yyyy", { locale: arSA })}`;
     return format(selectedMonthDate, "MMMM yyyy", { locale: arSA });
   }, [view, selectedDay, selectedWeekStart, selectedWeekEnd, selectedMonthDate]);
+
+  const isSettled = periodSettlements.length > 0;
+
+  const createSettlementMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/doctor-settlements", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settlementUrl] });
+      setShowSettlementDialog(false);
+      setSettlementAmount("");
+      setSettlementNotes("");
+      toast({ title: "تم تسجيل التسليم بنجاح", description: "تم حفظ عملية الدفع للطبيب" });
+    },
+    onError: () => {
+      toast({ title: "خطأ", description: "فشل في تسجيل التسليم", variant: "destructive" });
+    },
+  });
+
+  const deleteSettlementMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/doctor-settlements/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [settlementUrl] });
+      toast({ title: "تم حذف التسليم" });
+    },
+  });
+
+  function handleSettlement() {
+    if (!selectedDoctor || !settlementAmount) return;
+
+    const parsedAmount = parseInt(settlementAmount, 10);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast({ title: "خطأ", description: "أدخل مبلغاً صحيحاً أكبر من صفر", variant: "destructive" });
+      return;
+    }
+
+    const mainCurrency = settlementCurrency;
+    const totalDue = totalDueByCurrency[mainCurrency] || 0;
+    const totalRev = summary[mainCurrency]?.total || 0;
+    const comm = commissionByCurrency[mainCurrency] || 0;
+
+    createSettlementMutation.mutate({
+      doctorName: selectedDoctorName,
+      periodFrom: periodDates.from,
+      periodTo: periodDates.to,
+      periodType: view,
+      totalRevenue: totalRev,
+      commission: comm,
+      salary: selectedDoctor.salary || 0,
+      totalDue: totalDue,
+      amountPaid: parsedAmount,
+      currency: mainCurrency,
+      notes: settlementNotes || null,
+    });
+  }
+
+  function openSettlementDialog() {
+    const currencies = Object.keys(totalDueByCurrency);
+    const mainCurrency = currencies.includes("₪") ? "₪" : (currencies[0] || "₪");
+    const totalDue = totalDueByCurrency[mainCurrency] || 0;
+    setSettlementCurrency(mainCurrency);
+    setSettlementAmount(String(totalDue));
+    setSettlementNotes("");
+    setShowSettlementDialog(true);
+  }
 
   function generatePdfContent() {
     if (!selectedDoctor || !reportRef.current) return "";
@@ -369,6 +461,23 @@ export default function DoctorReport() {
                   إرسال واتساب
                 </Button>
               )}
+              {!isSettled ? (
+                <Button
+                  size="sm"
+                  onClick={openSettlementDialog}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={doctorEntries.length === 0}
+                  data-testid="button-mark-settled"
+                >
+                  <CheckCircle2 className="ml-1 w-4 h-4" />
+                  تم التسليم
+                </Button>
+              ) : (
+                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 px-3 py-1.5 text-sm gap-1" data-testid="badge-settled">
+                  <CheckCircle2 className="w-4 h-4" />
+                  تم الدفع
+                </Badge>
+              )}
             </div>
           )}
         </div>
@@ -517,6 +626,51 @@ export default function DoctorReport() {
               </Card>
             </div>
 
+            {isSettled && periodSettlements.length > 0 && (
+              <Card className="border-2 border-emerald-200 bg-emerald-50/50 shadow-lg shadow-emerald-100/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-tajawal text-emerald-800 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    سجل التسليمات لهذه الفترة
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {periodSettlements.map(s => (
+                      <div key={s.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-emerald-100" data-testid={`settlement-${s.id}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <Banknote className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-emerald-800 block">
+                              تم دفع {s.amountPaid?.toLocaleString()} {s.currency}
+                            </span>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              {s.createdAt ? format(new Date(s.createdAt), "d MMM yyyy - HH:mm", { locale: arSA }) : "—"}
+                            </div>
+                            {s.notes && (
+                              <span className="text-xs text-slate-500 block mt-0.5">{s.notes}</span>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => deleteSettlementMutation.mutate(s.id)}
+                          data-testid={`button-delete-settlement-${s.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {Object.entries(summary).length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {Object.entries(summary).map(([curr, data]) => (
@@ -602,6 +756,83 @@ export default function DoctorReport() {
           </div>
         )}
       </div>
+
+      <Dialog open={showSettlementDialog} onOpenChange={setShowSettlementDialog}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-tajawal text-xl">تسجيل تسليم المستحقات</DialogTitle>
+            <DialogDescription className="text-slate-500">
+              سجّل المبلغ الذي تم دفعه للطبيب {selectedDoctor?.displayName} عن فترة {periodLabel}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+              {Object.entries(totalDueByCurrency).map(([curr, amt]) => (
+                <div key={curr} className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">المستحق ({curr})</span>
+                  <span className="font-bold text-purple-600">{amt.toLocaleString()} {curr}</span>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">المبلغ المدفوع</label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={settlementAmount}
+                  onChange={e => setSettlementAmount(e.target.value)}
+                  placeholder="أدخل المبلغ"
+                  className="flex-1"
+                  data-testid="input-settlement-amount"
+                />
+                <Select value={settlementCurrency} onValueChange={setSettlementCurrency}>
+                  <SelectTrigger className="w-20" data-testid="select-settlement-currency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="₪">₪</SelectItem>
+                    <SelectItem value="$">$</SelectItem>
+                    <SelectItem value="€">€</SelectItem>
+                    <SelectItem value="د.أ">د.أ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">ملاحظات (اختياري)</label>
+              <Textarea
+                value={settlementNotes}
+                onChange={e => setSettlementNotes(e.target.value)}
+                placeholder="مثال: تم التسليم نقداً"
+                rows={2}
+                data-testid="input-settlement-notes"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setShowSettlementDialog(false)} data-testid="button-cancel-settlement">
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleSettlement}
+              disabled={!settlementAmount || createSettlementMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              data-testid="button-confirm-settlement"
+            >
+              {createSettlementMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin ml-1" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4 ml-1" />
+              )}
+              تأكيد التسليم
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
