@@ -261,9 +261,43 @@ export default function DoctorReport() {
     printWindow.document.close();
   }
 
+  function generateWhatsAppMessage() {
+    if (!selectedDoctor) return "";
+
+    let text = `السلام عليكم *${selectedDoctor.displayName}*\n`;
+    text += `تقرير مالي من عيادة *صوالحي دنت*\n`;
+    text += `━━━━━━━━━━━━━━━\n`;
+    text += `الفترة: ${periodLabel}\n`;
+    text += `عدد المعالجات: ${doctorEntries.length}\n\n`;
+
+    Object.entries(summary).forEach(([curr, data]) => {
+      text += `💰 إجمالي الإيرادات: *${data.total.toLocaleString()} ${curr}*\n`;
+      if (data.cashTotal > 0) text += `  كاش: ${data.cashTotal.toLocaleString()} ${curr}\n`;
+      if (data.checkTotal > 0) text += `  شيكات: ${data.checkTotal.toLocaleString()} ${curr}\n`;
+    });
+
+    if (selectedDoctor.salary && selectedDoctor.salary > 0) {
+      text += `\n📋 الراتب الثابت: *${selectedDoctor.salary.toLocaleString()} ₪*\n`;
+    }
+    if (selectedDoctor.commissionRate && selectedDoctor.commissionRate > 0) {
+      text += `📊 نسبة العمولة: *${selectedDoctor.commissionRate}%*\n`;
+      Object.entries(commissionByCurrency).forEach(([curr, amt]) => {
+        text += `مبلغ العمولة: *${amt.toLocaleString()} ${curr}*\n`;
+      });
+    }
+
+    text += `\n━━━━━━━━━━━━━━━\n`;
+    Object.entries(totalDueByCurrency).forEach(([curr, amt]) => {
+      text += `✅ إجمالي المستحق: *${amt.toLocaleString()} ${curr}*\n`;
+    });
+
+    text += `\nنتمنى لك دوام التوفيق.`;
+    return text;
+  }
+
   function handleSendWhatsApp() {
     if (!selectedDoctor?.phone) return;
-    const text = generatePdfContent();
+    const text = generateWhatsAppMessage();
     sendWhatsAppMessage(selectedDoctor.phone, text);
   }
 
