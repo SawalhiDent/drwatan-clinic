@@ -24,7 +24,7 @@ const controlPanelItems: NavItem[] = [
   { href: "/expenses", label: "المصروفات", icon: Receipt, permission: "payments" },
   { href: "/whatsapp-templates", label: "قوالب واتساب", icon: MessageSquare, permission: "appointments" },
   { href: "/reports", label: "التقارير", icon: BarChart3, permission: "reports" },
-  { href: "/doctor-report", label: "جرد الأطباء", icon: Stethoscope, permission: "reports" },
+  { href: "/doctor-report", label: "جرد الأطباء والمساعدين", icon: Stethoscope, permission: "reports" },
 ];
 
 function NavLink({ item, location }: { item: NavItem; location: string }) {
