@@ -101,6 +101,7 @@ export async function initDatabase() {
         currency TEXT NOT NULL DEFAULT '₪',
         description TEXT,
         date TEXT NOT NULL,
+        settlement_id INTEGER,
         created_at TEXT
       );
 
@@ -160,6 +161,7 @@ export async function initDatabase() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS salary INTEGER DEFAULT 0;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 0;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS settlement_id INTEGER;
     `);
     console.log("Database tables initialized successfully");
   } finally {

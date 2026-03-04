@@ -79,6 +79,8 @@ export default function DoctorReport() {
     return doctors.find(d => d.displayName === selectedDoctorName) || null;
   }, [doctors, selectedDoctorName]);
 
+  const isAssistant = selectedDoctor?.role === "assistant";
+
   const doctorEntries = useMemo(() => {
     if (!selectedDoctorName) return [];
     return allEntries.filter(e => e.doctor === selectedDoctorName);
@@ -141,7 +143,7 @@ export default function DoctorReport() {
       setShowSettlementDialog(false);
       setSettlementAmount("");
       setSettlementNotes("");
-      toast({ title: "تم تسجيل التسليم بنجاح", description: "تم حفظ عملية الدفع للطبيب" });
+      toast({ title: "تم تسجيل التسليم بنجاح", description: "تم حفظ عملية الدفع وإضافتها للمصروفات" });
     },
     onError: () => {
       toast({ title: "خطأ", description: "فشل في تسجيل التسليم", variant: "destructive" });
@@ -400,8 +402,8 @@ export default function DoctorReport() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold font-tajawal text-slate-900" data-testid="text-doctor-report-title">جرد الأطباء</h1>
-            <p className="text-slate-500 mt-1 text-sm">تقرير مالي مفصّل لكل طبيب مع إمكانية التصدير والإرسال</p>
+            <h1 className="text-3xl font-bold font-tajawal text-slate-900" data-testid="text-doctor-report-title">جرد الأطباء والمساعدين</h1>
+            <p className="text-slate-500 mt-1 text-sm">تقرير مالي مفصّل لكل طبيب ومساعد مع إمكانية التصدير والإرسال</p>
           </div>
         </div>
 
@@ -409,11 +411,14 @@ export default function DoctorReport() {
           <div className="min-w-[200px]">
             <Select value={selectedDoctorName} onValueChange={setSelectedDoctorName}>
               <SelectTrigger data-testid="select-doctor-report">
-                <SelectValue placeholder="اختر الطبيب" />
+                <SelectValue placeholder="اختر الطبيب أو المساعد" />
               </SelectTrigger>
               <SelectContent>
                 {(doctors || []).map(doc => (
-                  <SelectItem key={doc.id} value={doc.displayName}>{doc.displayName}</SelectItem>
+                  <SelectItem key={doc.id} value={doc.displayName}>
+                    {doc.displayName}
+                    {doc.role === "assistant" && <span className="text-xs text-slate-400 mr-1">(مساعد)</span>}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -532,7 +537,7 @@ export default function DoctorReport() {
         {!selectedDoctorName ? (
           <div className="text-center py-20 text-slate-400">
             <Stethoscope className="w-16 h-16 mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-tajawal">اختر طبيباً لعرض التقرير المالي</p>
+            <p className="text-lg font-tajawal">اختر طبيباً أو مساعداً لعرض التقرير المالي</p>
           </div>
         ) : isLoading ? (
           <div className="flex justify-center py-20">
@@ -548,7 +553,10 @@ export default function DoctorReport() {
                       <UserCircle2 className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-slate-800" data-testid="text-doctor-name">{selectedDoctor.displayName}</h2>
+                      <h2 className="text-xl font-bold text-slate-800" data-testid="text-doctor-name">
+                        {selectedDoctor.displayName}
+                        {isAssistant && <span className="text-sm font-normal text-slate-400 mr-2">(مساعد)</span>}
+                      </h2>
                       <div className="flex flex-wrap gap-3 mt-1">
                         {selectedDoctor.phone && (
                           <span className="text-sm text-slate-500">{selectedDoctor.phone}</span>
@@ -559,7 +567,7 @@ export default function DoctorReport() {
                             راتب: {selectedDoctor.salary?.toLocaleString()} ₪
                           </Badge>
                         )}
-                        {(selectedDoctor.commissionRate ?? 0) > 0 && (
+                        {!isAssistant && (selectedDoctor.commissionRate ?? 0) > 0 && (
                           <Badge variant="secondary" className="bg-blue-50 text-blue-700">
                             <Percent className="w-3.5 h-3.5 ml-1" />
                             عمولة: {selectedDoctor.commissionRate}%
@@ -572,47 +580,53 @@ export default function DoctorReport() {
               </Card>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="border-0 shadow-lg shadow-slate-200/50">
-                <CardContent className="p-5">
-                  <span className="text-xs text-slate-400 block mb-1">عدد المعالجات</span>
-                  <span className="text-2xl font-bold text-slate-800" data-testid="text-doctor-entry-count">{doctorEntries.length}</span>
-                </CardContent>
-              </Card>
+            <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4", isAssistant ? "lg:grid-cols-2" : "lg:grid-cols-4")}>
+              {!isAssistant && (
+                <Card className="border-0 shadow-lg shadow-slate-200/50">
+                  <CardContent className="p-5">
+                    <span className="text-xs text-slate-400 block mb-1">عدد المعالجات</span>
+                    <span className="text-2xl font-bold text-slate-800" data-testid="text-doctor-entry-count">{doctorEntries.length}</span>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card className="border-0 shadow-lg shadow-green-100/50">
-                <CardContent className="p-5">
-                  <span className="text-xs text-slate-400 block mb-1">إجمالي الإيرادات</span>
-                  {Object.entries(summary).length > 0 ? (
-                    Object.entries(summary).map(([curr, data]) => (
-                      <span key={curr} className="text-xl font-bold text-green-600 block" data-testid={`text-doctor-total-${curr}`}>
-                        {data.total.toLocaleString()} {curr}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xl font-bold text-slate-300">0</span>
-                  )}
-                </CardContent>
-              </Card>
+              {!isAssistant && (
+                <Card className="border-0 shadow-lg shadow-green-100/50">
+                  <CardContent className="p-5">
+                    <span className="text-xs text-slate-400 block mb-1">إجمالي الإيرادات</span>
+                    {Object.entries(summary).length > 0 ? (
+                      Object.entries(summary).map(([curr, data]) => (
+                        <span key={curr} className="text-xl font-bold text-green-600 block" data-testid={`text-doctor-total-${curr}`}>
+                          {data.total.toLocaleString()} {curr}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xl font-bold text-slate-300">0</span>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card className="border-0 shadow-lg shadow-blue-100/50">
-                <CardContent className="p-5">
-                  <span className="text-xs text-slate-400 block mb-1">العمولة المستحقة</span>
-                  {Object.entries(commissionByCurrency).length > 0 ? (
-                    Object.entries(commissionByCurrency).map(([curr, amt]) => (
-                      <span key={curr} className="text-xl font-bold text-blue-600 block" data-testid={`text-doctor-commission-${curr}`}>
-                        {amt.toLocaleString()} {curr}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xl font-bold text-slate-300">0</span>
-                  )}
-                </CardContent>
-              </Card>
+              {!isAssistant && (
+                <Card className="border-0 shadow-lg shadow-blue-100/50">
+                  <CardContent className="p-5">
+                    <span className="text-xs text-slate-400 block mb-1">العمولة المستحقة</span>
+                    {Object.entries(commissionByCurrency).length > 0 ? (
+                      Object.entries(commissionByCurrency).map(([curr, amt]) => (
+                        <span key={curr} className="text-xl font-bold text-blue-600 block" data-testid={`text-doctor-commission-${curr}`}>
+                          {amt.toLocaleString()} {curr}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xl font-bold text-slate-300">0</span>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               <Card className="border-0 shadow-lg shadow-purple-100/50">
                 <CardContent className="p-5">
-                  <span className="text-xs text-slate-400 block mb-1">إجمالي المستحق</span>
+                  <span className="text-xs text-slate-400 block mb-1">{isAssistant ? "الراتب المستحق" : "إجمالي المستحق"}</span>
                   {Object.entries(totalDueByCurrency).length > 0 ? (
                     Object.entries(totalDueByCurrency).map(([curr, amt]) => (
                       <span key={curr} className="text-xl font-bold text-purple-600 block" data-testid={`text-doctor-due-${curr}`}>
@@ -671,7 +685,7 @@ export default function DoctorReport() {
               </Card>
             )}
 
-            {Object.entries(summary).length > 0 && (
+            {!isAssistant && Object.entries(summary).length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {Object.entries(summary).map(([curr, data]) => (
                   <Card key={curr} className="border-0 shadow-lg shadow-slate-200/50">
@@ -709,6 +723,7 @@ export default function DoctorReport() {
               </div>
             )}
 
+            {!isAssistant && (
             <Card className="border-0 shadow-lg shadow-slate-200/50">
               <CardHeader className="border-b border-slate-100">
                 <CardTitle className="text-lg font-tajawal">تفاصيل المعالجات</CardTitle>
@@ -753,6 +768,7 @@ export default function DoctorReport() {
                 )}
               </CardContent>
             </Card>
+            )}
           </div>
         )}
       </div>
@@ -762,7 +778,7 @@ export default function DoctorReport() {
           <DialogHeader>
             <DialogTitle className="font-tajawal text-xl">تسجيل تسليم المستحقات</DialogTitle>
             <DialogDescription className="text-slate-500">
-              سجّل المبلغ الذي تم دفعه للطبيب {selectedDoctor?.displayName} عن فترة {periodLabel}
+              سجّل المبلغ الذي تم دفعه {isAssistant ? "للمساعد" : "للطبيب"} {selectedDoctor?.displayName} عن فترة {periodLabel}
             </DialogDescription>
           </DialogHeader>
 

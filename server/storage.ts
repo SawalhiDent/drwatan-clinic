@@ -119,6 +119,7 @@ export interface IStorage {
   createExpense(data: InsertExpense): Promise<Expense>;
   updateExpense(id: number, data: Partial<InsertExpense>): Promise<Expense | undefined>;
   deleteExpense(id: number): Promise<void>;
+  deleteExpenseBySettlementId(settlementId: number): Promise<void>;
 
   // Daily Entries
   getDailyEntries(date?: string): Promise<DailyEntry[]>;
@@ -488,6 +489,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExpense(id: number): Promise<void> {
     await db.delete(expenses).where(eq(expenses.id, id));
+  }
+
+  async deleteExpenseBySettlementId(settlementId: number): Promise<void> {
+    await db.delete(expenses).where(eq(expenses.settlementId, settlementId));
   }
 
   // Daily Entries

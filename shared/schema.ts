@@ -116,6 +116,7 @@ export const expenses = pgTable("expenses", {
   currency: text("currency").notNull().default("₪"),
   description: text("description"),
   date: text("date").notNull(),
+  settlementId: integer("settlement_id"),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 

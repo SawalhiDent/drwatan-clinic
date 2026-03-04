@@ -120,10 +120,10 @@ export async function registerRoutes(
 
   app.get("/api/doctors", authMiddleware, asyncHandler(async (req, res) => {
     const allUsers = await storage.getUsers();
-    const doctors = allUsers
-      .filter((u) => u.role === "doctor" || u.role === "admin")
+    const staff = allUsers
+      .filter((u) => u.role === "doctor" || u.role === "admin" || u.role === "assistant")
       .map(({ id, displayName, role, phone, salary, commissionRate }) => ({ id, displayName, role, phone, salary, commissionRate }));
-    res.json(doctors);
+    res.json(staff);
   }));
 
   // === Users (admin only) ===
@@ -625,11 +625,29 @@ export async function registerRoutes(
     const { insertDoctorSettlementSchema } = await import("@shared/schema");
     const data = insertDoctorSettlementSchema.parse(req.body);
     const settlement = await storage.createDoctorSettlement(data);
+
+    const categories = await storage.getExpenseCategories();
+    const salaryCategory = categories.find(c => c.name === "الرواتب");
+    if (salaryCategory) {
+      const periodLabel = data.periodType === "daily" ? data.periodFrom
+        : data.periodType === "weekly" ? `${data.periodFrom} — ${data.periodTo}`
+        : `${data.periodFrom} — ${data.periodTo}`;
+      await storage.createExpense({
+        categoryId: salaryCategory.id,
+        amount: data.amountPaid,
+        currency: data.currency,
+        description: `راتب ${data.doctorName} (${periodLabel})`,
+        date: new Date().toISOString().split("T")[0],
+        settlementId: settlement.id,
+      });
+    }
+
     res.status(201).json(settlement);
   }));
 
   app.delete("/api/doctor-settlements/:id", authMiddleware, requirePermission("reports"), asyncHandler(async (req, res) => {
     const id = parseInt(req.params.id);
+    await storage.deleteExpenseBySettlementId(id);
     await storage.deleteDoctorSettlement(id);
     res.json({ success: true });
   }));
