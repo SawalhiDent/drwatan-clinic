@@ -471,7 +471,6 @@ export default function DoctorReport() {
                   size="sm"
                   onClick={openSettlementDialog}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  disabled={doctorEntries.length === 0}
                   data-testid="button-mark-settled"
                 >
                   <CheckCircle2 className="ml-1 w-4 h-4" />
