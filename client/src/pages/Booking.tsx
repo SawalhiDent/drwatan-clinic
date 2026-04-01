@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAppointmentSchema, type InsertAppointment, type Patient, type Appointment } from "@shared/schema";
-import { useCreateAppointment, useAppointments, useUpdateAppointment } from "@/hooks/use-appointments";
+import { useCreateAppointment, useAppointments, useUpdateAppointment, useDeleteAppointment } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
 import { Layout } from "@/components/Layout";
 import { format, setHours, setMinutes, getDay } from "date-fns";
@@ -16,12 +16,16 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList, Pencil } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +57,8 @@ export default function Booking() {
   const { data: patients } = usePatients();
   const { mutate: createAppointment, isPending } = useCreateAppointment();
   const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment();
+  const { mutate: deleteAppointment, isPending: isDeleting } = useDeleteAppointment();
+  const [deletingAptId, setDeletingAptId] = useState<number | null>(null);
 
   const openEditDialog = (apt: Appointment) => {
     const rawPhone = (apt.phone || "").replace(/\D/g, "");
@@ -379,6 +385,16 @@ export default function Booking() {
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => setDeletingAptId(apt.id)}
+                              title="حذف الموعد"
+                              data-testid={`button-delete-apt-${apt.id}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
                             {apt.phone && apt.phone !== "000" && apt.phone.replace(/\D/g, "").length >= 7 && (
                               <WhatsAppTemplatePicker
                                 phone={apt.phone}
@@ -580,6 +596,33 @@ export default function Booking() {
         onOpenChange={setShowDailyEntry}
         date={selectedDate && isWorkingDay(selectedDate) ? selectedDate : new Date()}
       />
+
+      <AlertDialog open={deletingAptId !== null} onOpenChange={(o) => !o && setDeletingAptId(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-tajawal">تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذا الموعد؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => {
+                if (deletingAptId !== null) {
+                  deleteAppointment(deletingAptId, { onSuccess: () => setDeletingAptId(null) });
+                }
+              }}
+              disabled={isDeleting}
+              data-testid="button-confirm-delete"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : null}
+              نعم، احذف
+            </AlertDialogAction>
+            <AlertDialogCancel data-testid="button-cancel-delete">إلغاء</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!editingApt} onOpenChange={(o) => !o && setEditingApt(null)}>
         <DialogContent className="sm:max-w-md" dir="rtl">
