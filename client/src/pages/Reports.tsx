@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, DollarSign, Banknote, FileText, ChevronRight, ChevronLeft, TrendingUp, TrendingDown, Calendar, CalendarDays, Receipt, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@shared/routes";
-import type { Expense, ExpenseCategory } from "@shared/schema";
+import type { Expense, ExpenseCategory, DailyEntry } from "@shared/schema";
 
 type PaymentEntry = {
   amount: number;
@@ -29,22 +29,44 @@ export default function Reports() {
   const { data: expenseCategories } = useQuery<ExpenseCategory[]>({
     queryKey: [api.expenseCategories.list.path],
   });
+  const { data: allDailyEntries } = useQuery<DailyEntry[]>({
+    queryKey: [api.dailyEntries.list.path],
+  });
   const [view, setView] = useState<"daily" | "weekly" | "monthly">("daily");
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
 
   const allPayments: PaymentEntry[] = useMemo(() => {
-    if (!patients) return [];
     const payments: PaymentEntry[] = [];
-    patients.forEach((p) => {
-      const pPayments = (p.payments as any[]) || [];
-      pPayments.forEach((pay) => {
-        payments.push({ ...pay, patientName: p.fullName });
+
+    // Include payments from patient records (manual + auto-synced from entries WITH patientId)
+    if (patients) {
+      patients.forEach((p) => {
+        const pPayments = (p.payments as any[]) || [];
+        pPayments.forEach((pay) => {
+          payments.push({ ...pay, patientName: p.fullName });
+        });
       });
-    });
+    }
+
+    // Include daily entries WITHOUT a linked patient (not synced to any patient record)
+    if (allDailyEntries) {
+      allDailyEntries.forEach((entry) => {
+        if (!entry.patientId && entry.amount && entry.amount > 0) {
+          payments.push({
+            amount: entry.amount,
+            date: entry.date,
+            method: (entry.paymentMethod === "check" ? "check" : "cash") as "cash" | "check",
+            currency: entry.currency || "₪",
+            patientName: entry.patientName,
+          });
+        }
+      });
+    }
+
     return payments;
-  }, [patients]);
+  }, [patients, allDailyEntries]);
 
   const selectedDay = useMemo(() => subDays(new Date(), dayOffset), [dayOffset]);
   const selectedWeekStart = useMemo(() => startOfWeek(subWeeks(new Date(), weekOffset), { weekStartsOn: 6 }), [weekOffset]);
