@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertAppointmentSchema, type InsertAppointment, type Patient } from "@shared/schema";
-import { useCreateAppointment, useAppointments } from "@/hooks/use-appointments";
+import { insertAppointmentSchema, type InsertAppointment, type Patient, type Appointment } from "@shared/schema";
+import { useCreateAppointment, useAppointments, useUpdateAppointment } from "@/hooks/use-appointments";
 import { usePatients } from "@/hooks/use-patients";
 import { Layout } from "@/components/Layout";
 import { format, setHours, setMinutes, getDay } from "date-fns";
@@ -13,12 +13,15 @@ import { AddDailyEntryDialog } from "@/components/AddDailyEntryDialog";
 import { 
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage 
 } from "@/components/ui/form";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -38,11 +41,47 @@ export default function Booking() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [showDailyEntry, setShowDailyEntry] = useState(false);
   const [phonePrefix, setPhonePrefix] = useState("972");
+  const [editingApt, setEditingApt] = useState<Appointment | null>(null);
+  const [editPhonePrefix, setEditPhonePrefix] = useState("972");
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editService, setEditService] = useState("عام");
+  const [editNotes, setEditNotes] = useState("");
 
   const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined;
   const { data: existingAppointments, isLoading: isLoadingSlots } = useAppointments(formattedDate);
   const { data: patients } = usePatients();
   const { mutate: createAppointment, isPending } = useCreateAppointment();
+  const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment();
+
+  const openEditDialog = (apt: Appointment) => {
+    const rawPhone = (apt.phone || "").replace(/\D/g, "");
+    let localNumber = rawPhone;
+    let prefix = "972";
+    if (rawPhone.startsWith("970")) { prefix = "970"; localNumber = rawPhone.substring(3); }
+    else if (rawPhone.startsWith("972")) { localNumber = rawPhone.substring(3); }
+    else if (rawPhone.startsWith("0")) { localNumber = rawPhone.substring(1); }
+    setEditingApt(apt);
+    setEditName(apt.patientName);
+    setEditPhone(localNumber);
+    setEditPhonePrefix(prefix);
+    setEditService(apt.service || "عام");
+    setEditNotes(apt.notes || "");
+  };
+
+  const submitEdit = () => {
+    if (!editingApt) return;
+    let phone = editPhone.replace(/\D/g, "");
+    if (phone.length > 0) {
+      if (phone.startsWith("0")) phone = phone.substring(1);
+      if (phone.startsWith("972") || phone.startsWith("970")) phone = editPhonePrefix + phone.substring(3);
+      else phone = editPhonePrefix + phone;
+    }
+    updateAppointment(
+      { id: editingApt.id, data: { patientName: editName, phone: phone || "", service: editService, notes: editNotes } },
+      { onSuccess: () => setEditingApt(null) }
+    );
+  };
 
   const sortedAppointments = existingAppointments?.filter(apt => apt.status !== 'cancelled').sort((a, b) => 
     a.startTime.localeCompare(b.startTime)
@@ -315,19 +354,32 @@ export default function Booking() {
                   ) : (
                     <div className="divide-y divide-slate-100">
                       {sortedAppointments.map((apt) => (
-                        <div key={apt.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-bold text-primary font-mono">
+                        <div key={apt.id} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors gap-2">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="font-bold text-primary font-mono text-sm">
                               {apt.startTime}
                               {apt.endTime !== apt.startTime && ` - ${apt.endTime}`}
                             </span>
-                            <div className="flex items-center gap-2 text-sm text-slate-700">
-                              <User className="w-3 h-3 text-slate-400" />
-                              <span className="font-medium truncate max-w-[120px]">{apt.patientName}</span>
+                            <div className="flex items-center gap-1 text-sm text-slate-700">
+                              <User className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span className="font-medium truncate max-w-[110px]">{apt.patientName}</span>
                             </div>
+                            {apt.service && apt.service !== "عام" && (
+                              <span className="text-xs text-slate-400 truncate max-w-[130px]">{apt.service}</span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            {apt.phone && apt.phone !== "000" && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                              onClick={() => openEditDialog(apt)}
+                              title="تعديل الموعد"
+                              data-testid={`button-edit-apt-${apt.id}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            {apt.phone && apt.phone !== "000" && apt.phone.replace(/\D/g, "").length >= 7 && (
                               <WhatsAppTemplatePicker
                                 phone={apt.phone}
                                 context={{
@@ -528,6 +580,79 @@ export default function Booking() {
         onOpenChange={setShowDailyEntry}
         date={selectedDate && isWorkingDay(selectedDate) ? selectedDate : new Date()}
       />
+
+      <Dialog open={!!editingApt} onOpenChange={(o) => !o && setEditingApt(null)}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-tajawal">تعديل الموعد</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">اسم المريض</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="اسم المريض"
+                className="h-10"
+                data-testid="input-edit-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">رقم الهاتف <span className="text-slate-400 font-normal text-xs">(اختياري)</span></label>
+              <div className="flex gap-2">
+                <Select value={editPhonePrefix} onValueChange={setEditPhonePrefix}>
+                  <SelectTrigger className="w-[110px] h-10 bg-slate-50" data-testid="select-edit-prefix">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="972">+972</SelectItem>
+                    <SelectItem value="970">+970</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="5xxxxxxxx"
+                  className="h-10 bg-slate-50 flex-1"
+                  dir="ltr"
+                  data-testid="input-edit-phone"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">الخدمة</label>
+              <Select value={editService} onValueChange={setEditService}>
+                <SelectTrigger className="h-10 bg-slate-50" data-testid="select-edit-service">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["عام","تنظيف","حشو","خلع","تقويم","تركيب","زراعة","تبييض","أشعة","استشارة"].map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">ملاحظات</label>
+              <Textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="أي ملاحظات إضافية..."
+                className="bg-slate-50 resize-none"
+                rows={2}
+                data-testid="textarea-edit-notes"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 flex-row-reverse sm:flex-row-reverse">
+            <Button onClick={submitEdit} disabled={isUpdating || !editName.trim()} data-testid="button-save-edit">
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : null}
+              حفظ التغييرات
+            </Button>
+            <Button variant="outline" onClick={() => setEditingApt(null)}>إلغاء</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

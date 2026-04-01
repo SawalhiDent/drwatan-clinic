@@ -45,6 +45,26 @@ export function useCreateAppointment() {
   });
 }
 
+export function useUpdateAppointment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertAppointment> }) => {
+      const url = buildUrl(api.appointments.update.path, { id });
+      const res = await apiRequest(api.appointments.update.method, url, data);
+      return api.appointments.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      toast({ title: "تم التعديل بنجاح" });
+    },
+    onError: (error: Error) => {
+      toast({ variant: "destructive", title: "خطأ في التعديل", description: error.message });
+    },
+  });
+}
+
 export function useDeleteAppointment() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
