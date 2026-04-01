@@ -178,15 +178,17 @@ export default function Booking() {
 
   const onSubmit = (data: InsertAppointment) => {
     let phone = (data.phone || "").replace(/\D/g, "");
-    if (phone.startsWith("0")) {
-      phone = phone.substring(1);
+    if (phone.length > 0) {
+      if (phone.startsWith("0")) {
+        phone = phone.substring(1);
+      }
+      if (phone.startsWith("972") || phone.startsWith("970")) {
+        phone = phonePrefix + phone.substring(3);
+      } else {
+        phone = phonePrefix + phone;
+      }
     }
-    if (phone.startsWith("972") || phone.startsWith("970")) {
-      phone = phonePrefix + phone.substring(3);
-    } else {
-      phone = phonePrefix + phone;
-    }
-    const submitData = { ...data, phone };
+    const submitData = { ...data, phone: phone || "" };
     createAppointment(submitData, {
       onSuccess: () => {
         form.reset({
@@ -418,7 +420,7 @@ export default function Booking() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>رقم الهاتف</FormLabel>
+                          <FormLabel>رقم الهاتف <span className="text-slate-400 font-normal text-xs">(اختياري)</span></FormLabel>
                           <div className="flex gap-2">
                             <Select value={phonePrefix} onValueChange={setPhonePrefix}>
                               <SelectTrigger className="w-[120px] h-12 bg-slate-50" data-testid="select-phone-prefix">

@@ -169,7 +169,7 @@ export const insertPatientSchema = createInsertSchema(patients).omit({
 });
 
 export const insertAppointmentSchema = createInsertSchema(appointments, {
-  phone: z.string().min(9, "رقم الهاتف غير صالح"),
+  phone: z.string().optional().or(z.literal("")),
 }).omit({ 
   id: true, 
   createdAt: true 
