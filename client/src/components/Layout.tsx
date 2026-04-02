@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { Calendar, Users, ClipboardList, Receipt, BarChart3, LogOut, Settings, MessageSquare, UserCircle2, ChevronDown, Menu, X, Stethoscope } from "lucide-react";
+import { Calendar, Users, ClipboardList, Receipt, BarChart3, LogOut, Settings, MessageSquare, UserCircle2, ChevronDown, Menu, X, Stethoscope, Download, CheckCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import logo from "@assets/pp_1770153797959.png";
 import type { Permission } from "@shared/schema";
 import { useState, useEffect } from "react";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "مدير",
@@ -50,6 +51,7 @@ function NavLink({ item, location }: { item: NavItem; location: string }) {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout, hasPermission } = useAuth();
+  const { install, isInstalled } = useInstallPrompt();
   const [controlPanelOpen, setControlPanelOpen] = useState(() => {
     return controlPanelItems.some((item) => location === item.href);
   });
@@ -95,6 +97,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
         </nav>
 
+        {!isInstalled && (
+          <div className="px-4 pb-2">
+            <button
+              onClick={install}
+              data-testid="button-install-sidebar"
+              className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-all duration-200 text-sm font-medium"
+            >
+              <Download className="w-4 h-4" />
+              تحميل التطبيق
+            </button>
+          </div>
+        )}
+        {isInstalled && (
+          <div className="px-4 pb-2">
+            <div className="flex items-center gap-2 px-4 py-2 text-emerald-400 text-xs">
+              <CheckCircle className="w-3.5 h-3.5" />
+              التطبيق مثبّت
+            </div>
+          </div>
+        )}
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 px-4 py-3 text-slate-400">
             <UserCircle2 className="w-8 h-8" />
@@ -147,6 +169,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}
 
             <div className="pt-4 border-t border-slate-800 mt-4">
+              {!isInstalled && (
+                <button
+                  onClick={install}
+                  data-testid="button-install-mobile"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-primary/20 text-primary mb-2 transition-colors"
+                >
+                  <Download className="w-5 h-5" />
+                  <span className="font-medium">تحميل التطبيق</span>
+                </button>
+              )}
+              {isInstalled && (
+                <div className="flex items-center gap-3 px-4 py-2 text-emerald-400 text-sm mb-2">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>التطبيق مثبّت</span>
+                </div>
+              )}
               <div className="flex items-center gap-3 px-4 py-3 text-slate-400">
                 <UserCircle2 className="w-6 h-6" />
                 <div className="flex flex-col flex-1">

@@ -1,13 +1,15 @@
 import { Link } from "wouter";
-import { Calendar, FileText, Activity } from "lucide-react";
+import { Calendar, FileText, Activity, Download, CheckCircle } from "lucide-react";
 import logo from "@assets/pp_1770153797959.png";
 import { motion } from "framer-motion";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 export default function Home() {
+  const { install, installPrompt, isInstalled } = useInstallPrompt();
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 to-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       
-      {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
         <div className="absolute top-10 right-10 w-96 h-96 bg-primary rounded-full blur-[100px]" />
         <div className="absolute bottom-10 left-10 w-72 h-72 bg-accent rounded-full blur-[100px]" />
@@ -28,6 +30,31 @@ export default function Home() {
         <p className="text-slate-400 text-lg md:text-xl max-w-xl mx-auto">
           إدارة المرضى والمواعيد
         </p>
+
+        {!isInstalled && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            onClick={install}
+            data-testid="button-install-app"
+            className="mt-6 inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-full shadow-lg shadow-primary/30 transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            <Download className="w-5 h-5" />
+            تحميل التطبيق
+          </motion.button>
+        )}
+
+        {isInstalled && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-6 inline-flex items-center gap-2 text-emerald-400 text-sm"
+          >
+            <CheckCircle className="w-4 h-4" />
+            التطبيق مثبّت
+          </motion.div>
+        )}
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl z-10 px-4">
