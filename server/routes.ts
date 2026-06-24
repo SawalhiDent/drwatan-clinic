@@ -121,7 +121,7 @@ export async function registerRoutes(
   app.get("/api/doctors", authMiddleware, asyncHandler(async (req, res) => {
     const allUsers = await storage.getUsers();
     const staff = allUsers
-      .filter((u) => (u.role === "doctor" || u.role === "admin" || u.role === "assistant") && u.showInBooking !== false)
+      .filter((u) => (u.role === "doctor" || u.role === "assistant") && u.showInBooking !== false)
       .map(({ id, displayName, role, phone, salary, commissionRate }) => ({ id, displayName, role, phone, salary, commissionRate }));
     res.json(staff);
   }));
