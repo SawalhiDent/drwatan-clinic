@@ -301,13 +301,13 @@ export default function DoctorReport() {
           @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Cairo', sans-serif; direction: rtl; padding: 30px; color: #1e293b; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0e8bab; padding-bottom: 20px; }
-          .header h1 { color: #0e8bab; font-size: 24px; margin-bottom: 5px; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #8B2342; padding-bottom: 20px; }
+          .header h1 { color: #8B2342; font-size: 24px; margin-bottom: 5px; }
           .header p { color: #64748b; font-size: 14px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
           th { background: #f1f5f9; padding: 8px 10px; text-align: right; font-size: 13px; color: #475569; }
-          .section-title { font-size: 16px; font-weight: bold; color: #0e8bab; margin: 20px 0 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-          .total-box { background: #f8fafc; border: 2px solid #0e8bab; border-radius: 8px; padding: 15px; margin-top: 20px; }
+          .section-title { font-size: 16px; font-weight: bold; color: #8B2342; margin: 20px 0 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+          .total-box { background: #f8fafc; border: 2px solid #8B2342; border-radius: 8px; padding: 15px; margin-top: 20px; }
           @media print { body { padding: 15px; } }
         </style>
       </head>
@@ -545,11 +545,11 @@ export default function DoctorReport() {
         ) : (
           <div ref={reportRef} className="flex flex-col gap-4">
             {selectedDoctor && (
-              <Card className="border-0 shadow-lg shadow-blue-100/50">
+              <Card className="border-0 shadow-lg shadow-rose-100/50">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-4 flex-wrap">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                      <UserCircle2 className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
+                      <UserCircle2 className="w-6 h-6 text-rose-700" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-slate-800" data-testid="text-doctor-name">
@@ -567,7 +567,7 @@ export default function DoctorReport() {
                           </Badge>
                         )}
                         {!isAssistant && (selectedDoctor.commissionRate ?? 0) > 0 && (
-                          <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                          <Badge variant="secondary" className="bg-rose-50 text-rose-800">
                             <Percent className="w-3.5 h-3.5 ml-1" />
                             عمولة: {selectedDoctor.commissionRate}%
                           </Badge>
@@ -607,12 +607,12 @@ export default function DoctorReport() {
               )}
 
               {!isAssistant && (
-                <Card className="border-0 shadow-lg shadow-blue-100/50">
+                <Card className="border-0 shadow-lg shadow-rose-100/50">
                   <CardContent className="p-5">
                     <span className="text-xs text-slate-400 block mb-1">العمولة المستحقة</span>
                     {Object.entries(commissionByCurrency).length > 0 ? (
                       Object.entries(commissionByCurrency).map(([curr, amt]) => (
-                        <span key={curr} className="text-xl font-bold text-blue-600 block" data-testid={`text-doctor-commission-${curr}`}>
+                        <span key={curr} className="text-xl font-bold text-rose-700 block" data-testid={`text-doctor-commission-${curr}`}>
                           {amt.toLocaleString()} {curr}
                         </span>
                       ))
@@ -706,10 +706,10 @@ export default function DoctorReport() {
                           <div>
                             <div className="flex justify-between text-sm mb-1">
                               <span className="text-slate-600">شيكات</span>
-                              <span className="font-bold text-blue-600">{data.checkTotal.toLocaleString()} {curr} ({Math.round((data.checkTotal / data.total) * 100)}%)</span>
+                              <span className="font-bold text-rose-700">{data.checkTotal.toLocaleString()} {curr} ({Math.round((data.checkTotal / data.total) * 100)}%)</span>
                             </div>
                             <div className="w-full bg-slate-100 rounded-full h-2.5">
-                              <div className="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${(data.checkTotal / data.total) * 100}%` }} />
+                              <div className="bg-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${(data.checkTotal / data.total) * 100}%` }} />
                             </div>
                           </div>
                         </div>
@@ -753,7 +753,7 @@ export default function DoctorReport() {
                           <div className="text-left">
                             <span className={cn(
                               "font-bold text-sm block",
-                              entry.paymentMethod === "check" ? "text-blue-600" : "text-green-600"
+                              entry.paymentMethod === "check" ? "text-rose-700" : "text-green-600"
                             )}>
                               {(entry.amount || 0).toLocaleString()} {entry.currency || "₪"}
                             </span>

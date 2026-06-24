@@ -300,13 +300,13 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg shadow-blue-100/50">
+              <Card className="border-0 shadow-lg shadow-rose-100/50">
                 <CardContent className="p-5 flex items-center justify-between gap-2">
                   <div>
                     <span className="text-xs text-slate-400 block mb-1">إجمالي الشيكات</span>
                     {Object.entries(checkByCurrency).length > 0 ? (
                       Object.entries(checkByCurrency).map(([curr, total]) => (
-                        <span key={curr} className="text-xl font-bold text-blue-600 block" data-testid={`text-check-${curr}`}>
+                        <span key={curr} className="text-xl font-bold text-rose-700 block" data-testid={`text-check-${curr}`}>
                           {total.toLocaleString()} {curr}
                         </span>
                       ))
@@ -314,8 +314,8 @@ export default function Reports() {
                       <span className="text-xl font-bold text-slate-300">0</span>
                     )}
                   </div>
-                  <div className="bg-blue-50 p-3 rounded-full">
-                    <FileText className="w-6 h-6 text-blue-600" />
+                  <div className="bg-rose-50 p-3 rounded-full">
+                    <FileText className="w-6 h-6 text-rose-700" />
                   </div>
                 </CardContent>
               </Card>
@@ -425,7 +425,7 @@ export default function Reports() {
                   </div>
                   <div className="h-10 w-px bg-slate-200" />
                   <div className="text-center">
-                    <span className="text-2xl font-bold text-blue-600" data-testid="text-check-count">
+                    <span className="text-2xl font-bold text-rose-700" data-testid="text-check-count">
                       {activePayments.filter((p) => p.method === "check").length}
                     </span>
                     <span className="text-xs text-slate-400 block">شيكات</span>
@@ -464,13 +464,13 @@ export default function Reports() {
                       <div>
                         <div className="flex justify-between text-sm mb-1 gap-2">
                           <span className="text-slate-600">شيكات</span>
-                          <span className="font-bold text-blue-600">
+                          <span className="font-bold text-rose-700">
                             {Math.round((checkTotal / (cashTotal + checkTotal)) * 100)}%
                           </span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-2.5">
                           <div
-                            className="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
+                            className="bg-primary h-2.5 rounded-full transition-all duration-500"
                             style={{ width: `${(checkTotal / (cashTotal + checkTotal)) * 100}%` }}
                           />
                         </div>
@@ -502,12 +502,12 @@ export default function Reports() {
                           <div className="flex items-center gap-3">
                             <div className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center",
-                              payment.method === "cash" ? "bg-green-50" : "bg-blue-50"
+                              payment.method === "cash" ? "bg-green-50" : "bg-rose-50"
                             )}>
                               {payment.method === "cash" ? (
                                 <Banknote className="w-5 h-5 text-green-600" />
                               ) : (
-                                <FileText className="w-5 h-5 text-blue-600" />
+                                <FileText className="w-5 h-5 text-rose-700" />
                               )}
                             </div>
                             <div>
@@ -532,14 +532,14 @@ export default function Reports() {
                                 "text-xs",
                                 payment.method === "cash"
                                   ? "bg-green-50 text-green-700 border-green-100"
-                                  : "bg-blue-50 text-blue-700 border-blue-100"
+                                  : "bg-rose-50 text-rose-800 border-rose-100"
                               )}
                             >
                               {payment.method === "cash" ? "كاش" : "شيك"}
                             </Badge>
                             <span className={cn(
                               "font-bold text-lg",
-                              payment.method === "cash" ? "text-green-600" : "text-blue-600"
+                              payment.method === "cash" ? "text-green-600" : "text-rose-700"
                             )}>
                               {payment.amount.toLocaleString()} {payment.currency}
                             </span>

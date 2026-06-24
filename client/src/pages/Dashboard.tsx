@@ -103,10 +103,10 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20">
+        <Card className="bg-gradient-to-br from-[#8B2342] to-[#6d1b33] text-white border-0 shadow-lg shadow-primary/20">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-blue-100 font-medium mb-1">إجمالي المواعيد</p>
+              <p className="text-rose-100 font-medium mb-1">إجمالي المواعيد</p>
               <h3 className="text-3xl font-bold">{stats.total}</h3>
             </div>
             <div className="bg-white/20 p-3 rounded-xl">
@@ -187,7 +187,7 @@ export default function Dashboard() {
                         className={
                           apt.status === 'completed' ? "bg-green-100 text-green-700 hover:bg-green-100" :
                           apt.status === 'cancelled' ? "bg-red-100 text-red-700 hover:bg-red-100" :
-                          "bg-blue-50 text-blue-700 hover:bg-blue-50"
+                          "bg-rose-50 text-rose-800 hover:bg-rose-50"
                         }
                       >
                         {apt.status === 'completed' ? 'تم الإنجاز' : 

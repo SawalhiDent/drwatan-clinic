@@ -378,7 +378,7 @@ export default function Booking() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                              className="h-7 w-7 text-slate-400 hover:text-rose-700 hover:bg-rose-50"
                               onClick={() => openEditDialog(apt)}
                               title="تعديل الموعد"
                               data-testid={`button-edit-apt-${apt.id}`}
@@ -552,11 +552,11 @@ export default function Booking() {
                       />
                     </div>
 
-                    <div className="bg-blue-50 p-4 rounded-xl flex items-start gap-3 border border-blue-100">
-                      <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div className="bg-rose-50 p-4 rounded-xl flex items-start gap-3 border border-rose-100">
+                      <CheckCircle2 className="w-5 h-5 text-rose-700 mt-0.5" />
                       <div>
-                        <h4 className="font-bold text-blue-900 text-sm">ملخص الموعد</h4>
-                        <p className="text-blue-700 text-sm mt-1">
+                        <h4 className="font-bold text-rose-900 text-sm">ملخص الموعد</h4>
+                        <p className="text-rose-800 text-sm mt-1">
                           التاريخ: {format(selectedDate!, "yyyy-MM-dd")} <br />
                           الوقت: {selectedSlots.sort().join(" ، ")} 
                           {selectedSlots.length > 0 && (

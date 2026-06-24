@@ -64,7 +64,7 @@ export default function Home() {
             whileTap={{ scale: 0.98 }}
             className="group cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-300"
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-primary to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-[#6d1b33] rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform duration-300">
               <Calendar className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2 font-tajawal">حجز موعد جديد</h2>

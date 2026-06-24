@@ -192,12 +192,12 @@ export default function UsersPage() {
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className={cn(
                       "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                      u.role === "admin" ? "bg-purple-100" : u.role === "doctor" ? "bg-blue-100" : "bg-green-100"
+                      u.role === "admin" ? "bg-purple-100" : u.role === "doctor" ? "bg-rose-100" : "bg-green-100"
                     )}>
                       {u.role === "admin" ? (
                         <Shield className="w-5 h-5 text-purple-600" />
                       ) : (
-                        <UserCircle2 className={cn("w-5 h-5", u.role === "doctor" ? "text-blue-600" : "text-green-600")} />
+                        <UserCircle2 className={cn("w-5 h-5", u.role === "doctor" ? "text-rose-700" : "text-green-600")} />
                       )}
                     </div>
 
@@ -217,7 +217,7 @@ export default function UsersPage() {
                             </span>
                           )}
                           {(u.commissionRate ?? 0) > 0 && (
-                            <span className="text-xs text-blue-600 flex items-center gap-0.5">
+                            <span className="text-xs text-rose-700 flex items-center gap-0.5">
                               <Percent className="w-3 h-3" /> {u.commissionRate}%
                             </span>
                           )}
@@ -230,7 +230,7 @@ export default function UsersPage() {
                       className={cn(
                         "text-xs shrink-0",
                         u.role === "admin" ? "bg-purple-50 text-purple-700" :
-                        u.role === "doctor" ? "bg-blue-50 text-blue-700" :
+                        u.role === "doctor" ? "bg-rose-50 text-rose-800" :
                         "bg-green-50 text-green-700"
                       )}
                     >

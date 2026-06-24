@@ -302,7 +302,7 @@ export default function Patients() {
           <div className="flex flex-wrap gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => handleOpenDialog()} className="bg-[#0e8bab] hover:bg-[#0c7a96] h-9 px-6 text-sm">
+                <Button onClick={() => handleOpenDialog()} className="bg-[#8B2342] hover:bg-[#6d1b33] h-9 px-6 text-sm">
                   <UserPlus className="ml-2 w-4 h-4" />
                   إضافة مريض جديد
                 </Button>
@@ -490,7 +490,7 @@ export default function Patients() {
               <div key={patient.id} className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="bg-slate-50 p-2 rounded-lg">
-                    <FileText className="w-5 h-5 text-[#0e8bab]" />
+                    <FileText className="w-5 h-5 text-[#8B2342]" />
                   </div>
                   <div className="flex flex-col">
                     <h3 className="text-base font-bold text-slate-900">{patient.fullName}</h3>
@@ -519,7 +519,7 @@ export default function Patients() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Button 
                     size="sm"
-                    className="bg-[#0e8bab] hover:bg-[#0c7a96] h-8 rounded-lg gap-2 text-xs"
+                    className="bg-[#8B2342] hover:bg-[#6d1b33] h-8 rounded-lg gap-2 text-xs"
                     onClick={() => handleQuickBooking(patient)}
                   >
                     <Calendar className="w-3.5 h-3.5" />
@@ -572,7 +572,7 @@ export default function Patients() {
           <div className="space-y-4 pt-2">
             <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
               <div className="bg-slate-50 border-b border-slate-100 p-3 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#0e8bab]" />
+                <Calendar className="w-4 h-4 text-[#8B2342]" />
                 <span className="font-bold text-sm">اختيار التاريخ</span>
               </div>
               <CalendarComponent
@@ -590,7 +590,7 @@ export default function Patients() {
               <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
                 <div className="bg-slate-50 border-b border-slate-100 p-3">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-[#0e8bab]" />
+                    <Clock className="w-4 h-4 text-[#8B2342]" />
                     <span className="font-bold text-sm">الأوقات المتاحة</span>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">
@@ -600,7 +600,7 @@ export default function Patients() {
                 <div className="p-3">
                   {isLoadingSlots ? (
                     <div className="flex justify-center py-6">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#0e8bab]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-[#8B2342]" />
                     </div>
                   ) : (
                     <div className="grid grid-cols-4 gap-2">
@@ -614,9 +614,9 @@ export default function Patients() {
                           className={cn(
                             "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
                             quickBookTime === slot.time
-                              ? "bg-[#0e8bab] text-white border-[#0e8bab] shadow-md"
+                              ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
                               : slot.available
-                              ? "bg-white text-slate-700 border-slate-200 hover:border-[#0e8bab] hover:text-[#0e8bab]"
+                              ? "bg-white text-slate-700 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
                               : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed line-through"
                           )}
                         >
@@ -630,11 +630,11 @@ export default function Patients() {
             )}
 
             {quickBookTime && quickBookDate && (
-              <div className="bg-blue-50 p-3 rounded-xl flex items-start gap-3 border border-blue-100">
-                <CheckCircle2 className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="bg-rose-50 p-3 rounded-xl flex items-start gap-3 border border-rose-100">
+                <CheckCircle2 className="w-5 h-5 text-rose-700 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-blue-900 text-sm">ملخص الموعد</h4>
-                  <p className="text-blue-700 text-sm mt-1">
+                  <h4 className="font-bold text-rose-900 text-sm">ملخص الموعد</h4>
+                  <p className="text-rose-800 text-sm mt-1">
                     التاريخ: {format(quickBookDate, "yyyy-MM-dd")} — الوقت: {quickBookTime}
                   </p>
                 </div>
@@ -645,7 +645,7 @@ export default function Patients() {
               <Button type="button" variant="outline" onClick={() => setIsQuickBookingOpen(false)}>إلغاء</Button>
               <Button
                 type="button"
-                className="bg-[#0e8bab]"
+                className="bg-[#8B2342]"
                 disabled={isBooking || !quickBookTime || !quickBookDate}
                 onClick={onQuickBookingConfirm}
                 data-testid="button-confirm-quick-booking"
@@ -664,20 +664,20 @@ export default function Patients() {
           <DialogHeader className="p-4 md:p-6 pb-2">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <DialogTitle className="text-base md:text-xl font-bold font-tajawal flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#0e8bab] shrink-0" />
+                <FileText className="w-5 h-5 text-[#8B2342] shrink-0" />
                 <span className="truncate">{detailsLang === "he" ? `תיק מטופל: ${selectedPatient?.fullName}` : `ملف المريض: ${selectedPatient?.fullName}`}</span>
               </DialogTitle>
               <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 shrink-0">
                 <button
                   onClick={() => setDetailsLang("ar")}
-                  className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "ar" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
+                  className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "ar" ? "bg-[#8B2342] text-white" : "text-slate-500")}
                   data-testid="button-lang-ar"
                 >
                   عربي
                 </button>
                 <button
                   onClick={() => setDetailsLang("he")}
-                  className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "he" ? "bg-[#0e8bab] text-white" : "text-slate-500")}
+                  className={cn("px-3 py-1 rounded-md text-sm font-medium transition-colors", detailsLang === "he" ? "bg-[#8B2342] text-white" : "text-slate-500")}
                   data-testid="button-lang-he"
                 >
                   עברית
@@ -689,10 +689,10 @@ export default function Patients() {
           <Tabs defaultValue="info" className="flex-1 flex flex-col">
             <div className="px-4 md:px-6 border-b overflow-x-auto" dir={detailsLang === "he" ? "ltr" : "rtl"}>
               <TabsList className="bg-transparent gap-2 md:gap-6 h-12 p-0 w-max md:w-full justify-start">
-                <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "פרטים" : "التفاصيل"}</TabsTrigger>
-                <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "קבצים" : "الملفات"}</TabsTrigger>
-                <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "תשלומים" : "الدفعات"}</TabsTrigger>
-                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#0e8bab] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#0e8bab] whitespace-nowrap">{detailsLang === "he" ? "היסטוריית טיפולים" : "سجل العلاج"}</TabsTrigger>
+                <TabsTrigger value="info" className="data-[state=active]:border-b-2 data-[state=active]:border-[#8B2342] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#8B2342] whitespace-nowrap">{detailsLang === "he" ? "פרטים" : "التفاصيل"}</TabsTrigger>
+                <TabsTrigger value="files" className="data-[state=active]:border-b-2 data-[state=active]:border-[#8B2342] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#8B2342] whitespace-nowrap">{detailsLang === "he" ? "קבצים" : "الملفات"}</TabsTrigger>
+                <TabsTrigger value="payments" className="data-[state=active]:border-b-2 data-[state=active]:border-[#8B2342] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#8B2342] whitespace-nowrap">{detailsLang === "he" ? "תשלומים" : "الدفعات"}</TabsTrigger>
+                <TabsTrigger value="treatment-history" className="data-[state=active]:border-b-2 data-[state=active]:border-[#8B2342] rounded-none h-full bg-transparent shadow-none px-2 text-xs md:text-sm text-slate-500 data-[state=active]:text-[#8B2342] whitespace-nowrap">{detailsLang === "he" ? "היסטוריית טיפולים" : "سجل العلاج"}</TabsTrigger>
               </TabsList>
             </div>
 
@@ -710,7 +710,7 @@ export default function Patients() {
                 </div>
 
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-[#0e8bab] mb-3 flex items-center gap-2">
+                  <h4 className="font-bold text-[#8B2342] mb-3 flex items-center gap-2">
                     <ActivityIcon className="w-4 h-4" />
                     {detailsLang === "he" ? "היסטוריה רפואית" : "السجل الطبي"}
                   </h4>
@@ -725,7 +725,7 @@ export default function Patients() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">{detailsLang === "he" ? "תרופות נוכחיות" : "الأدوية الحالية"}</span>
-                      <span className="font-medium text-blue-600">{selectedPatient?.currentMeds || (detailsLang === "he" ? "אין" : "لا يوجد")}</span>
+                      <span className="font-medium text-rose-700">{selectedPatient?.currentMeds || (detailsLang === "he" ? "אין" : "لا يوجد")}</span>
                     </div>
                   </div>
                 </div>
@@ -752,7 +752,7 @@ export default function Patients() {
                   <div className="pointer-events-none">
                     <div className="bg-slate-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3">
                       {isUploadingFiles ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-[#0e8bab]" />
+                        <Loader2 className="w-6 h-6 animate-spin text-[#8B2342]" />
                       ) : (
                         <Download className="w-6 h-6 text-slate-400 rotate-180" />
                       )}
@@ -846,7 +846,7 @@ export default function Patients() {
                               return acc;
                             }, {} as Record<string, number>)
                         ).map(([curr, total]) => (
-                          <span key={curr} className="text-2xl font-bold text-blue-600 block leading-none">
+                          <span key={curr} className="text-2xl font-bold text-rose-700 block leading-none">
                             {total as number} {curr}
                           </span>
                         ))}
@@ -862,8 +862,8 @@ export default function Patients() {
                         )}
                       </div>
                     </div>
-                    <div className="bg-blue-50 p-3 rounded-full">
-                      <FileJson className="w-6 h-6 text-blue-600" />
+                    <div className="bg-rose-50 p-3 rounded-full">
+                      <FileJson className="w-6 h-6 text-rose-700" />
                     </div>
                   </div>
                 </div>
@@ -883,7 +883,7 @@ export default function Patients() {
                             <span className="text-[10px] text-slate-400">{format(new Date(payment.date), "yyyy-MM-dd")}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={payment.method === 'cash' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}>
+                            <Badge variant="outline" className={payment.method === 'cash' ? 'bg-green-50 text-green-700' : 'bg-rose-50 text-rose-800'}>
                               {payment.method === 'cash' ? (detailsLang === "he" ? "מזומן" : "كاش") : (detailsLang === "he" ? "צ'ק" : "شيك")}
                             </Badge>
                             {payment.method === 'check' && payment.checkImageUrl && (
@@ -906,7 +906,7 @@ export default function Patients() {
 
                 <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full bg-[#0e8bab] h-11">
+                    <Button className="w-full bg-[#8B2342] h-11">
                       {detailsLang === "he" ? "הוספת תשלום חדש" : "إضافة دفعة جديدة"}
                     </Button>
                   </DialogTrigger>
@@ -982,7 +982,7 @@ export default function Patients() {
 
                       <DialogFooter className="pt-4">
                         <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>{detailsLang === "he" ? "ביטול" : "إلغاء"}</Button>
-                        <Button className="bg-[#0e8bab]" onClick={handleAddPayment} disabled={isUpdating}>
+                        <Button className="bg-[#8B2342]" onClick={handleAddPayment} disabled={isUpdating}>
                           {isUpdating && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                           {detailsLang === "he" ? "אישור תשלום" : "تأكيد الدفعة"}
                         </Button>
@@ -994,13 +994,13 @@ export default function Patients() {
 
               <TabsContent value="treatment-history" className="mt-0 space-y-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-[#0e8bab] mb-4 flex items-center gap-2" data-testid="text-treatment-history-title">
+                  <h4 className="font-bold text-[#8B2342] mb-4 flex items-center gap-2" data-testid="text-treatment-history-title">
                     <Stethoscope className="w-4 h-4" />
                     {detailsLang === "he" ? "מעקב טיפולים" : "سجل متابعة العلاج"}
                   </h4>
                   {isLoadingNotes ? (
                     <div className="flex justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#0e8bab]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-[#8B2342]" />
                     </div>
                   ) : !treatmentNotesData || treatmentNotesData.length === 0 ? (
                     <div className="text-center py-8 text-slate-400" data-testid="text-no-treatment-notes">
@@ -1018,14 +1018,14 @@ export default function Patients() {
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <Calendar className="w-3.5 h-3.5 text-[#0e8bab]" />
+                              <Calendar className="w-3.5 h-3.5 text-[#8B2342]" />
                               <span className="text-sm font-bold text-slate-700" data-testid={`treatment-note-date-${note.id}`}>
                                 {note.date}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {note.treatment && (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs" data-testid={`treatment-note-service-${note.id}`}>
+                                <Badge variant="outline" className="bg-rose-50 text-rose-800 text-xs" data-testid={`treatment-note-service-${note.id}`}>
                                   {note.treatment}
                                 </Badge>
                               )}
