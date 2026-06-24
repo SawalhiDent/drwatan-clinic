@@ -69,6 +69,7 @@ export function AddDailyEntryDialog({ open, onOpenChange, date, editingEntry, on
 
   const { data: doctors } = useQuery<{ id: number; displayName: string; role: string }[]>({
     queryKey: ["/api/doctors"],
+    staleTime: 0,
   });
 
   const [patientName, setPatientName] = useState("");
