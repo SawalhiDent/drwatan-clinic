@@ -237,7 +237,7 @@ export default function WhatsAppTemplatesPage() {
                 : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342]"
             }`}
           >
-            🇸🇦 عربي
+            عربي
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-normal ${selectedLang === "ar" ? "bg-white/20" : "bg-slate-100"}`}>
               {langCounts.ar}
             </span>
@@ -251,7 +251,7 @@ export default function WhatsAppTemplatesPage() {
                 : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342]"
             }`}
           >
-            🇮🇱 עברית
+            עברית
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-normal ${selectedLang === "he" ? "bg-white/20" : "bg-slate-100"}`}>
               {langCounts.he}
             </span>
@@ -327,7 +327,7 @@ export default function WhatsAppTemplatesPage() {
                               {category === "dental" ? "🦷 أسنان" : category === "aesthetic" ? "✨ تجميل" : "💬 عامة"}
                             </Badge>
                             <Badge className={`text-[10px] ${lang === "he" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
-                              {lang === "he" ? "🇮🇱 עברית" : "🇸🇦 عربي"}
+                              {lang === "he" ? "עברית" : "عربي"}
                             </Badge>
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5 font-mono">{template.templateKey}</p>
@@ -437,7 +437,7 @@ export default function WhatsAppTemplatesPage() {
                         form.language === "ar" ? "bg-[#8B2342] text-white border-[#8B2342]" : "border-slate-200 text-slate-600 hover:border-[#8B2342]"
                       }`}
                     >
-                      🇸🇦 عربي
+                      عربي
                     </button>
                     <button
                       type="button"
@@ -446,7 +446,7 @@ export default function WhatsAppTemplatesPage() {
                         form.language === "he" ? "bg-[#8B2342] text-white border-[#8B2342]" : "border-slate-200 text-slate-600 hover:border-[#8B2342]"
                       }`}
                     >
-                      🇮🇱 עברית
+                      עברית
                     </button>
                   </div>
                 </div>
