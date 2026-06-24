@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-const WORKING_DAYS = [0, 1, 4, 6]; // Sun=0, Mon=1, Thu=4, Sat=6
+const WORKING_DAYS = [0, 1, 2, 3, 4, 5, 6]; // All days available
 
 function isWorkingDay(d: Date) {
   return WORKING_DAYS.includes(getDay(d));

@@ -29,12 +29,12 @@ import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, Clipboard
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const ALLOWED_DAYS = [0, 1, 4, 6];
+const ALLOWED_DAYS = [0, 1, 2, 3, 4, 5, 6];
 const START_HOUR = 12;
 const END_HOUR = 21;
 const SLOT_DURATION = 30;
 
-const WORKING_DAYS = [0, 1, 4, 6];
+const WORKING_DAYS = [0, 1, 2, 3, 4, 5, 6]; // All days available
 function isWorkingDay(d: Date) { return WORKING_DAYS.includes(getDay(d)); }
 
 export default function Booking() {

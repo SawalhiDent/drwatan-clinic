@@ -25,7 +25,7 @@ import { api } from "@shared/routes";
 import type { DailyEntry } from "@shared/schema";
 import { AddDailyEntryDialog } from "@/components/AddDailyEntryDialog";
 
-const WORKING_DAYS = [0, 1, 4, 6];
+const WORKING_DAYS = [0, 1, 2, 3, 4, 5, 6]; // All days available
 function isWorkingDay(d: Date) { return WORKING_DAYS.includes(getDay(d)); }
 function getNextWorkingDay(from: Date) { let d = addDays(from, 1); while (!isWorkingDay(d)) d = addDays(d, 1); return d; }
 function getPrevWorkingDay(from: Date) { let d = subDays(from, 1); while (!isWorkingDay(d)) d = subDays(d, 1); return d; }
