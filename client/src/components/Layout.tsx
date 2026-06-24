@@ -77,9 +77,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <img src={watanLogo} alt="Dr.Watan Logo" className="w-full h-full object-cover bg-white" />
             </div>
           </div>
-          <h1 className="text-base font-bold font-tajawal text-center text-white tracking-wide">صوالحي دنت</h1>
-          <p className="text-[11px] text-rose-200/90 mt-0.5 font-tajawal font-semibold">فرع د. وطن</p>
-          <p className="text-[9px] text-rose-300/60 mt-0.5 tracking-widest uppercase font-medium">Dental & Aesthetic Clinic</p>
+          <h1 className="text-base font-bold font-tajawal text-center text-white tracking-wide">Dr.Watan</h1>
+          <p className="text-[10px] text-rose-300/80 mt-0.5 tracking-widest uppercase font-medium">Dental & Aesthetic Clinic</p>
           <div className="flex items-center gap-1.5 mt-2">
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-900/50 text-rose-300 border border-rose-700/40">
               🦷 Dentistry
@@ -88,6 +87,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               ✨ Aesthetic
             </span>
           </div>
+          <p className="text-[10px] text-rose-200/70 mt-2 font-tajawal font-semibold tracking-wide">صوالحي دنت</p>
         </div>
 
         {/* Navigation */}
@@ -164,8 +164,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <img src={watanLogo} alt="Dr.Watan" className="w-full h-full object-cover bg-white" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold font-tajawal text-sm leading-tight">صوالحي دنت</span>
-            <span className="text-[9px] text-rose-300/70 leading-tight font-tajawal">فرع د. وطن</span>
+            <span className="font-bold font-tajawal text-sm leading-tight">Dr.Watan</span>
+            <span className="text-[9px] text-rose-300/70 uppercase tracking-wider leading-tight">Dental & Aesthetic</span>
+            <span className="text-[9px] text-rose-200/60 font-tajawal leading-tight">صوالحي دنت</span>
           </div>
         </div>
         <button
@@ -190,8 +191,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <img src={watanLogo} alt="Dr.Watan" className="w-full h-full object-cover bg-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white font-tajawal">صوالحي دنت</p>
-                <p className="text-[9px] text-rose-200/80 font-tajawal">فرع د. وطن</p>
+                <p className="text-sm font-bold text-white font-tajawal">Dr.Watan</p>
+                <p className="text-[9px] text-rose-300/70 uppercase tracking-wider">Dental & Aesthetic</p>
+                <p className="text-[9px] text-rose-200/60 font-tajawal">صوالحي دنت</p>
               </div>
             </div>
 
