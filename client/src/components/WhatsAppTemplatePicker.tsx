@@ -84,7 +84,7 @@ export function WhatsAppTemplatePicker({
               <DropdownMenuItem
                 key={template.id}
                 onClick={() => !disabled && handleSelect(template)}
-                className={`cursor-pointer gap-2 text-slate-200 hover:text-white hover:bg-emerald-600/25 focus:bg-emerald-600/25 focus:text-white rounded-lg px-2 py-2 text-sm ${disabled ? "opacity-35 cursor-not-allowed" : ""}`}
+                className={`cursor-pointer gap-2 text-white hover:text-white hover:bg-emerald-600/30 focus:bg-emerald-600/30 focus:text-white rounded-lg px-2 py-2 text-sm font-medium ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
                 disabled={disabled}
                 data-testid={`whatsapp-template-${template.templateKey}`}
               >
