@@ -57,6 +57,7 @@ export const patients = pgTable("patients", {
   chronicDiseases: text("chronic_diseases"),
   currentMeds: text("current_meds"),
   notes: text("notes"),
+  fileNumber: text("file_number"),
   paidAmount: integer("paid_amount").default(0),
   currencySymbol: text("currency_symbol").default("₪"),
   payments: jsonb("payments").$type<{

@@ -167,7 +167,9 @@ export class DatabaseStorage implements IStorage {
 
   async createPatient(patient: InsertPatient): Promise<Patient> {
     const [newPatient] = await db.insert(patients).values(patient as any).returning();
-    return newPatient;
+    const fileNumber = `P-${String(newPatient.id).padStart(4, "0")}`;
+    const [withFile] = await db.update(patients).set({ fileNumber }).where(eq(patients.id, newPatient.id)).returning();
+    return withFile;
   }
 
   async updatePatient(id: number, updates: Partial<InsertPatient>): Promise<Patient> {

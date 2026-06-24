@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, UserPlus, Pencil, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon, ClipboardList, Stethoscope } from "lucide-react";
+import { Search, UserPlus, Pencil, FileText, Loader2, Trash2, Calendar, Eye, Download, FileJson, DollarSign, Image as ImageIcon, ClipboardList, Stethoscope, Printer, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppTemplatePicker } from "@/components/WhatsAppTemplatePicker";
 import { 
@@ -258,6 +258,127 @@ export default function Patients() {
   const handleViewDetails = (patient: Patient) => {
     setSelectedPatient(patient);
     setIsDetailsOpen(true);
+  };
+
+  const handlePrintPatient = (patient: Patient, notes: TreatmentNote[] | undefined) => {
+    const payments = (patient.payments as any[]) || [];
+    const paymentsRows = payments.map((p: any, i: number) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${p.date || ""}</td>
+        <td>${(p.amount || 0).toLocaleString()} ${p.currency || "₪"}</td>
+        <td>${p.method === "check" ? "شيك" : "كاش"}</td>
+      </tr>`).join("");
+
+    const notesRows = (notes || []).map((n, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${n.date || ""}</td>
+        <td>${n.treatment || "—"}</td>
+        <td>${n.doctor || "—"}</td>
+        <td>${n.notes || "—"}</td>
+      </tr>`).join("");
+
+    const totalPaid = payments.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+    const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8"/>
+<title>ملف المريض - ${patient.fullName}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Cairo',sans-serif; background:#fff; color:#1e293b; padding:24px 32px; font-size:13px; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #8B2342; padding-bottom:16px; margin-bottom:20px; }
+  .clinic-name { font-size:20px; font-weight:900; color:#8B2342; }
+  .clinic-sub { font-size:12px; color:#64748b; margin-top:2px; }
+  .file-badge { background:#8B2342; color:#fff; font-size:18px; font-weight:900; padding:6px 18px; border-radius:8px; }
+  .patient-title { font-size:16px; font-weight:700; margin-bottom:16px; color:#8B2342; border-right:4px solid #8B2342; padding-right:10px; }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px; }
+  .info-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; }
+  .info-label { font-size:10px; color:#94a3b8; margin-bottom:3px; }
+  .info-value { font-weight:700; color:#1e293b; font-size:13px; }
+  .section { margin-bottom:20px; }
+  .section-title { font-size:13px; font-weight:700; color:#8B2342; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:6px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { background:#8B2342; color:#fff; padding:7px 10px; text-align:right; font-weight:600; }
+  td { padding:6px 10px; border-bottom:1px solid #f1f5f9; }
+  tr:nth-child(even) td { background:#fafafa; }
+  .medical-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .medical-item { background:#fff7f7; border:1px solid #fecaca; border-radius:6px; padding:8px 12px; }
+  .medical-label { font-size:10px; color:#ef4444; margin-bottom:3px; }
+  .total-bar { background:#8B2342; color:#fff; padding:10px 16px; border-radius:8px; text-align:left; margin-top:8px; font-weight:700; }
+  .footer { margin-top:28px; text-align:center; font-size:10px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:10px; }
+  .notes-box { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px; font-size:13px; color:#78350f; }
+  @media print { body { padding:16px 20px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="clinic-name">عيادة صوالحي دنت - دكتورة وطن</div>
+    <div class="clinic-sub">Dental &amp; Aesthetic Clinic</div>
+    <div class="clinic-sub">تاريخ الطباعة: ${new Date().toLocaleDateString("ar-SA")}</div>
+  </div>
+  <div class="file-badge">${patient.fileNumber || "—"}</div>
+</div>
+
+<div class="patient-title">بيانات المريض: ${patient.fullName}</div>
+
+<div class="info-grid">
+  <div class="info-box"><div class="info-label">الاسم الكامل</div><div class="info-value">${patient.fullName}</div></div>
+  <div class="info-box"><div class="info-label">رقم الهاتف</div><div class="info-value" dir="ltr">${patient.phone}</div></div>
+  <div class="info-box"><div class="info-label">رقم الملف</div><div class="info-value">${patient.fileNumber || "—"}</div></div>
+  <div class="info-box"><div class="info-label">العمر</div><div class="info-value">${patient.age ? patient.age + " سنة" : "غير محدد"}</div></div>
+  <div class="info-box"><div class="info-label">الجنس</div><div class="info-value">${patient.gender === "male" ? "ذكر" : patient.gender === "female" ? "أنثى" : "غير محدد"}</div></div>
+  <div class="info-box"><div class="info-label">العنوان</div><div class="info-value">${patient.address || "غير محدد"}</div></div>
+</div>
+
+${patient.allergies || patient.chronicDiseases || patient.currentMeds ? `
+<div class="section">
+  <div class="section-title">السجل الطبي</div>
+  <div class="medical-grid">
+    ${patient.allergies ? `<div class="medical-item"><div class="medical-label">الحساسية</div><div>${patient.allergies}</div></div>` : ""}
+    ${patient.chronicDiseases ? `<div class="medical-item"><div class="medical-label">أمراض مزمنة</div><div>${patient.chronicDiseases}</div></div>` : ""}
+    ${patient.currentMeds ? `<div class="medical-item"><div class="medical-label">الأدوية الحالية</div><div>${patient.currentMeds}</div></div>` : ""}
+  </div>
+</div>` : ""}
+
+${patient.notes ? `
+<div class="section">
+  <div class="section-title">ملاحظات</div>
+  <div class="notes-box">${patient.notes}</div>
+</div>` : ""}
+
+${notesRows ? `
+<div class="section">
+  <div class="section-title">سجل العلاجات</div>
+  <table>
+    <thead><tr><th>#</th><th>التاريخ</th><th>العلاج</th><th>الطبيب</th><th>الملاحظات</th></tr></thead>
+    <tbody>${notesRows}</tbody>
+  </table>
+</div>` : ""}
+
+${paymentsRows ? `
+<div class="section">
+  <div class="section-title">سجل الدفعات</div>
+  <table>
+    <thead><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>طريقة الدفع</th></tr></thead>
+    <tbody>${paymentsRows}</tbody>
+  </table>
+  <div class="total-bar">إجمالي المدفوعات: ${totalPaid.toLocaleString()} ${patient.currencySymbol || "₪"}</div>
+</div>` : ""}
+
+<div class="footer">عيادة صوالحي دنت - دكتورة وطن &nbsp;|&nbsp; Dental &amp; Aesthetic Clinic</div>
+</body></html>`;
+
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.onload = () => { win.print(); };
+    }
   };
 
   const onSubmit = (data: InsertPatient) => {
@@ -517,7 +638,14 @@ export default function Patients() {
                     <FileText className="w-5 h-5 text-[#8B2342]" />
                   </div>
                   <div className="flex flex-col">
-                    <h3 className="text-base font-bold text-slate-900">{patient.fullName}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-slate-900">{patient.fullName}</h3>
+                      {patient.fileNumber && (
+                        <span className="text-[11px] font-bold bg-[#8B2342]/10 text-[#8B2342] px-2 py-0.5 rounded-full border border-[#8B2342]/20">
+                          {patient.fileNumber}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span dir="ltr" className="text-sm text-slate-500">{patient.phone}</span>
                       {patient.phone && (
@@ -721,7 +849,23 @@ export default function Patients() {
               <DialogTitle className="text-base md:text-xl font-bold font-tajawal flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#8B2342] shrink-0" />
                 <span className="truncate">{detailsLang === "he" ? `תיק מטופל: ${selectedPatient?.fullName}` : `ملف المريض: ${selectedPatient?.fullName}`}</span>
+                {selectedPatient?.fileNumber && (
+                  <span className="text-xs font-bold bg-[#8B2342]/10 text-[#8B2342] px-2 py-0.5 rounded-full border border-[#8B2342]/20 shrink-0">
+                    {selectedPatient.fileNumber}
+                  </span>
+                )}
               </DialogTitle>
+              <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs border-slate-200 shrink-0"
+                onClick={() => selectedPatient && handlePrintPatient(selectedPatient, treatmentNotesData)}
+                data-testid="button-print-patient"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                طباعة
+              </Button>
               <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 shrink-0">
                 <button
                   onClick={() => setDetailsLang("ar")}

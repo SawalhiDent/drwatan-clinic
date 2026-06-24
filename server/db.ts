@@ -157,6 +157,7 @@ export async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_doctor_settlements_doctor ON doctor_settlements(doctor_name);
       CREATE INDEX IF NOT EXISTS idx_doctor_settlements_period ON doctor_settlements(period_from, period_to);
 
+      ALTER TABLE patients ADD COLUMN IF NOT EXISTS file_number TEXT;
       ALTER TABLE daily_entries ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
       ALTER TABLE daily_entries ADD COLUMN IF NOT EXISTS check_images TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
