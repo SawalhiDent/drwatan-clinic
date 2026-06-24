@@ -63,7 +63,7 @@ export default function UsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({ title: "تم إضافة المستخدم بنجاح" });
+      toast({ title: "✅ تم إضافة المستخدم بنجاح", variant: "success" as any });
       resetForm();
       setDialogOpen(false);
     },
@@ -79,7 +79,7 @@ export default function UsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({ title: "تم تحديث المستخدم بنجاح" });
+      toast({ title: "✅ تم تحديث المستخدم بنجاح", variant: "success" as any });
       resetForm();
       setDialogOpen(false);
     },
@@ -94,7 +94,7 @@ export default function UsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({ title: "تم حذف المستخدم" });
+      toast({ title: "🗑️ تم حذف المستخدم", variant: "success" as any });
     },
     onError: (err: Error) => {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -261,9 +261,21 @@ export default function UsersPage() {
                     {u.role !== "admin" && (
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         {/* Quick toggle: show/hide in booking */}
-                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
-                          <CalendarCheck className={cn("w-3.5 h-3.5", u.showInBooking !== false ? "text-emerald-600" : "text-slate-400")} />
-                          <span className="text-xs text-slate-600 font-medium">الحجز</span>
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 rounded-xl px-3 py-2 border-2 transition-all duration-200",
+                            u.showInBooking !== false
+                              ? "bg-emerald-50 border-emerald-300"
+                              : "bg-slate-100 border-slate-300"
+                          )}
+                        >
+                          <CalendarCheck className={cn("w-4 h-4 shrink-0", u.showInBooking !== false ? "text-emerald-600" : "text-slate-400")} />
+                          <div className="flex flex-col leading-none">
+                            <span className="text-[10px] text-slate-500 font-medium">ظهور عند الحجز</span>
+                            <span className={cn("text-xs font-bold", u.showInBooking !== false ? "text-emerald-700" : "text-slate-500")}>
+                              {u.showInBooking !== false ? "✅ مفعّل" : "⛔ موقوف"}
+                            </span>
+                          </div>
                           <Switch
                             checked={u.showInBooking !== false}
                             onCheckedChange={(val) =>
