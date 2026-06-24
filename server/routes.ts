@@ -507,7 +507,7 @@ export async function registerRoutes(
             const newPayment = {
               amount: entry.amount,
               date: entry.date,
-              method: (entry.paymentMethod === "check" ? "check" : "cash") as "cash" | "check",
+              method: (entry.paymentMethod || "cash") as string,
               currency: entry.currency || "₪",
               dailyEntryId: entry.id,
             };
@@ -565,7 +565,7 @@ export async function registerRoutes(
           const newPayment = {
             amount: newAmount,
             date: entry.date,
-            method: (entry.paymentMethod === "check" ? "check" : "cash") as "cash" | "check",
+            method: (entry.paymentMethod || "cash") as string,
             currency: entry.currency || "₪",
             dailyEntryId: entryId,
           };

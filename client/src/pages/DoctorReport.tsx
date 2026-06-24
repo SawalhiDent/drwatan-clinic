@@ -234,7 +234,7 @@ export default function DoctorReport() {
     text += `تفاصيل المعالجات:\n\n`;
 
     doctorEntries.forEach((e, i) => {
-      const method = e.paymentMethod === "check" ? "شيك" : "كاش";
+      const method = e.paymentMethod === "check" ? "شيك" : e.paymentMethod === "visa" ? "فيزا" : e.paymentMethod === "bpay" ? "بييت" : "كاش";
       text += `${i + 1}. ${e.patientName} - ${e.treatment || "—"} - ${(e.amount || 0).toLocaleString()} ${e.currency || "₪"} (${method}) - ${e.date}\n`;
     });
 
@@ -254,7 +254,7 @@ export default function DoctorReport() {
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${e.patientName}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee">${e.treatment || "—"}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${(e.amount || 0).toLocaleString()} ${e.currency || "₪"}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${e.paymentMethod === "check" ? "شيك" : "كاش"}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">${e.paymentMethod === "check" ? "شيك" : e.paymentMethod === "visa" ? "فيزا" : e.paymentMethod === "bpay" ? "بييت" : "كاش"}</td>
       </tr>
     `).join("");
 
@@ -758,7 +758,7 @@ export default function DoctorReport() {
                               {(entry.amount || 0).toLocaleString()} {entry.currency || "₪"}
                             </span>
                             <span className="text-xs text-slate-400">
-                              {entry.paymentMethod === "check" ? "شيك" : "كاش"}
+                              {entry.paymentMethod === "check" ? "شيك" : entry.paymentMethod === "visa" ? "فيزا" : entry.paymentMethod === "bpay" ? "بييت" : "كاش"}
                             </span>
                           </div>
                         </div>

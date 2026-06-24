@@ -63,7 +63,7 @@ export const patients = pgTable("patients", {
   payments: jsonb("payments").$type<{
     amount: number;
     date: string;
-    method: "cash" | "check";
+    method: "cash" | "check" | "visa" | "bpay" | string;
     checkImageUrl?: string;
     currency: string;
     dailyEntryId?: number;

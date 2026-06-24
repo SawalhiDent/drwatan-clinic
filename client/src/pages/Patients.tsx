@@ -48,7 +48,7 @@ export default function Patients() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "check">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [paymentCurrency, setPaymentCurrency] = useState("₪");
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [checkImage, setCheckImage] = useState<string | null>(null);
@@ -267,7 +267,7 @@ export default function Patients() {
         <td>${i + 1}</td>
         <td>${p.date || ""}</td>
         <td>${(p.amount || 0).toLocaleString()} ${p.currency || "₪"}</td>
-        <td>${p.method === "check" ? "شيك" : "كاش"}</td>
+        <td>${p.method === "check" ? "شيك" : p.method === "visa" ? "فيزا" : p.method === "bpay" ? "بييت" : "كاش"}</td>
       </tr>`).join("");
 
     const notesRows = (notes || []).map((n, i) => `
@@ -1000,73 +1000,45 @@ ${paymentsRows ? `
               </TabsContent>
 
               <TabsContent value="payments" className="mt-0 space-y-4" dir={detailsLang === "he" ? "ltr" : "rtl"}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-slate-400 block">{detailsLang === "he" ? "סה\"כ מזומן" : "إجمالي الكاش"}</span>
-                      <div className="space-y-1">
-                        {Object.entries(
-                          ((selectedPatient?.payments as any[]) || [])
-                            .filter(p => p.method === 'cash')
-                            .reduce((acc, p) => {
-                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
-                              return acc;
-                            }, {} as Record<string, number>)
-                        ).map(([curr, total]) => (
-                          <span key={curr} className="text-2xl font-bold text-green-600 block leading-none">
-                            {total as number} {curr}
-                          </span>
-                        ))}
-                        {Object.keys(
-                          ((selectedPatient?.payments as any[]) || [])
-                            .filter(p => p.method === 'cash')
-                            .reduce((acc, p) => {
-                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
-                              return acc;
-                            }, {} as Record<string, number>)
-                        ).length === 0 && (
-                          <span className="text-2xl font-bold text-slate-300 block">0</span>
-                        )}
-                      </div>
+                {(() => {
+                  const allPayments = (selectedPatient?.payments as any[]) || [];
+                  const methodConfig: Record<string, { label: string; labelHe: string; color: string; bg: string; iconBg: string; icon: string }> = {
+                    cash:  { label: "كاش",  labelHe: "מזומן",  color: "text-green-600",  bg: "bg-green-50",   iconBg: "bg-green-50",   icon: "💵" },
+                    check: { label: "شيك",  labelHe: "צ'ק",    color: "text-rose-700",   bg: "bg-rose-50",    iconBg: "bg-rose-50",    icon: "📄" },
+                    visa:  { label: "فيزا", labelHe: "ויזה",   color: "text-blue-600",   bg: "bg-blue-50",    iconBg: "bg-blue-50",    icon: "💳" },
+                    bpay:  { label: "بييت", labelHe: "ביט",    color: "text-purple-600", bg: "bg-purple-50",  iconBg: "bg-purple-50",  icon: "📱" },
+                  };
+                  return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {Object.entries(methodConfig).map(([method, cfg]) => {
+                        const totals = allPayments
+                          .filter((p: any) => p.method === method)
+                          .reduce((acc: Record<string, number>, p: any) => {
+                            acc[p.currency] = (acc[p.currency] || 0) + p.amount;
+                            return acc;
+                          }, {} as Record<string, number>);
+                        const entries = Object.entries(totals);
+                        return (
+                          <div key={method} className={`bg-white p-4 rounded-xl border border-slate-100`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-slate-400">{detailsLang === "he" ? cfg.labelHe : cfg.label}</span>
+                              <span className="text-lg">{cfg.icon}</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {entries.length === 0 ? (
+                                <span className={`text-xl font-bold text-slate-300 block`}>0</span>
+                              ) : entries.map(([curr, total]) => (
+                                <span key={curr} className={`text-xl font-bold ${cfg.color} block leading-tight`}>
+                                  {(total as number).toLocaleString()} {curr}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="bg-green-50 p-3 rounded-full">
-                      <DollarSign className="w-6 h-6 text-green-600" />
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-xl border border-slate-100 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-slate-400 block">{detailsLang === "he" ? "סה\"כ צ'קים" : "إجمالي الشيكات"}</span>
-                      <div className="space-y-1">
-                        {Object.entries(
-                          ((selectedPatient?.payments as any[]) || [])
-                            .filter(p => p.method === 'check')
-                            .reduce((acc, p) => {
-                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
-                              return acc;
-                            }, {} as Record<string, number>)
-                        ).map(([curr, total]) => (
-                          <span key={curr} className="text-2xl font-bold text-rose-700 block leading-none">
-                            {total as number} {curr}
-                          </span>
-                        ))}
-                        {Object.keys(
-                          ((selectedPatient?.payments as any[]) || [])
-                            .filter(p => p.method === 'check')
-                            .reduce((acc, p) => {
-                              acc[p.currency] = (acc[p.currency] || 0) + p.amount;
-                              return acc;
-                            }, {} as Record<string, number>)
-                        ).length === 0 && (
-                          <span className="text-2xl font-bold text-slate-300 block">0</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-rose-50 p-3 rounded-full">
-                      <FileJson className="w-6 h-6 text-rose-700" />
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
                 
                 <div className="bg-white p-4 rounded-xl border border-slate-100">
                   <h4 className="text-sm font-bold text-slate-700 mb-4">{detailsLang === "he" ? "פעולות אחרונות" : "آخر العمليات"}</h4>
@@ -1083,8 +1055,18 @@ ${paymentsRows ? `
                             <span className="text-[10px] text-slate-400">{format(new Date(payment.date), "yyyy-MM-dd")}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={payment.method === 'cash' ? 'bg-green-50 text-green-700' : 'bg-rose-50 text-rose-800'}>
-                              {payment.method === 'cash' ? (detailsLang === "he" ? "מזומן" : "كاش") : (detailsLang === "he" ? "צ'ק" : "شيك")}
+                            <Badge variant="outline" className={
+                              payment.method === 'cash'  ? 'bg-green-50 text-green-700 border-green-200' :
+                              payment.method === 'check' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              payment.method === 'visa'  ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              payment.method === 'bpay'  ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                              'bg-slate-50 text-slate-700'
+                            }>
+                              {payment.method === 'cash'  ? (detailsLang === "he" ? "מזומן" : "كاش") :
+                               payment.method === 'check' ? (detailsLang === "he" ? "צ'ק" : "شيك") :
+                               payment.method === 'visa'  ? (detailsLang === "he" ? "ויזה" : "فيزا") :
+                               payment.method === 'bpay'  ? (detailsLang === "he" ? "ביט" : "بييت") :
+                               payment.method}
                             </Badge>
                             {payment.method === 'check' && payment.checkImageUrl && (
                               <Button 
@@ -1144,6 +1126,8 @@ ${paymentsRows ? `
                           <SelectContent className="bg-white border-slate-200">
                             <SelectItem value="cash">{detailsLang === "he" ? "מזומן" : "كاش"}</SelectItem>
                             <SelectItem value="check">{detailsLang === "he" ? "צ'ק" : "شيك"}</SelectItem>
+                            <SelectItem value="visa">{detailsLang === "he" ? "ויזה" : "فيزا"}</SelectItem>
+                            <SelectItem value="bpay">{detailsLang === "he" ? "ביט" : "بييت"}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

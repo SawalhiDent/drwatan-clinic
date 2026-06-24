@@ -188,7 +188,7 @@ export default function DailySchedule() {
                                   {entry.amount.toLocaleString()} {entry.currency || "₪"}
                                 </span>
                                 <span className="text-[10px] text-slate-400">
-                                  {entry.paymentMethod === "check" ? "شيك" : "كاش"}
+                                  {entry.paymentMethod === "check" ? "شيك" : entry.paymentMethod === "visa" ? "فيزا" : entry.paymentMethod === "bpay" ? "بييت" : "كاش"}
                                 </span>
                               </div>
                             ) : "—"}
