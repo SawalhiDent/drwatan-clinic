@@ -181,6 +181,7 @@ export async function registerRoutes(
     phone: z.string().optional(),
     salary: z.number().optional(),
     commissionRate: z.number().optional(),
+    showInBooking: z.boolean().optional(),
   });
 
   app.put("/api/users/:id", authMiddleware, requirePermission("user_management"), asyncHandler(async (req, res) => {
@@ -192,7 +193,7 @@ export async function registerRoutes(
       if (target.role === "admin" && req.user!.id !== target.id) {
         return res.status(403).json({ message: "لا يمكن تعديل المدير" });
       }
-      const { displayName, role, permissions, active, password, phone, salary, commissionRate } = updateUserSchema.parse(req.body);
+      const { displayName, role, permissions, active, password, phone, salary, commissionRate, showInBooking } = updateUserSchema.parse(req.body);
       const allowedRoles = ["doctor", "assistant"];
       const safeRole = target.role === "admin" ? undefined : (role && allowedRoles.includes(role) ? role : undefined);
       const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission)) as Permission[] | undefined;
@@ -205,6 +206,7 @@ export async function registerRoutes(
         phone,
         salary,
         commissionRate,
+        showInBooking,
       });
       if (!updated) return res.status(404).json({ message: "المستخدم غير موجود" });
       const { passwordHash, ...safeUser } = updated;

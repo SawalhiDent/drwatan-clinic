@@ -89,7 +89,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(data: { username: string; password: string; displayName: string; role: string; permissions: Permission[]; phone?: string; salary?: number; commissionRate?: number }): Promise<User>;
-  updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string; phone?: string; salary?: number; commissionRate?: number }): Promise<User | undefined>;
+  updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string; phone?: string; salary?: number; commissionRate?: number; showInBooking?: boolean }): Promise<User | undefined>;
   deleteUser(id: number): Promise<void>;
   verifyPassword(user: User, password: string): Promise<boolean>;
 
@@ -253,7 +253,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string; phone?: string; salary?: number; commissionRate?: number }): Promise<User | undefined> {
+  async updateUser(id: number, data: { displayName?: string; role?: string; permissions?: Permission[]; active?: boolean; password?: string; phone?: string; salary?: number; commissionRate?: number; showInBooking?: boolean }): Promise<User | undefined> {
     const updates: any = {};
     if (data.displayName !== undefined) updates.displayName = data.displayName;
     if (data.role !== undefined) updates.role = data.role;
@@ -263,6 +263,7 @@ export class DatabaseStorage implements IStorage {
     if (data.phone !== undefined) updates.phone = data.phone;
     if (data.salary !== undefined) updates.salary = data.salary;
     if (data.commissionRate !== undefined) updates.commissionRate = data.commissionRate;
+    if (data.showInBooking !== undefined) updates.showInBooking = data.showInBooking;
 
     const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return updated;
