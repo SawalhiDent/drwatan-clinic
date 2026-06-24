@@ -5,25 +5,25 @@
 @tailwind utilities;
 
 :root {
-  /* Dark Blue Theme based on Medical context */
-  --primary: 215 100% 25%;      /* #004080 - Deep Royal Blue */
-  --primary-foreground: 210 40% 98%;
+  /* Dr.Watan Dental & Aesthetic — Burgundy / Rose Gold Theme */
+  --primary: 343 58% 33%;            /* #8B2342 — Deep Burgundy */
+  --primary-foreground: 0 0% 98%;
 
-  --secondary: 210 96% 89%;     /* Light Blue for backgrounds */
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 340 35% 93%;          /* Light Rose Blush for backgrounds */
+  --secondary-foreground: 343 58% 22%;
 
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 340 20% 96%;
+  --muted-foreground: 340 12% 47%;
 
-  --accent: 38 92% 50%;         /* Gold/Orange accent for call-to-actions */
-  --accent-foreground: 222 47% 11%;
+  --accent: 15 48% 60%;              /* Rose Gold accent */
+  --accent-foreground: 0 0% 98%;
 
   --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 0 0% 98%;
 
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 215 100% 50%;
+  --border: 340 22% 88%;
+  --input: 340 22% 88%;
+  --ring: 343 58% 43%;
 
   --radius: 0.75rem;
 

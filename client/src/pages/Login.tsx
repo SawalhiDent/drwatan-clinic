@@ -69,7 +69,7 @@ export default function Login() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading} data-testid="button-login">
+            <Button type="submit" className="w-full bg-[#004080] hover:bg-[#003366] text-white" disabled={loading} data-testid="button-login">
               {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Lock className="w-4 h-4 ml-2" />}
               تسجيل الدخول
             </Button>
