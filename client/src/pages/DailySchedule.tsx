@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { format, addDays, subDays, getDay } from "date-fns";
@@ -31,6 +32,7 @@ function getNextWorkingDay(from: Date) { let d = addDays(from, 1); while (!isWor
 function getPrevWorkingDay(from: Date) { let d = subDays(from, 1); while (!isWorkingDay(d)) d = subDays(d, 1); return d; }
 
 export default function DailySchedule() {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(() => {
     const today = new Date();
@@ -164,7 +166,19 @@ export default function DailySchedule() {
                     <TableBody>
                       {entries.map((entry) => (
                         <TableRow key={entry.id} data-testid={`row-entry-${entry.id}`}>
-                          <TableCell className="font-bold text-slate-800">{entry.patientName}</TableCell>
+                          <TableCell>
+                            {entry.patientId ? (
+                              <button
+                                onClick={() => navigate(`/patients?patientId=${entry.patientId}`)}
+                                className="font-bold text-primary hover:underline underline-offset-2 text-right"
+                                data-testid={`link-patient-${entry.id}`}
+                              >
+                                {entry.patientName}
+                              </button>
+                            ) : (
+                              <span className="font-bold text-slate-800">{entry.patientName}</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-slate-600">{entry.treatment || "—"}</TableCell>
                           <TableCell className="text-slate-600">{entry.doctor || "—"}</TableCell>
                           <TableCell>

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,9 +59,25 @@ export default function Patients() {
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [phonePrefix, setPhonePrefix] = useState("972");
 
+  const [, navigate] = useLocation();
+
   const { data: patients, isLoading } = usePatients();
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
   const { mutate: updatePatient, isPending: isUpdating } = useUpdatePatient();
+
+  // Auto-open patient from URL param (e.g. /patients?patientId=5)
+  useEffect(() => {
+    if (!patients) return;
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get("patientId");
+    if (!pid) return;
+    const found = patients.find((p) => p.id === Number(pid));
+    if (found) {
+      setSelectedPatient(found);
+      setIsDetailsOpen(true);
+      navigate("/patients", { replace: true });
+    }
+  }, [patients]);
 
   const { data: treatmentNotesData, isLoading: isLoadingNotes } = useQuery<TreatmentNote[]>({
     queryKey: [`/api/patients/${selectedPatient?.id}/treatment-notes`],

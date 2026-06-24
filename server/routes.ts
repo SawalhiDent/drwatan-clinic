@@ -489,13 +489,13 @@ export async function registerRoutes(
       const entry = await storage.createDailyEntry(input);
 
       if (entry.patientId) {
-        if (entry.notes && entry.notes.trim()) {
+        if (entry.treatment || entry.doctor || (entry.notes && entry.notes.trim())) {
           await storage.createTreatmentNote({
             patientId: entry.patientId,
             date: entry.date,
             treatment: entry.treatment,
             doctor: entry.doctor,
-            notes: entry.notes.trim(),
+            notes: entry.notes?.trim() || "",
             dailyEntryId: entry.id,
           });
         }
@@ -573,6 +573,20 @@ export async function registerRoutes(
           const totalPaid = updatedPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
           await storage.updatePatient(newPatientId, { payments: updatedPayments, paidAmount: totalPaid });
         }
+      }
+
+      // Sync treatment note update
+      if (newPatientId && (entry.treatment || entry.doctor || (entry.notes && entry.notes.trim()))) {
+        await storage.upsertTreatmentNoteByDailyEntry({
+          dailyEntryId: entryId,
+          patientId: newPatientId,
+          date: entry.date,
+          treatment: entry.treatment,
+          doctor: entry.doctor,
+          notes: entry.notes?.trim() || "",
+        });
+      } else {
+        await storage.deleteTreatmentNoteByDailyEntry(entryId);
       }
 
       res.json(entry);

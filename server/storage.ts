@@ -93,6 +93,9 @@ export interface IStorage {
   deleteUser(id: number): Promise<void>;
   verifyPassword(user: User, password: string): Promise<boolean>;
 
+  upsertTreatmentNoteByDailyEntry(data: { dailyEntryId: number; patientId: number; date: string; treatment?: string | null; doctor?: string | null; notes: string }): Promise<void>;
+  deleteTreatmentNoteByDailyEntry(dailyEntryId: number): Promise<void>;
+
   // Sessions
   createSession(userId: number): Promise<Session>;
   getSession(id: string): Promise<(Session & { user: User }) | undefined>;
@@ -550,6 +553,35 @@ export class DatabaseStorage implements IStorage {
     }).returning();
     return note;
   }
+
+  async upsertTreatmentNoteByDailyEntry(data: { dailyEntryId: number; patientId: number; date: string; treatment?: string | null; doctor?: string | null; notes: string }): Promise<void> {
+    const existing = await db.select().from(treatmentNotes)
+      .where(eq(treatmentNotes.dailyEntryId, data.dailyEntryId))
+      .limit(1);
+    if (existing.length > 0) {
+      await db.update(treatmentNotes).set({
+        date: data.date,
+        treatment: data.treatment || null,
+        doctor: data.doctor || null,
+        notes: data.notes,
+        patientId: data.patientId,
+      }).where(eq(treatmentNotes.dailyEntryId, data.dailyEntryId));
+    } else {
+      await db.insert(treatmentNotes).values({
+        patientId: data.patientId,
+        date: data.date,
+        treatment: data.treatment || null,
+        doctor: data.doctor || null,
+        notes: data.notes,
+        dailyEntryId: data.dailyEntryId,
+      });
+    }
+  }
+
+  async deleteTreatmentNoteByDailyEntry(dailyEntryId: number): Promise<void> {
+    await db.update(treatmentNotes).set({ dailyEntryId: null }).where(eq(treatmentNotes.dailyEntryId, dailyEntryId));
+  }
+
   // Doctor Settlements
   async getDoctorSettlements(doctorName: string): Promise<DoctorSettlement[]> {
     return await db.select().from(doctorSettlements)
