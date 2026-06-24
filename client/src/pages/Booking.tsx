@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList, Pencil, Trash2 } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Loader2, CheckCircle2, User, ClipboardList, Pencil, Trash2, Stethoscope, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -98,7 +98,7 @@ export default function Booking() {
     defaultValues: {
       patientName: "",
       phone: "",
-      service: "عام",
+      service: "أسنان",
       notes: "",
       date: formattedDate || "",
       startTime: "",
@@ -538,19 +538,46 @@ export default function Booking() {
                       )}
                     />
 
-                    <div className="hidden">
-                      <FormField
-                        control={form.control}
-                        name="service"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input {...field} value={field.value || "عام"} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="service"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>نوع العيادة</FormLabel>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => field.onChange("أسنان")}
+                              className={cn(
+                                "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                                field.value === "أسنان"
+                                  ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md shadow-[#8B2342]/20"
+                                  : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                              )}
+                              data-testid="button-clinic-dental"
+                            >
+                              <Stethoscope className="w-4 h-4" />
+                              🦷 أسنان
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange("تجميل")}
+                              className={cn(
+                                "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                                field.value === "تجميل"
+                                  ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md shadow-[#8B2342]/20"
+                                  : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                              )}
+                              data-testid="button-clinic-aesthetic"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              ✨ تجميل
+                            </button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="bg-rose-50 p-4 rounded-xl flex items-start gap-3 border border-rose-100">
                       <CheckCircle2 className="w-5 h-5 text-rose-700 mt-0.5" />
@@ -663,17 +690,33 @@ export default function Booking() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">الخدمة</label>
-              <Select value={editService} onValueChange={setEditService}>
-                <SelectTrigger className="h-10 bg-slate-50" data-testid="select-edit-service">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["عام","تنظيف","حشو","خلع","تقويم","تركيب","زراعة","تبييض","أشعة","استشارة"].map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">نوع العيادة</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditService("أسنان")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                    editService === "أسنان"
+                      ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                  )}
+                >
+                  🦷 أسنان
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditService("تجميل")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                    editService === "تجميل"
+                      ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                  )}
+                >
+                  ✨ تجميل
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">ملاحظات</label>

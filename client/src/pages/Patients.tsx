@@ -53,6 +53,7 @@ export default function Patients() {
   const [checkImage, setCheckImage] = useState<string | null>(null);
   const [quickBookDate, setQuickBookDate] = useState<Date | undefined>(new Date());
   const [quickBookTime, setQuickBookTime] = useState<string | null>(null);
+  const [quickBookClinic, setQuickBookClinic] = useState<"أسنان" | "تجميل">("أسنان");
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [phonePrefix, setPhonePrefix] = useState("972");
@@ -228,6 +229,7 @@ export default function Patients() {
     setSelectedPatient(patient);
     setQuickBookDate(new Date());
     setQuickBookTime(null);
+    setQuickBookClinic("أسنان");
     setIsQuickBookingOpen(true);
   };
 
@@ -273,7 +275,7 @@ export default function Patients() {
       date: format(quickBookDate, "yyyy-MM-dd"),
       startTime: quickBookTime,
       endTime: format(endDate, "HH:mm"),
-      service: "حجز سريع",
+      service: quickBookClinic,
       status: "scheduled"
     }, {
       onSuccess: () => {
@@ -629,13 +631,44 @@ export default function Patients() {
               </div>
             )}
 
+            {/* Clinic Type Selector */}
+            <div className="bg-white rounded-xl border border-slate-100 p-3">
+              <p className="text-sm font-bold mb-2 text-slate-700">نوع العيادة</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQuickBookClinic("أسنان")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                    quickBookClinic === "أسنان"
+                      ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                  )}
+                >
+                  🦷 أسنان
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickBookClinic("تجميل")}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                    quickBookClinic === "تجميل"
+                      ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                  )}
+                >
+                  ✨ تجميل
+                </button>
+              </div>
+            </div>
+
             {quickBookTime && quickBookDate && (
               <div className="bg-rose-50 p-3 rounded-xl flex items-start gap-3 border border-rose-100">
                 <CheckCircle2 className="w-5 h-5 text-rose-700 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-rose-900 text-sm">ملخص الموعد</h4>
                   <p className="text-rose-800 text-sm mt-1">
-                    التاريخ: {format(quickBookDate, "yyyy-MM-dd")} — الوقت: {quickBookTime}
+                    التاريخ: {format(quickBookDate, "yyyy-MM-dd")} — الوقت: {quickBookTime} — {quickBookClinic}
                   </p>
                 </div>
               </div>
