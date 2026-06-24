@@ -188,7 +188,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
+    const [newAppointment] = await db.insert(appointments).values({
+      ...appointment,
+      phone: appointment.phone ?? "",
+    }).returning();
     return newAppointment;
   }
 

@@ -196,7 +196,7 @@ export async function registerRoutes(
       const { displayName, role, permissions, active, password, phone, salary, commissionRate, showInBooking } = updateUserSchema.parse(req.body);
       const allowedRoles = ["doctor", "assistant"];
       const safeRole = target.role === "admin" ? undefined : (role && allowedRoles.includes(role) ? role : undefined);
-      const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission)) as Permission[] | undefined;
+      const validPerms = target.role === "admin" ? undefined : (permissions || []).filter((p: string) => PERMISSIONS.includes(p as Permission) && p !== "user_management") as Permission[] | undefined;
       const updated = await storage.updateUser(id, {
         displayName,
         role: safeRole,
@@ -284,7 +284,7 @@ export async function registerRoutes(
   }));
 
   // Get upcoming appointments by phone number
-  app.get("/api/appointments/by-phone/:phone", authMiddleware, asyncHandler(async (req, res) => {
+  app.get("/api/appointments/by-phone/:phone", authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     const { phone } = req.params;
     const today = new Date().toISOString().slice(0, 10);
     const all = await storage.getAppointments();
@@ -473,7 +473,7 @@ export async function registerRoutes(
   }));
 
   // === Daily Entries ===
-  app.get("/api/daily-entries/range", authMiddleware, asyncHandler(async (req, res) => {
+  app.get("/api/daily-entries/range", authMiddleware, requirePermission("reports"), asyncHandler(async (req, res) => {
     const from = req.query.from as string | undefined;
     const to = req.query.to as string | undefined;
     const date = req.query.date as string | undefined;
@@ -630,7 +630,7 @@ export async function registerRoutes(
   }));
 
   // === Doctor Settlements ===
-  app.get("/api/doctor-settlements", authMiddleware, asyncHandler(async (req, res) => {
+  app.get("/api/doctor-settlements", authMiddleware, requirePermission("reports"), asyncHandler(async (req, res) => {
     const doctorName = req.query.doctor as string;
     const periodFrom = req.query.from as string | undefined;
     const periodTo = req.query.to as string | undefined;
@@ -673,7 +673,7 @@ export async function registerRoutes(
   }));
 
   app.delete("/api/doctor-settlements/:id", authMiddleware, requirePermission("reports"), asyncHandler(async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteExpenseBySettlementId(id);
     await storage.deleteDoctorSettlement(id);
     res.json({ success: true });
