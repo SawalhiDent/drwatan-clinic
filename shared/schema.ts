@@ -131,6 +131,7 @@ export const dailyEntries = pgTable("daily_entries", {
   amount: integer("amount").default(0),
   currency: text("currency").default("₪"),
   paymentMethod: text("payment_method").default("cash"),
+  checkImages: text("check_images"),
   notes: text("notes"),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
