@@ -143,14 +143,17 @@ export default function Booking() {
   };
 
   const generateTimeSlots = () => {
+    const selectedClinic = form.watch("service") || "أسنان";
     const slots = [];
     let currentTime = setMinutes(setHours(new Date(), START_HOUR), 0);
     const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
 
     while (currentTime < endTime) {
       const timeString = format(currentTime, "HH:mm");
+      // A slot is taken only if the SAME clinic type has an appointment overlapping it
       const isTaken = existingAppointments?.some(apt => {
         if (apt.status === 'cancelled') return false;
+        if (apt.service !== selectedClinic) return false; // different clinic = allowed
         const slotMin = parseInt(timeString.split(":")[0]) * 60 + parseInt(timeString.split(":")[1]);
         const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
         const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);

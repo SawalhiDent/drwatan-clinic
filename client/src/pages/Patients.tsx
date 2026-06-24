@@ -160,7 +160,12 @@ export default function Patients() {
     const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
     while (currentTime < endTime) {
       const timeString = format(currentTime, "HH:mm");
-      const isTaken = quickBookAppointments?.some(apt => apt.startTime === timeString && apt.status !== 'cancelled');
+      // A slot is taken only if the SAME clinic type already has an appointment at that time
+      const isTaken = quickBookAppointments?.some(apt =>
+        apt.startTime === timeString &&
+        apt.status !== 'cancelled' &&
+        apt.service === quickBookClinic
+      );
       slots.push({ time: timeString, available: !isTaken });
       currentTime = addMinutes(currentTime, SLOT_DURATION);
     }
