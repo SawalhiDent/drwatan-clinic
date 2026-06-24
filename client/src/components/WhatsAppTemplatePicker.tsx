@@ -67,11 +67,15 @@ export function WhatsAppTemplatePicker({
           {showLabel && <span className="mr-1">واتساب</span>}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
-          قوالب رسائل واتساب
+      <DropdownMenuContent
+        align="end"
+        className="w-60 bg-slate-900/96 backdrop-blur-md border border-slate-700/70 shadow-2xl rounded-xl p-1"
+      >
+        <DropdownMenuLabel className="text-xs text-emerald-400/80 font-semibold px-2 py-1.5 flex items-center gap-1.5">
+          <MessageSquare className="w-3.5 h-3.5" />
+          قوالب واتساب
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-slate-700/60 my-1" />
         {templates && templates.length > 0 ? (
           templates.map((template) => {
             const Icon = ICON_MAP[template.iconName] || MessageCircle;
@@ -80,17 +84,17 @@ export function WhatsAppTemplatePicker({
               <DropdownMenuItem
                 key={template.id}
                 onClick={() => !disabled && handleSelect(template)}
-                className={`cursor-pointer gap-2 ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+                className={`cursor-pointer gap-2 text-slate-200 hover:text-white hover:bg-emerald-600/25 focus:bg-emerald-600/25 focus:text-white rounded-lg px-2 py-2 text-sm ${disabled ? "opacity-35 cursor-not-allowed" : ""}`}
                 disabled={disabled}
                 data-testid={`whatsapp-template-${template.templateKey}`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{template.label}</span>
               </DropdownMenuItem>
             );
           })
         ) : (
-          <DropdownMenuItem disabled className="text-muted-foreground text-center">
+          <DropdownMenuItem disabled className="text-slate-500 text-center text-sm">
             لا توجد قوالب
           </DropdownMenuItem>
         )}
