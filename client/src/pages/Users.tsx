@@ -261,8 +261,13 @@ export default function UsersPage() {
                     {u.role !== "admin" && (
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         {/* Quick toggle: show/hide in booking */}
-                        <div className="flex items-center gap-1.5 h-9 rounded-md border border-input bg-background px-3 text-sm">
-                          <span className="text-muted-foreground">الحجز</span>
+                        <div className={cn(
+                          "flex items-center gap-1.5 h-9 rounded-md border px-3 text-sm transition-colors",
+                          u.showInBooking !== false
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                            : "border-slate-200 bg-slate-50 text-slate-500"
+                        )}>
+                          <span>الحجز</span>
                           <span className={cn(
                             "text-xs font-semibold px-1.5 py-0.5 rounded",
                             u.showInBooking !== false
