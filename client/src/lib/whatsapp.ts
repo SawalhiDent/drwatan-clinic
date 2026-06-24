@@ -75,10 +75,13 @@ export function sendWhatsAppMessage(phone: string, message: string) {
     const cleanPhone = formatPhoneForWhatsApp(phone);
     if (!cleanPhone) return;
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    const win = window.open(url, "_blank", "noopener,noreferrer");
-    if (!win) {
-      window.location.href = url;
-    }
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   } catch {
   }
 }

@@ -40,6 +40,7 @@ export function WhatsAppTemplatePicker({
 }: WhatsAppTemplatePickerProps) {
   const { data: templates } = useQuery<WhatsappTemplate[]>({
     queryKey: [api.whatsappTemplates.list.path],
+    throwOnError: false,
   });
 
   const handleSelect = (template: WhatsappTemplate) => {
@@ -56,6 +57,7 @@ export function WhatsAppTemplatePicker({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          type="button"
           variant="ghost"
           size={size}
           className="text-green-600"
