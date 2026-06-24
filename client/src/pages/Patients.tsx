@@ -882,6 +882,7 @@ ${paymentsRows ? `
                   עברית
                 </button>
               </div>
+              </div>
             </div>
           </DialogHeader>
 
