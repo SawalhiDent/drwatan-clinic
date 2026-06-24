@@ -65,6 +65,17 @@ export default function Patients() {
   const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
   const { mutate: updatePatient, isPending: isUpdating } = useUpdatePatient();
 
+  // Fetch all upcoming appointments to match with patients for WhatsApp context
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: allAppointments } = useQuery<import("@shared/schema").Appointment[]>({
+    queryKey: ["/api/appointments"],
+    throwOnError: false,
+  });
+  const upcomingByPhone = (phone: string) =>
+    (allAppointments ?? [])
+      .filter(a => a.phone === phone && a.date >= today && a.status !== "cancelled")
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0];
+
   // Auto-open patient from URL param (e.g. /patients?patientId=5)
   useEffect(() => {
     if (!patients) return;
@@ -701,6 +712,9 @@ ${paymentsRows ? `
                           phone={patient.phone}
                           context={{
                             name: patient.fullName,
+                            date: upcomingByPhone(patient.phone)?.date,
+                            time: upcomingByPhone(patient.phone)?.startTime,
+                            service: upcomingByPhone(patient.phone)?.service ?? undefined,
                             totalPaid: patient.paidAmount ?? 0,
                             currency: patient.currencySymbol ?? "₪",
                             payments: (patient.payments ?? []).map(p => ({

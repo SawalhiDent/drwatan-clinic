@@ -283,6 +283,17 @@ export async function registerRoutes(
     res.json(appointments);
   }));
 
+  // Get upcoming appointments by phone number
+  app.get("/api/appointments/by-phone/:phone", authMiddleware, asyncHandler(async (req, res) => {
+    const { phone } = req.params;
+    const today = new Date().toISOString().slice(0, 10);
+    const all = await storage.getAppointments();
+    const upcoming = all
+      .filter(a => a.phone === phone && a.date >= today && a.status !== "cancelled")
+      .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+    res.json(upcoming);
+  }));
+
   app.post(api.appointments.create.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
       const input = api.appointments.create.input.parse(req.body);
