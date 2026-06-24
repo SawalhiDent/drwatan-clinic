@@ -43,8 +43,11 @@ export function WhatsAppTemplatePicker({
   });
 
   const handleSelect = (template: WhatsappTemplate) => {
-    const message = renderTemplate(template.messageBody, context);
-    sendWhatsAppMessage(phone, message);
+    try {
+      const message = renderTemplate(template.messageBody || "", context);
+      sendWhatsAppMessage(phone, message);
+    } catch {
+    }
   };
 
   const hasAppointmentContext = !!(context.date && context.time);
