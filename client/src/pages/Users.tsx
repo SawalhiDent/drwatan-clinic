@@ -261,21 +261,16 @@ export default function UsersPage() {
                     {u.role !== "admin" && (
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         {/* Quick toggle: show/hide in booking */}
-                        <div
-                          className={cn(
-                            "flex items-center gap-2 rounded-xl px-3 py-2 border-2 transition-all duration-200",
+                        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+                          <span className="text-xs text-slate-500">الحجز</span>
+                          <span className={cn(
+                            "text-[11px] font-semibold px-1.5 py-0.5 rounded",
                             u.showInBooking !== false
-                              ? "bg-emerald-50 border-emerald-300"
-                              : "bg-slate-100 border-slate-300"
-                          )}
-                        >
-                          <CalendarCheck className={cn("w-4 h-4 shrink-0", u.showInBooking !== false ? "text-emerald-600" : "text-slate-400")} />
-                          <div className="flex flex-col leading-none">
-                            <span className="text-[10px] text-slate-500 font-medium">ظهور عند الحجز</span>
-                            <span className={cn("text-xs font-bold", u.showInBooking !== false ? "text-emerald-700" : "text-slate-500")}>
-                              {u.showInBooking !== false ? "✅ مفعّل" : "⛔ موقوف"}
-                            </span>
-                          </div>
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-200 text-slate-500"
+                          )}>
+                            {u.showInBooking !== false ? "ON" : "OFF"}
+                          </span>
                           <Switch
                             checked={u.showInBooking !== false}
                             onCheckedChange={(val) =>
