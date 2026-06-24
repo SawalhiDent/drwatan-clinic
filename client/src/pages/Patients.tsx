@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { Clock, CheckCircle2 } from "lucide-react";
 
 const ALLOWED_DAYS = [0, 1, 2, 3, 4, 5, 6];
-const START_HOUR = 12;
+const START_HOUR = 10;
 const END_HOUR = 21;
 const SLOT_DURATION = 30;
 

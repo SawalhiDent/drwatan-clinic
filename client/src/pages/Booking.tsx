@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const ALLOWED_DAYS = [0, 1, 2, 3, 4, 5, 6];
-const START_HOUR = 12;
+const START_HOUR = 10;
 const END_HOUR = 21;
 const SLOT_DURATION = 30;
 
