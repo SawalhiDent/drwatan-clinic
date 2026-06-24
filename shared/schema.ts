@@ -98,6 +98,8 @@ export const whatsappTemplates = pgTable("whatsapp_templates", {
   needsAppointment: boolean("needs_appointment").default(false),
   sortOrder: integer("sort_order").default(0),
   active: boolean("active").default(true),
+  language: text("language").default("ar"),
+  category: text("category").default("dental"),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });
 

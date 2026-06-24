@@ -73,6 +73,13 @@ const VARIABLES_INFO = [
   { var: "{payments_list}", desc: "قائمة المدفوعات" },
 ];
 
+const CATEGORY_TABS = [
+  { value: "all", label: "الكل", emoji: "📋" },
+  { value: "dental", label: "أسنان", emoji: "🦷" },
+  { value: "aesthetic", label: "تجميل", emoji: "✨" },
+  { value: "general", label: "عامة", emoji: "💬" },
+];
+
 interface TemplateFormData {
   label: string;
   templateKey: string;
@@ -80,6 +87,8 @@ interface TemplateFormData {
   messageBody: string;
   needsAppointment: boolean;
   sortOrder: number;
+  language: string;
+  category: string;
 }
 
 const emptyForm: TemplateFormData = {
@@ -89,6 +98,8 @@ const emptyForm: TemplateFormData = {
   messageBody: "",
   needsAppointment: false,
   sortOrder: 0,
+  language: "ar",
+  category: "dental",
 };
 
 export default function WhatsAppTemplatesPage() {
@@ -96,6 +107,8 @@ export default function WhatsAppTemplatesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<WhatsappTemplate | null>(null);
   const [form, setForm] = useState<TemplateFormData>(emptyForm);
+  const [selectedLang, setSelectedLang] = useState<"ar" | "he">("ar");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const { data: templates, isLoading } = useQuery<WhatsappTemplate[]>({
     queryKey: [api.whatsappTemplates.list.path],
@@ -145,7 +158,7 @@ export default function WhatsAppTemplatesPage() {
   const openCreateDialog = () => {
     setEditingTemplate(null);
     const maxOrder = templates?.reduce((max, t) => Math.max(max, t.sortOrder ?? 0), 0) ?? 0;
-    setForm({ ...emptyForm, sortOrder: maxOrder + 1 });
+    setForm({ ...emptyForm, sortOrder: maxOrder + 1, language: selectedLang, category: selectedCategory === "all" ? "dental" : selectedCategory });
     setDialogOpen(true);
   };
 
@@ -158,6 +171,8 @@ export default function WhatsAppTemplatesPage() {
       messageBody: template.messageBody,
       needsAppointment: template.needsAppointment ?? false,
       sortOrder: template.sortOrder ?? 0,
+      language: (template as any).language || "ar",
+      category: (template as any).category || "dental",
     });
     setDialogOpen(true);
   };
@@ -176,9 +191,24 @@ export default function WhatsAppTemplatesPage() {
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
+  // Filter templates by language + category
+  const filteredTemplates = templates?.filter(t => {
+    const lang = (t as any).language || "ar";
+    const cat = (t as any).category || "dental";
+    const langMatch = lang === selectedLang;
+    const catMatch = selectedCategory === "all" || cat === selectedCategory;
+    return langMatch && catMatch;
+  }) ?? [];
+
+  const langCounts = {
+    ar: templates?.filter(t => ((t as any).language || "ar") === "ar").length ?? 0,
+    he: templates?.filter(t => ((t as any).language || "ar") === "he").length ?? 0,
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold font-tajawal text-slate-900" data-testid="text-page-title">
@@ -187,7 +217,7 @@ export default function WhatsAppTemplatesPage() {
             <p className="text-slate-500 text-sm mt-1">إدارة وتعديل قوالب الرسائل المرسلة عبر واتساب</p>
           </div>
           <Button
-            className="bg-[#0e8bab] gap-2"
+            className="bg-[#8B2342] hover:bg-[#6d1b33] gap-2"
             onClick={openCreateDialog}
             data-testid="button-add-template"
           >
@@ -196,6 +226,57 @@ export default function WhatsAppTemplatesPage() {
           </Button>
         </div>
 
+        {/* Language Selector */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSelectedLang("ar")}
+            data-testid="tab-lang-ar"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${
+              selectedLang === "ar"
+                ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342]"
+            }`}
+          >
+            🇸🇦 عربي
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-normal ${selectedLang === "ar" ? "bg-white/20" : "bg-slate-100"}`}>
+              {langCounts.ar}
+            </span>
+          </button>
+          <button
+            onClick={() => setSelectedLang("he")}
+            data-testid="tab-lang-he"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${
+              selectedLang === "he"
+                ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342]"
+            }`}
+          >
+            🇮🇱 עברית
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-normal ${selectedLang === "he" ? "bg-white/20" : "bg-slate-100"}`}>
+              {langCounts.he}
+            </span>
+          </button>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex gap-2 flex-wrap">
+          {CATEGORY_TABS.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setSelectedCategory(tab.value)}
+              data-testid={`tab-category-${tab.value}`}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                selectedCategory === tab.value
+                  ? "bg-rose-50 text-rose-800 border-rose-300"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-rose-200 hover:text-rose-700"
+              }`}
+            >
+              {tab.emoji} {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Variables Info */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-slate-500 flex items-center gap-2">
@@ -215,21 +296,24 @@ export default function WhatsAppTemplatesPage() {
           </CardContent>
         </Card>
 
+        {/* Templates List */}
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : templates && templates.length > 0 ? (
+        ) : filteredTemplates.length > 0 ? (
           <div className="grid gap-4">
-            {templates.map((template) => {
+            {filteredTemplates.map((template) => {
               const Icon = ICON_MAP[template.iconName] || MessageCircle;
+              const lang = (template as any).language || "ar";
+              const category = (template as any).category || "dental";
               return (
                 <Card key={template.id} data-testid={`template-card-${template.id}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="bg-green-50 p-2.5 rounded-lg shrink-0 mt-0.5">
-                          <Icon className="w-5 h-5 text-green-600" />
+                        <div className="bg-rose-50 p-2.5 rounded-lg shrink-0 mt-0.5">
+                          <Icon className="w-5 h-5 text-rose-700" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -240,13 +324,16 @@ export default function WhatsAppTemplatesPage() {
                               <Badge variant="outline" className="text-[10px]">يتطلب موعد</Badge>
                             )}
                             <Badge variant="secondary" className="text-[10px]">
-                              ترتيب: {template.sortOrder}
+                              {category === "dental" ? "🦷 أسنان" : category === "aesthetic" ? "✨ تجميل" : "💬 عامة"}
+                            </Badge>
+                            <Badge className={`text-[10px] ${lang === "he" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
+                              {lang === "he" ? "🇮🇱 עברית" : "🇸🇦 عربي"}
                             </Badge>
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5 font-mono">{template.templateKey}</p>
                           <pre
                             className="mt-2 text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-3 rounded-lg border border-slate-100 max-h-40 overflow-y-auto"
-                            dir="rtl"
+                            dir={lang === "he" ? "rtl" : "rtl"}
                             data-testid={`text-template-body-${template.id}`}
                           >
                             {template.messageBody}
@@ -302,12 +389,13 @@ export default function WhatsAppTemplatesPage() {
         ) : (
           <div className="text-center py-12 text-slate-400">
             <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>لا توجد قوالب رسائل</p>
+            <p>لا توجد قوالب في هذا القسم</p>
           </div>
         )}
 
+        {/* Edit / Create Dialog */}
         <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) closeDialog(); }}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingTemplate ? "تعديل القالب" : "إضافة قالب جديد"}
@@ -334,6 +422,46 @@ export default function WhatsAppTemplatesPage() {
                     dir="ltr"
                     data-testid="input-template-key"
                   />
+                </div>
+              </div>
+
+              {/* Language & Category */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>اللغة</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, language: "ar" })}
+                      className={`flex-1 py-2 rounded-lg border-2 text-sm font-bold transition-all ${
+                        form.language === "ar" ? "bg-[#8B2342] text-white border-[#8B2342]" : "border-slate-200 text-slate-600 hover:border-[#8B2342]"
+                      }`}
+                    >
+                      🇸🇦 عربي
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, language: "he" })}
+                      className={`flex-1 py-2 rounded-lg border-2 text-sm font-bold transition-all ${
+                        form.language === "he" ? "bg-[#8B2342] text-white border-[#8B2342]" : "border-slate-200 text-slate-600 hover:border-[#8B2342]"
+                      }`}
+                    >
+                      🇮🇱 עברית
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>الفئة</Label>
+                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                    <SelectTrigger data-testid="select-template-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dental">🦷 أسنان</SelectItem>
+                      <SelectItem value="aesthetic">✨ تجميل</SelectItem>
+                      <SelectItem value="general">💬 عامة</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -384,6 +512,7 @@ export default function WhatsAppTemplatesPage() {
                   placeholder="اكتب نص الرسالة هنا... استخدم {name} لاسم المريض"
                   rows={10}
                   className="font-mono text-sm"
+                  dir={form.language === "he" ? "rtl" : "rtl"}
                   data-testid="input-template-body"
                 />
               </div>
@@ -394,7 +523,7 @@ export default function WhatsAppTemplatesPage() {
                 إلغاء
               </Button>
               <Button
-                className="bg-[#0e8bab] gap-2"
+                className="bg-[#8B2342] hover:bg-[#6d1b33] gap-2"
                 onClick={handleSave}
                 disabled={isSaving}
                 data-testid="button-save-template"
