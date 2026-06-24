@@ -261,13 +261,53 @@ export default function Patients() {
   };
 
   const handlePrintPatient = (patient: Patient, notes: TreatmentNote[] | undefined) => {
+    const isHe = detailsLang === "he";
+    const t = {
+      title:        isHe ? "תיק מטופל" : "ملف المريض",
+      clinicName:   isHe ? "מרפאת שוואלחי דנט - ד\"ר וטאן" : "عيادة صوالحي دنت - دكتورة وطن",
+      printDate:    isHe ? "תאריך הדפסה" : "تاريخ الطباعة",
+      patientData:  isHe ? "פרטי מטופל" : "بيانات المريض",
+      fullName:     isHe ? "שם מלא" : "الاسم الكامل",
+      phone:        isHe ? "טלפון" : "رقم الهاتف",
+      fileNum:      isHe ? "מס' תיק" : "رقم الملف",
+      age:          isHe ? "גיל" : "العمر",
+      ageUnit:      isHe ? " שנה" : " سنة",
+      gender:       isHe ? "מין" : "الجنس",
+      male:         isHe ? "זכר" : "ذكر",
+      female:       isHe ? "נקבה" : "أنثى",
+      address:      isHe ? "כתובת" : "العنوان",
+      unknown:      isHe ? "לא צוין" : "غير محدد",
+      medHistory:   isHe ? "היסטוריה רפואית" : "السجل الطبي",
+      allergies:    isHe ? "אלרגיות" : "الحساسية",
+      chronic:      isHe ? "מחלות כרוניות" : "أمراض مزمنة",
+      meds:         isHe ? "תרופות נוכחיות" : "الأدوية الحالية",
+      notesSec:     isHe ? "הערות" : "ملاحظات",
+      treatments:   isHe ? "היסטוריית טיפולים" : "سجل العلاجات",
+      date:         isHe ? "תאריך" : "التاريخ",
+      treatment:    isHe ? "טיפול" : "العلاج",
+      doctor:       isHe ? "רופא" : "الطبيب",
+      notes_col:    isHe ? "הערות" : "الملاحظات",
+      payments:     isHe ? "תשלומים" : "سجل الدفعات",
+      amount:       isHe ? "סכום" : "المبلغ",
+      method:       isHe ? "אמצעי תשלום" : "طريقة الدفع",
+      total:        isHe ? "סה\"כ שולם" : "إجمالي المدفوعات",
+      footer:       isHe ? "מרפאת שוואלחי דנט - ד\"ר וטאן | Dental & Aesthetic Clinic" : "عيادة صوالحي دنت - دكتورة وطن | Dental & Aesthetic Clinic",
+      cash:         isHe ? "מזומן" : "كاش",
+      check:        isHe ? "צ'ק" : "شيك",
+      visa:         isHe ? "ויזה" : "فيزا",
+      bpay:         isHe ? "ביט" : "بييت",
+    };
+
+    const methodLabel = (m: string) =>
+      m === "check" ? t.check : m === "visa" ? t.visa : m === "bpay" ? t.bpay : t.cash;
+
     const payments = (patient.payments as any[]) || [];
     const paymentsRows = payments.map((p: any, i: number) => `
       <tr>
         <td>${i + 1}</td>
         <td>${p.date || ""}</td>
         <td>${(p.amount || 0).toLocaleString()} ${p.currency || "₪"}</td>
-        <td>${p.method === "check" ? "شيك" : p.method === "visa" ? "فيزا" : p.method === "bpay" ? "بييت" : "كاش"}</td>
+        <td>${methodLabel(p.method)}</td>
       </tr>`).join("");
 
     const notesRows = (notes || []).map((n, i) => `
@@ -280,21 +320,29 @@ export default function Patients() {
       </tr>`).join("");
 
     const totalPaid = payments.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+    const dir = "rtl";
+    const lang = isHe ? "he" : "ar";
+    const fontImport = isHe
+      ? `@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap');`
+      : `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');`;
+    const fontFamily = isHe ? "'Heebo', sans-serif" : "'Cairo', sans-serif";
+    const borderSide = "border-right";
+    const paddingSide = "padding-right";
 
     const html = `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html dir="${dir}" lang="${lang}">
 <head>
 <meta charset="UTF-8"/>
-<title>ملف المريض - ${patient.fullName}</title>
+<title>${t.title} - ${patient.fullName}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+  ${fontImport}
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Cairo',sans-serif; background:#fff; color:#1e293b; padding:24px 32px; font-size:13px; }
+  body { font-family:${fontFamily}; background:#fff; color:#1e293b; padding:24px 32px; font-size:13px; }
   .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #8B2342; padding-bottom:16px; margin-bottom:20px; }
   .clinic-name { font-size:20px; font-weight:900; color:#8B2342; }
   .clinic-sub { font-size:12px; color:#64748b; margin-top:2px; }
   .file-badge { background:#8B2342; color:#fff; font-size:18px; font-weight:900; padding:6px 18px; border-radius:8px; }
-  .patient-title { font-size:16px; font-weight:700; margin-bottom:16px; color:#8B2342; border-right:4px solid #8B2342; padding-right:10px; }
+  .patient-title { font-size:16px; font-weight:700; margin-bottom:16px; color:#8B2342; ${borderSide}:4px solid #8B2342; ${paddingSide}:10px; }
   .info-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px; }
   .info-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; }
   .info-label { font-size:10px; color:#94a3b8; margin-bottom:3px; }
@@ -317,60 +365,60 @@ export default function Patients() {
 <body>
 <div class="header">
   <div>
-    <div class="clinic-name">عيادة صوالحي دنت - دكتورة وطن</div>
+    <div class="clinic-name">${t.clinicName}</div>
     <div class="clinic-sub">Dental &amp; Aesthetic Clinic</div>
-    <div class="clinic-sub">تاريخ الطباعة: ${new Date().toLocaleDateString("ar-SA")}</div>
+    <div class="clinic-sub">${t.printDate}: ${new Date().toLocaleDateString(isHe ? "he-IL" : "ar-SA")}</div>
   </div>
   <div class="file-badge">${patient.fileNumber || "—"}</div>
 </div>
 
-<div class="patient-title">بيانات المريض: ${patient.fullName}</div>
+<div class="patient-title">${t.patientData}: ${patient.fullName}</div>
 
 <div class="info-grid">
-  <div class="info-box"><div class="info-label">الاسم الكامل</div><div class="info-value">${patient.fullName}</div></div>
-  <div class="info-box"><div class="info-label">رقم الهاتف</div><div class="info-value" dir="ltr">${patient.phone}</div></div>
-  <div class="info-box"><div class="info-label">رقم الملف</div><div class="info-value">${patient.fileNumber || "—"}</div></div>
-  <div class="info-box"><div class="info-label">العمر</div><div class="info-value">${patient.age ? patient.age + " سنة" : "غير محدد"}</div></div>
-  <div class="info-box"><div class="info-label">الجنس</div><div class="info-value">${patient.gender === "male" ? "ذكر" : patient.gender === "female" ? "أنثى" : "غير محدد"}</div></div>
-  <div class="info-box"><div class="info-label">العنوان</div><div class="info-value">${patient.address || "غير محدد"}</div></div>
+  <div class="info-box"><div class="info-label">${t.fullName}</div><div class="info-value">${patient.fullName}</div></div>
+  <div class="info-box"><div class="info-label">${t.phone}</div><div class="info-value" dir="ltr">${patient.phone}</div></div>
+  <div class="info-box"><div class="info-label">${t.fileNum}</div><div class="info-value">${patient.fileNumber || "—"}</div></div>
+  <div class="info-box"><div class="info-label">${t.age}</div><div class="info-value">${patient.age ? patient.age + t.ageUnit : t.unknown}</div></div>
+  <div class="info-box"><div class="info-label">${t.gender}</div><div class="info-value">${patient.gender === "male" ? t.male : patient.gender === "female" ? t.female : t.unknown}</div></div>
+  <div class="info-box"><div class="info-label">${t.address}</div><div class="info-value">${patient.address || t.unknown}</div></div>
 </div>
 
 ${patient.allergies || patient.chronicDiseases || patient.currentMeds ? `
 <div class="section">
-  <div class="section-title">السجل الطبي</div>
+  <div class="section-title">${t.medHistory}</div>
   <div class="medical-grid">
-    ${patient.allergies ? `<div class="medical-item"><div class="medical-label">الحساسية</div><div>${patient.allergies}</div></div>` : ""}
-    ${patient.chronicDiseases ? `<div class="medical-item"><div class="medical-label">أمراض مزمنة</div><div>${patient.chronicDiseases}</div></div>` : ""}
-    ${patient.currentMeds ? `<div class="medical-item"><div class="medical-label">الأدوية الحالية</div><div>${patient.currentMeds}</div></div>` : ""}
+    ${patient.allergies ? `<div class="medical-item"><div class="medical-label">${t.allergies}</div><div>${patient.allergies}</div></div>` : ""}
+    ${patient.chronicDiseases ? `<div class="medical-item"><div class="medical-label">${t.chronic}</div><div>${patient.chronicDiseases}</div></div>` : ""}
+    ${patient.currentMeds ? `<div class="medical-item"><div class="medical-label">${t.meds}</div><div>${patient.currentMeds}</div></div>` : ""}
   </div>
 </div>` : ""}
 
 ${patient.notes ? `
 <div class="section">
-  <div class="section-title">ملاحظات</div>
+  <div class="section-title">${t.notesSec}</div>
   <div class="notes-box">${patient.notes}</div>
 </div>` : ""}
 
 ${notesRows ? `
 <div class="section">
-  <div class="section-title">سجل العلاجات</div>
+  <div class="section-title">${t.treatments}</div>
   <table>
-    <thead><tr><th>#</th><th>التاريخ</th><th>العلاج</th><th>الطبيب</th><th>الملاحظات</th></tr></thead>
+    <thead><tr><th>#</th><th>${t.date}</th><th>${t.treatment}</th><th>${t.doctor}</th><th>${t.notes_col}</th></tr></thead>
     <tbody>${notesRows}</tbody>
   </table>
 </div>` : ""}
 
 ${paymentsRows ? `
 <div class="section">
-  <div class="section-title">سجل الدفعات</div>
+  <div class="section-title">${t.payments}</div>
   <table>
-    <thead><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>طريقة الدفع</th></tr></thead>
+    <thead><tr><th>#</th><th>${t.date}</th><th>${t.amount}</th><th>${t.method}</th></tr></thead>
     <tbody>${paymentsRows}</tbody>
   </table>
-  <div class="total-bar">إجمالي المدفوعات: ${totalPaid.toLocaleString()} ${patient.currencySymbol || "₪"}</div>
+  <div class="total-bar">${t.total}: ${totalPaid.toLocaleString()} ${patient.currencySymbol || "₪"}</div>
 </div>` : ""}
 
-<div class="footer">عيادة صوالحي دنت - دكتورة وطن &nbsp;|&nbsp; Dental &amp; Aesthetic Clinic</div>
+<div class="footer">${t.footer}</div>
 </body></html>`;
 
     const win = window.open("", "_blank", "width=900,height=700");
