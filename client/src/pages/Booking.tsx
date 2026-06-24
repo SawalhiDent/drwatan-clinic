@@ -262,7 +262,7 @@ export default function Booking() {
           <h1 className="text-3xl font-bold font-tajawal text-slate-900">حجز موعد جديد</h1>
           <p className="text-slate-500 mt-2">اختر التاريخ والوقت المناسب لحجز الموعد.</p>
         </div>
-        <Button onClick={() => setShowDailyEntry(true)} variant="outline" data-testid="button-add-daily-entry">
+        <Button onClick={() => setShowDailyEntry(true)} variant="outline" className="border-2 border-rose-400 text-rose-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-500" data-testid="button-add-daily-entry">
           <ClipboardList className="w-4 h-4 ml-2" />
           إضافة سجل يومي
         </Button>
