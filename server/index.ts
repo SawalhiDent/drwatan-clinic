@@ -102,6 +102,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      log(`[Clinic-Scheduler-Arabic-2] صوالحي دنت — الفرع الثاني — قاعدة بيانات مستقلة`);
     },
   );
 

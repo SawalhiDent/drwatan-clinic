@@ -1,5 +1,8 @@
 # Replit.md
 
+## مشروع: Clinic-Scheduler-Arabic-2 — الفرع الثاني
+> **هذا هو الفرع الثاني** من نظام إدارة عيادة صوالحي دنت. يعمل بقاعدة بيانات PostgreSQL مستقلة تماماً خاصة بهذا المشروع فقط، ولا يشترك في أي بيانات مع الفرع الأول.
+
 ## Overview
 
 This is a **dental clinic management system** (عيادة الأسنان - "Dental Clinic") built as a full-stack web application. It provides patient record management, appointment booking with calendar-based scheduling, and an admin dashboard. The entire UI is in **Arabic** with **RTL (Right-to-Left)** layout direction.

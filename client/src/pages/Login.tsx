@@ -35,6 +35,7 @@ export default function Login() {
             <img src={logo} alt="Logo" className="w-24 h-24 rounded-full bg-white p-1 shadow-lg" />
           </div>
           <CardTitle className="text-2xl font-tajawal text-slate-800">صوالحي دنت</CardTitle>
+          <span className="inline-block mt-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-700 border border-sky-200">الفرع الثاني</span>
           <p className="text-sm text-slate-500 mt-1">تسجيل الدخول إلى النظام</p>
         </CardHeader>
         <CardContent>

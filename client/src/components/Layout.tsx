@@ -70,6 +70,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-6 flex flex-col items-center border-b border-slate-800">
           <img src={logo} alt="Clinic Logo" className="w-20 h-20 rounded-full mb-3 bg-white p-1" />
           <h1 className="text-xl font-bold font-tajawal text-center">صوالحي دنت</h1>
+          <span className="mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">الفرع الثاني</span>
           <p className="text-xs text-slate-400 mt-1">إدارة المرضى والمواعيد</p>
         </div>
 
