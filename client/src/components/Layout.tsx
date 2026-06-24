@@ -120,9 +120,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button
               onClick={install}
               data-testid="button-install-sidebar"
-              className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/50 transition-all duration-200 text-sm font-bold"
+              className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 transition-all duration-200 text-sm font-semibold"
             >
-              <Download className="w-4 h-4 text-amber-300" />
+              <Download className="w-4 h-4" />
               تحميل التطبيق
             </button>
           </div>
@@ -212,10 +212,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <button
                   onClick={install}
                   data-testid="button-install-mobile"
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/50 mb-2 transition-colors font-bold"
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 mb-2 transition-all duration-200 font-semibold"
                 >
-                  <Download className="w-5 h-5 text-amber-300" />
-                  <span className="font-bold">تحميل التطبيق</span>
+                  <Download className="w-5 h-5" />
+                  <span>تحميل التطبيق</span>
                 </button>
               )}
               {isInstalled && (
