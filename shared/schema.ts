@@ -35,6 +35,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   salary: integer("salary").default(0),
   commissionRate: integer("commission_rate").default(0),
+  showInBooking: boolean("show_in_booking").default(true),
   active: boolean("active").default(true),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
 });

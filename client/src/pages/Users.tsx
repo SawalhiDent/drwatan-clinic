@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, UserCircle2, Shield, Pencil, Trash2, Users, Phone, Banknote, Percent } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Plus, UserCircle2, Shield, Pencil, Trash2, Users, Phone, Banknote, Percent, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -32,6 +33,7 @@ type SafeUser = {
   phone: string | null;
   salary: number | null;
   commissionRate: number | null;
+  showInBooking: boolean | null;
 };
 
 export default function UsersPage() {
@@ -48,6 +50,7 @@ export default function UsersPage() {
   const [phone, setPhone] = useState("");
   const [salary, setSalary] = useState("");
   const [commissionRate, setCommissionRate] = useState("");
+  const [showInBooking, setShowInBooking] = useState(true);
 
   const { data: users = [], isLoading } = useQuery<SafeUser[]>({
     queryKey: ["/api/users"],
@@ -107,6 +110,7 @@ export default function UsersPage() {
     setPhone("");
     setSalary("");
     setCommissionRate("");
+    setShowInBooking(true);
     setEditUser(null);
   };
 
@@ -125,6 +129,7 @@ export default function UsersPage() {
     setPhone(u.phone || "");
     setSalary(u.salary ? String(u.salary) : "");
     setCommissionRate(u.commissionRate ? String(u.commissionRate) : "");
+    setShowInBooking(u.showInBooking !== false);
     setPassword("");
     setDialogOpen(true);
   };
@@ -135,6 +140,7 @@ export default function UsersPage() {
       phone,
       salary: salary ? Number(salary) : 0,
       commissionRate: commissionRate ? Number(commissionRate) : 0,
+      showInBooking,
     };
     if (editUser) {
       const data: any = { displayName, role, permissions: selectedPerms, ...extraFields };
@@ -253,7 +259,19 @@ export default function UsersPage() {
                     </div>
 
                     {u.role !== "admin" && (
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                        {/* Quick toggle: show/hide in booking */}
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                          <CalendarCheck className={cn("w-3.5 h-3.5", u.showInBooking !== false ? "text-emerald-600" : "text-slate-400")} />
+                          <span className="text-xs text-slate-600 font-medium">الحجز</span>
+                          <Switch
+                            checked={u.showInBooking !== false}
+                            onCheckedChange={(val) =>
+                              updateMutation.mutate({ id: u.id, data: { showInBooking: val } })
+                            }
+                            data-testid={`switch-show-in-booking-${u.id}`}
+                          />
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
@@ -379,6 +397,24 @@ export default function UsersPage() {
                   </div>
                 </div>
               )}
+
+              {/* Show in Booking toggle */}
+              <div className="flex items-center justify-between bg-white rounded-xl p-3 border border-slate-100">
+                <div className="flex items-center gap-2">
+                  <CalendarCheck className={cn("w-4 h-4", showInBooking ? "text-emerald-600" : "text-slate-400")} />
+                  <div>
+                    <Label className="font-semibold text-sm">الظهور عند الحجز والسجل اليومي</Label>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {showInBooking ? "يظهر في قائمة الأطباء عند الحجز" : "مخفي من قائمة الأطباء"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={showInBooking}
+                  onCheckedChange={setShowInBooking}
+                  data-testid="switch-form-show-in-booking"
+                />
+              </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

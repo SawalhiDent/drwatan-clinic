@@ -162,6 +162,7 @@ export async function initDatabase() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS salary INTEGER DEFAULT 0;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS show_in_booking BOOLEAN DEFAULT true;
       ALTER TABLE expenses ADD COLUMN IF NOT EXISTS settlement_id INTEGER;
       ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'ar';
       ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'dental';
