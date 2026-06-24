@@ -87,7 +87,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               ✨ Aesthetic
             </span>
           </div>
-          <p className="text-[10px] text-rose-200/70 mt-2 font-tajawal font-semibold tracking-wide">صوالحي دنت</p>
+          <p className="text-sm text-rose-200 mt-2 font-tajawal font-bold tracking-wide">صوالحي دنت</p>
         </div>
 
         {/* Navigation */}
