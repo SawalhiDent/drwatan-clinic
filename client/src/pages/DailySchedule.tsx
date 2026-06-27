@@ -90,6 +90,13 @@ export default function DailySchedule() {
               {format(date, "EEEE, d MMMM yyyy", { locale: arSA })}
             </p>
           </div>
+          <Button onClick={openAdd} data-testid="button-add-entry">
+            <Plus className="w-4 h-4 ml-2" />
+            إضافة سجل
+          </Button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setDate(getNextWorkingDay(date))} data-testid="button-next-day">
               <ChevronRight className="w-5 h-5" />
@@ -117,13 +124,6 @@ export default function DailySchedule() {
               <ChevronLeft className="w-5 h-5" />
             </Button>
           </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <Button onClick={openAdd} data-testid="button-add-entry">
-            <Plus className="w-4 h-4 ml-2" />
-            إضافة سجل
-          </Button>
           {Object.keys(totalByCurrency).length > 0 && (
             <div className="flex items-center gap-3 flex-wrap bg-white rounded-lg px-4 py-2 border border-slate-100 shadow-sm">
               <DollarSign className="w-4 h-4 text-green-600" />
