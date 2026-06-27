@@ -306,9 +306,9 @@ export async function registerRoutes(
         sm += 30;
         if (sm >= 60) { sh += 1; sm -= 60; }
       }
-      const conflictSlot = await storage.checkSlotsAvailability(input.date, slotsToCheck);
+      const conflictSlot = await storage.checkSlotsAvailability(input.date, slotsToCheck, input.service);
       if (conflictSlot) {
-        return res.status(409).json({ message: `الوقت ${conflictSlot} محجوز مسبقاً` });
+        return res.status(409).json({ message: `الوقت ${conflictSlot} محجوز مسبقاً لقسم ${input.service || ""}` });
       }
       const appointment = await storage.createAppointment(input);
       res.status(201).json(appointment);

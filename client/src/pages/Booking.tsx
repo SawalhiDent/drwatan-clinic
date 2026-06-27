@@ -144,6 +144,7 @@ export default function Booking() {
   };
 
   const generateTimeSlots = () => {
+    const selectedService = form.watch("service") || "أسنان";
     const slots = [];
     let currentTime = setMinutes(setHours(new Date(), START_HOUR), 0);
     const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
@@ -151,9 +152,10 @@ export default function Booking() {
     while (currentTime < endTime) {
       const timeString = format(currentTime, "HH:mm");
       const slotMin = parseInt(timeString.split(":")[0]) * 60 + parseInt(timeString.split(":")[1]);
-      // A slot is taken if ANY non-cancelled appointment overlaps it (regardless of service)
+      // A slot is taken only if an appointment for the SAME service overlaps it
       const isTaken = existingAppointments?.some(apt => {
         if (apt.status === 'cancelled') return false;
+        if (apt.service !== selectedService) return false;
         const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
         const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);
         return slotMin >= startMin && slotMin < endMin;
