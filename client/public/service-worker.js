@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sawalehi-dent-v3';
+const CACHE_NAME = 'sawalehi-dent-v4';
 
 const STATIC_ASSETS = [
   '/',

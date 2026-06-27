@@ -53,7 +53,8 @@ export default function Booking() {
   const [editNotes, setEditNotes] = useState("");
 
   const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : undefined;
-  const { data: existingAppointments, isLoading: isLoadingSlots } = useAppointments(formattedDate);
+  const { data: existingAppointments, isLoading, isFetching } = useAppointments(formattedDate);
+  const isLoadingSlots = isLoading || isFetching;
   const { data: patients } = usePatients();
   const { mutate: createAppointment, isPending } = useCreateAppointment();
   const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment();

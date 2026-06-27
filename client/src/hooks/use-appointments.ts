@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertAppointment, type Appointment } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +15,9 @@ export function useAppointments(date?: string) {
       const res = await apiRequest("GET", url);
       return api.appointments.list.responses[200].parse(await res.json());
     },
-    placeholderData: keepPreviousData,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -30,6 +32,7 @@ export function useCreateAppointment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      queryClient.refetchQueries({ queryKey: [api.appointments.list.path] });
       toast({
         title: "تم الحجز بنجاح",
         description: "تم تسجيل الموعد في النظام",
@@ -38,7 +41,7 @@ export function useCreateAppointment() {
     onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "خطأ في الحجز",
+        title: "هذا الوقت محجوز",
         description: error.message,
       });
     },
@@ -57,6 +60,7 @@ export function useUpdateAppointment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      queryClient.refetchQueries({ queryKey: [api.appointments.list.path] });
       toast({ title: "تم التعديل بنجاح" });
     },
     onError: (error: Error) => {
@@ -76,6 +80,7 @@ export function useDeleteAppointment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      queryClient.refetchQueries({ queryKey: [api.appointments.list.path] });
       toast({
         title: "تم الإلغاء",
         description: "تم إلغاء الموعد بنجاح",

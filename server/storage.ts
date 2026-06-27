@@ -29,7 +29,7 @@ import {
   type TreatmentNote,
   type DoctorSettlement,
 } from "@shared/schema";
-import { eq, and, sql, desc, asc, gte, lte } from "drizzle-orm";
+import { eq, and, ne, sql, desc, asc, gte, lte } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -210,13 +210,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async checkSlotsAvailability(date: string, slots: string[]): Promise<string | null> {
+    if (slots.length === 0) return null;
     const dayAppointments = await db.select({
       startTime: appointments.startTime,
       endTime: appointments.endTime,
     }).from(appointments).where(
       and(
         eq(appointments.date, date),
-        sql`${appointments.status} != 'cancelled'`
+        ne(appointments.status, 'cancelled')
       )
     );
     for (const slotTime of slots) {
