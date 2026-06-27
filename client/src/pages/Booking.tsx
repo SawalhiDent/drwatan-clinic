@@ -152,15 +152,24 @@ export default function Booking() {
     while (currentTime < endTime) {
       const timeString = format(currentTime, "HH:mm");
       const slotMin = parseInt(timeString.split(":")[0]) * 60 + parseInt(timeString.split(":")[1]);
-      // A slot is taken only if an appointment for the SAME service overlaps it
-      const isTaken = existingAppointments?.some(apt => {
-        if (apt.status === 'cancelled') return false;
-        if (apt.service !== selectedService) return false;
+
+      // Collect all services booked at this slot (for icons)
+      const bookedServices: string[] = [];
+      existingAppointments?.forEach(apt => {
+        if (apt.status === 'cancelled') return;
         const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
         const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);
-        return slotMin >= startMin && slotMin < endMin;
+        if (slotMin >= startMin && slotMin < endMin) {
+          if (apt.service && !bookedServices.includes(apt.service)) {
+            bookedServices.push(apt.service);
+          }
+        }
       });
-      slots.push({ time: timeString, available: !isTaken });
+
+      // A slot is "unavailable" only for the SAME service
+      const isTaken = bookedServices.includes(selectedService);
+
+      slots.push({ time: timeString, available: !isTaken, bookedServices });
       currentTime = new Date(currentTime);
       currentTime.setMinutes(currentTime.getMinutes() + SLOT_DURATION);
     }
@@ -168,6 +177,17 @@ export default function Booking() {
   };
 
   const timeSlots = selectedDate ? generateTimeSlots() : [];
+
+  // Which services are already booked in the currently selected slots?
+  const servicesBlockedBySelection = (() => {
+    if (selectedSlots.length === 0) return new Set<string>();
+    const blocked = new Set<string>();
+    selectedSlots.forEach(slotTime => {
+      const slotInfo = timeSlots.find(s => s.time === slotTime);
+      slotInfo?.bookedServices?.forEach(svc => blocked.add(svc));
+    });
+    return blocked;
+  })();
 
   const toMinutes = (t: string) => parseInt(t.split(":")[0]) * 60 + parseInt(t.split(":")[1]);
 
@@ -318,26 +338,58 @@ export default function Booking() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-3 gap-2">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          disabled={!slot.available}
-                          onClick={() => handleTimeSelect(slot.time)}
-                          data-testid={`slot-${slot.time}`}
-                          title={!slot.available ? "هذا الوقت محجوز" : undefined}
-                          className={cn(
-                            "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border relative",
-                            selectedSlots.includes(slot.time)
-                              ? "bg-primary text-white border-primary shadow-md transform scale-105"
-                              : slot.available
-                              ? "bg-white text-slate-700 border-slate-200 hover:border-primary hover:text-primary"
-                              : "bg-rose-50 text-rose-300 border-rose-200 cursor-not-allowed line-through opacity-70"
-                          )}
-                        >
-                          {slot.time}
-                        </button>
-                      ))}
+                      {timeSlots.map((slot) => {
+                        const hasDental = slot.bookedServices?.includes("أسنان");
+                        const hasAesthetic = slot.bookedServices?.includes("تجميل");
+                        const tooltipParts: string[] = [];
+                        if (!slot.available) tooltipParts.push("محجوز للقسم المختار");
+                        if (hasDental && slot.available) tooltipParts.push("🦷 أسنان محجوز");
+                        if (hasAesthetic && slot.available) tooltipParts.push("✨ تجميل محجوز");
+                        return (
+                          <button
+                            key={slot.time}
+                            type="button"
+                            disabled={!slot.available}
+                            onClick={() => handleTimeSelect(slot.time)}
+                            data-testid={`slot-${slot.time}`}
+                            title={tooltipParts.join(" | ") || undefined}
+                            className={cn(
+                              "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border relative flex flex-col items-center gap-0.5",
+                              selectedSlots.includes(slot.time)
+                                ? "bg-primary text-white border-primary shadow-md transform scale-105"
+                                : slot.available
+                                ? "bg-white text-slate-700 border-slate-200 hover:border-primary hover:text-primary"
+                                : "bg-rose-50 text-rose-300 border-rose-200 cursor-not-allowed line-through opacity-70"
+                            )}
+                          >
+                            <span>{slot.time}</span>
+                            {(hasDental || hasAesthetic) && (
+                              <span className="flex gap-0.5 text-[10px] leading-none">
+                                {hasDental && (
+                                  <span title="أسنان محجوز" className={cn(
+                                    "rounded px-0.5",
+                                    selectedSlots.includes(slot.time)
+                                      ? "text-white/80"
+                                      : !slot.available
+                                      ? "text-rose-400"
+                                      : "text-blue-500"
+                                  )}>🦷</span>
+                                )}
+                                {hasAesthetic && (
+                                  <span title="تجميل محجوز" className={cn(
+                                    "rounded px-0.5",
+                                    selectedSlots.includes(slot.time)
+                                      ? "text-white/80"
+                                      : !slot.available
+                                      ? "text-rose-400"
+                                      : "text-purple-500"
+                                  )}>✨</span>
+                                )}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -550,34 +602,39 @@ export default function Booking() {
                         <FormItem>
                           <FormLabel>نوع العيادة</FormLabel>
                           <div className="grid grid-cols-2 gap-3">
-                            <button
-                              type="button"
-                              onClick={() => field.onChange("أسنان")}
-                              className={cn(
-                                "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
-                                field.value === "أسنان"
-                                  ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md shadow-[#8B2342]/20"
-                                  : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
-                              )}
-                              data-testid="button-clinic-dental"
-                            >
-                              <Stethoscope className="w-4 h-4" />
-                              🦷 أسنان
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => field.onChange("تجميل")}
-                              className={cn(
-                                "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
-                                field.value === "تجميل"
-                                  ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md shadow-[#8B2342]/20"
-                                  : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
-                              )}
-                              data-testid="button-clinic-aesthetic"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              ✨ تجميل
-                            </button>
+                            {[
+                              { value: "أسنان", label: "أسنان", emoji: "🦷", Icon: Stethoscope, testId: "button-clinic-dental" },
+                              { value: "تجميل", label: "تجميل", emoji: "✨", Icon: Sparkles, testId: "button-clinic-aesthetic" },
+                            ].map(({ value, label, emoji, Icon, testId }) => {
+                              const isBlocked = servicesBlockedBySelection.has(value);
+                              const isSelected = field.value === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  disabled={isBlocked}
+                                  onClick={() => !isBlocked && field.onChange(value)}
+                                  data-testid={testId}
+                                  title={isBlocked ? `${label} محجوز في الوقت المختار` : undefined}
+                                  className={cn(
+                                    "flex flex-col items-center justify-center gap-1 py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all duration-200",
+                                    isBlocked
+                                      ? "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed opacity-60"
+                                      : isSelected
+                                      ? "bg-[#8B2342] text-white border-[#8B2342] shadow-md shadow-[#8B2342]/20"
+                                      : "bg-white text-slate-600 border-slate-200 hover:border-[#8B2342] hover:text-[#8B2342]"
+                                  )}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Icon className="w-4 h-4" />
+                                    {emoji} {label}
+                                  </span>
+                                  {isBlocked && (
+                                    <span className="text-[10px] font-normal text-slate-400">محجوز</span>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
                           <FormMessage />
                         </FormItem>
