@@ -376,7 +376,7 @@ export class DatabaseStorage implements IStorage {
         iconName: "Clock",
         needsAppointment: true,
         sortOrder: 1,
-        messageBody: `السلام عليكم {name}،\nنذكرك بموعدك في عيادة *صوالحي دنت*\nالتاريخ: {date}\nالساعة: {time}\nالخدمة: {service}\n\nنرجو الحضور في الموعد المحدد.\nنتمنى لك دوام الصحة والعافية.`,
+        messageBody: `السلام عليكم {name}،\nنذكرك بموعدك في عيادة *صوالحي دنت - دكتورة وطن*\nالتاريخ: {date}\nالساعة: {time}\nالخدمة: {service}\n\nنرجو الحضور في الموعد المحدد.\nنتمنى لك دوام الصحة والعافية.`,
       },
       {
         templateKey: "invoice",
