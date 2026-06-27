@@ -143,18 +143,16 @@ export default function Booking() {
   };
 
   const generateTimeSlots = () => {
-    const selectedClinic = form.watch("service") || "أسنان";
     const slots = [];
     let currentTime = setMinutes(setHours(new Date(), START_HOUR), 0);
     const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
 
     while (currentTime < endTime) {
       const timeString = format(currentTime, "HH:mm");
-      // A slot is taken only if the SAME clinic type has an appointment overlapping it
+      const slotMin = parseInt(timeString.split(":")[0]) * 60 + parseInt(timeString.split(":")[1]);
+      // A slot is taken if ANY non-cancelled appointment overlaps it (regardless of service)
       const isTaken = existingAppointments?.some(apt => {
         if (apt.status === 'cancelled') return false;
-        if (apt.service !== selectedClinic) return false; // different clinic = allowed
-        const slotMin = parseInt(timeString.split(":")[0]) * 60 + parseInt(timeString.split(":")[1]);
         const startMin = parseInt(apt.startTime.split(":")[0]) * 60 + parseInt(apt.startTime.split(":")[1]);
         const endMin = parseInt(apt.endTime.split(":")[0]) * 60 + parseInt(apt.endTime.split(":")[1]);
         return slotMin >= startMin && slotMin < endMin;
@@ -324,13 +322,14 @@ export default function Booking() {
                           disabled={!slot.available}
                           onClick={() => handleTimeSelect(slot.time)}
                           data-testid={`slot-${slot.time}`}
+                          title={!slot.available ? "هذا الوقت محجوز" : undefined}
                           className={cn(
-                            "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border",
+                            "px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200 border relative",
                             selectedSlots.includes(slot.time)
                               ? "bg-primary text-white border-primary shadow-md transform scale-105"
                               : slot.available
                               ? "bg-white text-slate-700 border-slate-200 hover:border-primary hover:text-primary"
-                              : "bg-slate-100 text-slate-400 border-transparent cursor-not-allowed decoration-slate-400 line-through"
+                              : "bg-rose-50 text-rose-300 border-rose-200 cursor-not-allowed line-through opacity-70"
                           )}
                         >
                           {slot.time}
