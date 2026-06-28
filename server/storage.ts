@@ -209,12 +209,13 @@ export class DatabaseStorage implements IStorage {
     return result === null;
   }
 
-  async checkSlotsAvailability(date: string, slots: string[], service?: string): Promise<string | null> {
+  async checkSlotsAvailability(date: string, slots: string[], service?: string, excludeId?: number): Promise<string | null> {
     if (slots.length === 0) return null;
     const conditions = [
       eq(appointments.date, date),
       ne(appointments.status, 'cancelled'),
       ...(service ? [eq(appointments.service, service)] : []),
+      ...(excludeId ? [ne(appointments.id, excludeId)] : []),
     ];
     const dayAppointments = await db.select({
       startTime: appointments.startTime,

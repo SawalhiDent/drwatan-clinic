@@ -322,8 +322,30 @@ export async function registerRoutes(
 
   app.put(api.appointments.update.path, authMiddleware, requirePermission("appointments"), asyncHandler(async (req, res) => {
     try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "معرف غير صالح" });
       const input = api.appointments.update.input.parse(req.body);
-      const appointment = await storage.updateAppointment(Number(req.params.id), input);
+
+      // If time or service is being changed, check for conflicts (excluding this appointment)
+      if (input.startTime && input.endTime && input.date) {
+        const slotsToCheck: string[] = [];
+        let [sh, sm] = input.startTime.split(":").map(Number);
+        const [eh, em] = input.endTime.split(":").map(Number);
+        const endMinutes = eh * 60 + em;
+        while (sh * 60 + sm < endMinutes) {
+          slotsToCheck.push(`${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}`);
+          sm += 30;
+          if (sm >= 60) { sh += 1; sm -= 60; }
+        }
+        const conflictSlot = await storage.checkSlotsAvailability(
+          input.date, slotsToCheck, input.service, id
+        );
+        if (conflictSlot) {
+          return res.status(409).json({ message: `الوقت ${conflictSlot} محجوز مسبقاً لقسم ${input.service || ""}` });
+        }
+      }
+
+      const appointment = await storage.updateAppointment(id, input);
       if (!appointment) return res.status(404).json({ message: "Appointment not found" });
       res.json(appointment);
     } catch (err) {

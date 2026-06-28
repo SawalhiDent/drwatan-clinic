@@ -108,6 +108,14 @@ export default function Booking() {
     },
   });
 
+  // Watch service at component level for proper reactivity
+  const watchedService = form.watch("service") || "أسنان";
+
+  // Clear selected slots whenever the service changes (stale slots become invalid)
+  useEffect(() => {
+    setSelectedSlots([]);
+  }, [watchedService]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
@@ -144,7 +152,7 @@ export default function Booking() {
   };
 
   const generateTimeSlots = () => {
-    const selectedService = form.watch("service") || "أسنان";
+    const selectedService = watchedService;
     const slots = [];
     let currentTime = setMinutes(setHours(new Date(), START_HOUR), 0);
     const endTime = setMinutes(setHours(new Date(), END_HOUR), 0);
