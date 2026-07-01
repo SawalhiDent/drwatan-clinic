@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "WlBcadNWDs8QjdjiDjnRL"
+uri = "file://client/public/icon-192x192.png"
+type = "image"
+title = "أيقونة التطبيق 192×192"
+
+[[outputs]]
+id = "_6q3dd7wUUDifcMwqi14N"
+uri = "file://client/public/icon-512x512.png"
+type = "image"
+title = "أيقونة التطبيق 512×512"
